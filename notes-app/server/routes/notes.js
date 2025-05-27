@@ -10,7 +10,7 @@ function sanitizeInput(input, maxLength = 255) {
 // GET all notes
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM notes ORDER BY id ASC');
+    const result = await pool.query('SELECT id, content FROM notes ORDER BY id ASC');
     res.json(result.rows);
   } catch (err) {
     console.error('❌ Error fetching notes:', err);
@@ -18,20 +18,16 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST a new note
+// POST a new note (only content)
 router.post('/', async (req, res) => {
-  let { title, content } = req.body;
-  title = sanitizeInput(title);
+  let { content } = req.body;
+  console.log('📨 Received content:', content);
   content = sanitizeInput(content);
-
-  if (!title || !content) {
-    return res.status(400).json({ message: 'Title and content are required' });
-  }
-
+  if (!content) return res.status(400).json({ message: 'Content is required' });
   try {
     const result = await pool.query(
-      'INSERT INTO notes (title, content) VALUES ($1, $2) RETURNING *',
-      [title, content]
+      'INSERT INTO notes (content) VALUES ($1) RETURNING *',
+      [content]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -40,21 +36,20 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT (update) a note
+// PUT (update) a note (only content)
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  let { title, content } = req.body;
-  title = sanitizeInput(title);
+  let { content } = req.body;
   content = sanitizeInput(content);
 
-  if (!title || !content) {
-    return res.status(400).json({ message: 'Title and content are required' });
+  if (!content) {
+    return res.status(400).json({ message: 'Content is required' });
   }
 
   try {
     const result = await pool.query(
-      'UPDATE notes SET title = $1, content = $2 WHERE id = $3 RETURNING *',
-      [title, content, id]
+      'UPDATE notes SET content = $1 WHERE id = $2 RETURNING *',
+      [content, id]
     );
 
     if (result.rowCount === 0) {
