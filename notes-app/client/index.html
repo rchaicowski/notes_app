@@ -2,24 +2,56 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Notes App</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notes App</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-    <h1>My Notes</h1>
+  <h1>My Notes</h1>
 
-    <form id="note-form">
-        <input type="text" id="title" placeholder="Title" required />
-        <input type="text" id="content" placeholder="Content" required />
-        <button type="submit">Add Note</button>
-    </form>
+  <div class="table">
+    <div class="lamp">💡</div>
+    <div class="plant">🪴</div>
+    <div class="calculator">🧮</div>
 
-    <ul id="notes-list"></ul>
+    <div class="notepad">
+      <div class="spirals">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
 
-    <script src="script.js"></script>
+      <div id="global-controls">
+        <div class="icon-wrapper" id="edit-mode-btn" title="Edit Mode">
+          <div class="icon pencil">
+            <div class="vertical-lines"></div>
+            <div class="pencil-text">EDIT</div>
+          </div>
+        </div>
+        <div class="icon-wrapper" id="delete-mode-btn" title="Delete Mode">
+          <div class="icon eraser">
+            <div class="eraser-text">DEL</div>
+            <div class="eraser-text-metal">ETE</div>
+          </div>
+        </div>
+      </div>
+
+      <form id="note-form">
+        <input type="text" id="content" placeholder="Note" required />
+        <button type="button" id="add-btn" class="add-btn">+</button>
+      </form>
+      <ul id="notes-list"></ul>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 
 </html>
