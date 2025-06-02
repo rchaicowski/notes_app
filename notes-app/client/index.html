@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,11 +9,38 @@
 
 <body>
   <h1>My Notes</h1>
-
+  
   <div class="table">
     <div class="lamp">💡</div>
     <div class="plant">🪴</div>
-    <div class="calculator">🧮</div>
+    
+    <div class="calculator">
+      <div class="calc-display" id="calc-display">0</div>
+      <div class="calc-buttons">
+        <button class="calc-btn clear" onclick="clearCalculator()">C</button>
+        <button class="calc-btn operator" onclick="inputOperator('/')">/</button>
+        <button class="calc-btn operator" onclick="inputOperator('*')">×</button>
+        <button class="calc-btn operator" onclick="deleteLast()">⌫</button>
+        
+        <button class="calc-btn" onclick="inputNumber('7')">7</button>
+        <button class="calc-btn" onclick="inputNumber('8')">8</button>
+        <button class="calc-btn" onclick="inputNumber('9')">9</button>
+        <button class="calc-btn operator" onclick="inputOperator('-')">-</button>
+        
+        <button class="calc-btn" onclick="inputNumber('4')">4</button>
+        <button class="calc-btn" onclick="inputNumber('5')">5</button>
+        <button class="calc-btn" onclick="inputNumber('6')">6</button>
+        <button class="calc-btn operator" onclick="inputOperator('+')">+</button>
+        
+        <button class="calc-btn" onclick="inputNumber('1')">1</button>
+        <button class="calc-btn" onclick="inputNumber('2')">2</button>
+        <button class="calc-btn" onclick="inputNumber('3')">3</button>
+        <button class="calc-btn equals" onclick="calculate()" style="grid-row: span 2">=</button>
+        
+        <button class="calc-btn" onclick="inputNumber('0')" style="grid-column: span 2">0</button>
+        <button class="calc-btn" onclick="inputDecimal()">.</button>
+      </div>
+    </div>
 
     <div class="notepad">
       <div class="spirals">
@@ -53,5 +79,4 @@
 
   <script src="script.js"></script>
 </body>
-
 </html>

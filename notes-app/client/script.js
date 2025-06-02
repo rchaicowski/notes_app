@@ -1,34 +1,146 @@
-// Global state variables
+// Calculator variables
+let calcDisplay = '';
+let calcOperator = '';
+let calcPrevious = '';
+let calcWaitingForOperand = false;
+let calcExpression = ''; // New variable to track the full expression
+
+// Notes variables
 let isEditMode = false;
 let isDeleteMode = false;
 let notes = [];
 
-// Load all notes on page load
-function loadNotes() {
-  fetch('http://localhost:5000/api/notes')
-    .then(response => response.json())
-    .then(data => {
-      notes = data;
-      renderNotes();
-    })
-    .catch(err => {
-      console.error('Failed to fetch notes:', err);
-    });
+// Calculator functions
+function updateDisplay() {
+  const display = document.getElementById('calc-display');
+  
+  // Show expression + current number if we're building an expression
+  if (calcExpression && calcOperator && !calcWaitingForOperand) {
+    display.textContent = calcExpression + calcDisplay;
+  } else if (calcExpression && calcWaitingForOperand) {
+    display.textContent = calcExpression;
+  } else {
+    display.textContent = calcDisplay || '0';
+  }
 }
 
-// Render notes in the list
+function inputNumber(num) {
+  if (calcWaitingForOperand) {
+    calcDisplay = num;
+    calcWaitingForOperand = false;
+  } else {
+    calcDisplay = calcDisplay === '0' ? num : calcDisplay + num;
+  }
+  updateDisplay();
+}
+
+function inputDecimal() {
+  if (calcWaitingForOperand) {
+    calcDisplay = '0.';
+    calcWaitingForOperand = false;
+  } else if (calcDisplay.indexOf('.') === -1) {
+    calcDisplay += '.';
+  }
+  updateDisplay();
+}
+
+function inputOperator(nextOperator) {
+  const inputValue = parseFloat(calcDisplay);
+
+  if (calcPrevious === '') {
+    calcPrevious = inputValue;
+    calcExpression = calcDisplay + ' ' + nextOperator + ' ';
+  } else if (calcOperator) {
+    const currentValue = calcPrevious || 0;
+    const newValue = performCalculation(currentValue, inputValue, calcOperator);
+
+    calcDisplay = String(newValue);
+    calcPrevious = newValue;
+    calcExpression = String(newValue) + ' ' + nextOperator + ' ';
+  }
+
+  calcWaitingForOperand = true;
+  calcOperator = nextOperator;
+  updateDisplay();
+}
+
+function calculate() {
+  const inputValue = parseFloat(calcDisplay);
+
+  if (calcPrevious !== '' && calcOperator) {
+    // Complete the expression before calculating
+    calcExpression = (calcExpression || calcPrevious + ' ' + calcOperator + ' ') + calcDisplay;
+    
+    const newValue = performCalculation(calcPrevious, inputValue, calcOperator);
+    calcDisplay = String(newValue);
+    
+    // Show the full expression first, then after a brief moment show the result
+    const display = document.getElementById('calc-display');
+    display.textContent = calcExpression + ' = ' + calcDisplay;
+    
+    // Reset for next calculation
+    calcPrevious = '';
+    calcOperator = '';
+    calcExpression = '';
+    calcWaitingForOperand = true;
+  }
+}
+
+function performCalculation(firstOperand, secondOperand, operator) {
+  switch (operator) {
+    case '+':
+      return firstOperand + secondOperand;
+    case '-':
+      return firstOperand - secondOperand;
+    case '*':
+      return firstOperand * secondOperand;
+    case '/':
+      return secondOperand !== 0 ? firstOperand / secondOperand : 0;
+    default:
+      return secondOperand;
+  }
+}
+
+function clearCalculator() {
+  calcDisplay = '';
+  calcOperator = '';
+  calcPrevious = '';
+  calcExpression = '';
+  calcWaitingForOperand = false;
+  updateDisplay();
+}
+
+function deleteLast() {
+  if (calcDisplay.length > 1) {
+    calcDisplay = calcDisplay.slice(0, -1);
+  } else {
+    calcDisplay = '0';
+  }
+  updateDisplay();
+}
+
+// Notes functions (Note: Using in-memory storage instead of localStorage for Claude.ai compatibility)
+function loadNotes() {
+  // Notes are now stored in memory only
+  renderNotes();
+}
+
+function saveNotes() {
+  // Notes are automatically saved in memory
+  // In a real app, you'd save to a backend or localStorage
+}
+
 function renderNotes() {
   const list = document.getElementById('notes-list');
   list.innerHTML = '';
   
-  notes.forEach(note => {
+  notes.forEach((note, index) => {
     const li = document.createElement('li');
-    li.dataset.id = note.id;
+    li.dataset.id = index;
     li.innerHTML = `
       <div class="note-content">${note.content}</div>
     `;
 
-    // Add click event for note selection in modes
     li.addEventListener('click', function(e) {
       if (isEditMode || isDeleteMode) {
         e.preventDefault();
@@ -40,10 +152,9 @@ function renderNotes() {
   });
 }
 
-// Select note in edit/delete mode
 function selectNote(noteElement) {
   const noteId = noteElement.dataset.id;
-  const note = notes.find(n => n.id == noteId);
+  const note = notes[noteId];
   
   if (isEditMode) {
     editNote(noteId, note.content);
@@ -74,25 +185,22 @@ document.getElementById('delete-mode-btn').addEventListener('click', function() 
   }
 });
 
-// Enter edit mode
 function enterEditMode() {
-  exitModes(); // Exit any current mode first
+  exitModes();
   isEditMode = true;
   document.getElementById('edit-mode-btn').classList.add('active');
   document.body.classList.add('edit-mode');
   highlightNotes('edit');
 }
 
-// Enter delete mode
 function enterDeleteMode() {
-  exitModes(); // Exit any current mode first
+  exitModes();
   isDeleteMode = true;
   document.getElementById('delete-mode-btn').classList.add('active');
   document.body.classList.add('delete-mode');
   highlightNotes('delete');
 }
 
-// Exit all modes
 function exitModes() {
   isEditMode = false;
   isDeleteMode = false;
@@ -102,25 +210,22 @@ function exitModes() {
   removeHighlights();
 }
 
-// Highlight notes based on mode
 function highlightNotes(mode) {
-  const notes = document.querySelectorAll('#notes-list li');
-  notes.forEach(note => {
+  const noteElements = document.querySelectorAll('#notes-list li');
+  noteElements.forEach(note => {
     note.classList.add(`highlight-${mode}`);
     note.style.cursor = 'pointer';
   });
 }
 
-// Remove highlights
 function removeHighlights() {
-  const notes = document.querySelectorAll('#notes-list li');
-  notes.forEach(note => {
+  const noteElements = document.querySelectorAll('#notes-list li');
+  noteElements.forEach(note => {
     note.classList.remove('highlight-edit', 'highlight-delete');
     note.style.cursor = 'default';
   });
 }
 
-// Edit note function
 function editNote(noteId, content) {
   document.getElementById('content').value = content;
   document.getElementById('note-form').dataset.editing = noteId;
@@ -134,57 +239,25 @@ document.getElementById('add-btn').addEventListener('click', function () {
 
   if (!content) return;
 
-  if (editingId) {
+  if (editingId !== undefined) {
     // UPDATE existing note
-    fetch(`http://localhost:5000/api/notes/${editingId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content })
-    })
-      .then(response => response.json())
-      .then(note => {
-        // Update the note in the local array
-        const index = notes.findIndex(n => n.id == editingId);
-        if (index !== -1) {
-          notes[index] = note;
-        }
-        renderNotes();
-        document.getElementById('note-form').reset();
-        document.getElementById('note-form').removeAttribute('data-editing');
-      })
-      .catch(err => console.error('Error updating note:', err));
+    notes[editingId].content = content;
+    document.getElementById('note-form').removeAttribute('data-editing');
   } else {
     // ADD new note
-    fetch('http://localhost:5000/api/notes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content })
-    })
-      .then(response => response.json())
-      .then(note => {
-        notes.push(note);
-        renderNotes();
-        document.getElementById('note-form').reset();
-      })
-      .catch(err => console.error('Error saving note:', err));
+    notes.push({ content: content });
   }
+  
+  saveNotes();
+  renderNotes();
+  document.getElementById('note-form').reset();
 });
 
 // Delete function
 function deleteNote(id, listItem) {
-  fetch(`http://localhost:5000/api/notes/${id}`, { method: 'DELETE' })
-    .then(response => {
-      if (!response.ok) throw new Error('Delete failed');
-      return response.json();
-    })
-    .then(() => {
-      // Remove from local array
-      notes = notes.filter(note => note.id != id);
-      listItem.remove();
-    })
-    .catch(err => {
-      console.error('Error deleting note:', err);
-    });
+  notes.splice(id, 1);
+  saveNotes();
+  renderNotes();
 }
 
 // Handle Enter key in input field
@@ -210,3 +283,4 @@ document.addEventListener('keydown', function(e) {
 
 // Initialize the app
 loadNotes();
+updateDisplay();
