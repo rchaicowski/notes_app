@@ -10,6 +10,63 @@ let isEditMode = false;
 let isDeleteMode = false;
 let notes = [];
 
+
+// Lamp toggle function
+let lampOn = true;
+let lampTimeouts = [];
+
+function toggleLamp() {
+  const powerButton = document.getElementById('power-button');
+  const lampBulb = document.getElementById('lamp-bulb');
+  const tableContainer = document.getElementById('table-container');
+
+  // Clear any previously scheduled timeouts
+  lampTimeouts.forEach(timeout => clearTimeout(timeout));
+  lampTimeouts = [];
+
+  if (!lampOn) {
+    // Turning ON - immediate bright effect
+    lampOn = true;
+    powerButton.className = 'lamp-power-button on';
+    lampBulb.className = 'lamp-bulb on';
+    tableContainer.classList.remove('dimmed');
+  } else {
+    // Turning OFF - multi-stage 5 second transition
+    lampOn = false;
+    powerButton.className = 'lamp-power-button off';
+    lampBulb.className = 'lamp-bulb warm-orange';
+
+    // Immediate dim the table
+    tableContainer.classList.add('dimmed');
+
+    lampTimeouts.push(setTimeout(() => {
+      if (!lampOn) {
+        lampBulb.className = 'lamp-bulb transitioning-off';
+      }
+    }, 1500));
+
+    lampTimeouts.push(setTimeout(() => {
+      if (!lampOn) {
+        lampBulb.className = 'lamp-bulb dim-orange';
+      }
+    }, 3000));
+
+    lampTimeouts.push(setTimeout(() => {
+      if (!lampOn) {
+        lampBulb.className = 'lamp-bulb';
+      }
+    }, 4500));
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  const powerButton = document.getElementById('power-button');
+  const lampBulb = document.getElementById('lamp-bulb');
+  
+  powerButton.className = 'lamp-power-button on';
+  lampBulb.className = 'lamp-bulb on';
+});
+
 // Calculator functions
 function updateDisplay() {
   const display = document.getElementById('calc-display');
