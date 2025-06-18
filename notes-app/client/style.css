@@ -530,36 +530,36 @@ ul#notes-list li .note-content {
   border: 1px solid #222;
   background: radial-gradient(circle at 30% 30%, #888, #555 50%, #333 80%, #111 100%);
   transition: all 0.3s ease;
-  box-shadow: 
-    0 2px 4px rgba(0,0,0,0.6),
-    inset 0 1px 1px rgba(255,255,255,0.3),
-    inset 0 -1px 1px rgba(0,0,0,0.7);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.7);
 }
 
 .lamp-power-button:active {
   transform: translate(-50%, -45%);
-  box-shadow: 
-    0 1px 2px rgba(0,0,0,0.8),
-    inset 0 1px 1px rgba(255,255,255,0.2),
-    inset 0 -1px 1px rgba(0,0,0,0.9);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.8),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.9);
 }
 
 .lamp-power-button.on {
   background: radial-gradient(circle at 30% 30%, #66ff66, #00ff00 40%, #00cc00 70%, #009900 90%, #004400 100%);
-  box-shadow: 
-    0 2px 4px rgba(0,0,0,0.6),
-    inset 0 1px 1px rgba(255,255,255,0.4),
-    inset 0 -1px 1px rgba(0,0,0,0.5),
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.5),
     0 0 6px rgba(0, 255, 0, 0.6),
     0 0 12px rgba(0, 255, 0, 0.3);
 }
 
 .lamp-power-button.off {
   background: radial-gradient(circle at 30% 30%, #ff6666, #ff4444 40%, #cc0000 70%, #990000 90%, #440000 100%);
-  box-shadow: 
-    0 2px 4px rgba(0,0,0,0.6),
-    inset 0 1px 1px rgba(255,255,255,0.4),
-    inset 0 -1px 1px rgba(0,0,0,0.5),
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.5),
     0 0 6px rgba(255, 0, 0, 0.6),
     0 0 12px rgba(255, 0, 0, 0.3);
 }
@@ -653,7 +653,7 @@ ul#notes-list li .note-content {
 
 .lamp-bulb.on {
   background: radial-gradient(circle, #ffffff 20%, #fffbcc 50%, #ffec88 80%, #f0d040 100%);
-  box-shadow: 
+  box-shadow:
     0 0 20px rgba(255, 255, 255, 0.8),
     0 0 40px rgba(255, 240, 150, 0.6),
     0 0 60px rgba(255, 240, 150, 0.4);
@@ -661,21 +661,21 @@ ul#notes-list li .note-content {
 
 .lamp-bulb.transitioning-off {
   background: radial-gradient(circle, #ff6600 20%, #cc3300 50%, #990000 80%, #330000 100%);
-  box-shadow: 
+  box-shadow:
     0 0 4px rgba(255, 102, 0, 0.3),
     0 0 8px rgba(255, 102, 0, 0.1);
 }
 
 .lamp-bulb.warm-orange {
   background: radial-gradient(circle, #ffaa44 25%, #ff7722 55%, #dd4400 85%, #661100 100%);
-  box-shadow: 
+  box-shadow:
     0 0 6px rgba(255, 170, 68, 0.4),
     0 0 12px rgba(255, 170, 68, 0.2);
 }
 
 .lamp-bulb.dim-orange {
   background: radial-gradient(circle, #cc5500 30%, #993300 60%, #661100 90%, #220000 100%);
-  box-shadow: 
+  box-shadow:
     0 0 3px rgba(204, 85, 0, 0.2);
 }
 
@@ -688,8 +688,186 @@ ul#notes-list li .note-content {
 }
 
 #table-container.dimmed {
-  filter: brightness(0.4);  
+  filter: brightness(0.4);
   transition: filter 0.8s ease;
+}
+
+.plant-group {
+  position: absolute;
+  top: 80px;
+  right: 80px;
+  width: 160px;
+  height: 160px;
+}
+
+.vase {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle at 30% 30%, #d2691e, #a0522d, #8b4513);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow:
+    inset -10px -10px 20px rgba(139, 69, 19, 0.3),
+    inset 10px 10px 20px rgba(255, 165, 0, 0.2),
+    0 10px 20px rgba(0, 0, 0, 0.2);
+  border: 3px solid #654321;
+}
+
+.stem {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: #186318;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  box-shadow: 0 0 5px rgba(34, 139, 34, 0.5);
+}
+
+.leaf {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  transition: all 0.3s ease;
+}
+
+.leaf-shape {
+  width: 60px;
+  height: 120px;
+  background: linear-gradient(to top, #228b22, #32cd32, #90ee90);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  position: relative;
+  transform-origin: center bottom;
+  box-shadow:
+    inset 2px 2px 5px rgba(255, 255, 255, 0.3),
+    inset -2px -2px 5px rgba(0, 0, 0, 0.2),
+    0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.leaf-shape::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 1px;
+  height: 100px;
+  background: linear-gradient(to bottom, #1e7e1e, #2e8b2e);
+  transform: translateX(-50%);
+}
+
+.leaf-shape::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 30%;
+  width: 40%;
+  height: 1px;
+  background: rgba(30, 126, 30, 0.4);
+  transform: rotate(25deg);
+}
+
+/* NEW: Big leaf styling - makes them 1.2x the medium size */
+.big-leaf .leaf-shape {
+  width: 48px;
+  /* 1.2 x 40px = 48px */
+  height: 96px;
+  /* 1.2 x 80px = 96px */
+  background: linear-gradient(to top, #1a5f1a, #228b22, #32cd32, #90ee90);
+}
+
+.big-leaf .leaf-shape::before {
+  height: 84px;
+  /* 1.2 x 70px = 84px */
+}
+
+.medium-leaf .leaf-shape {
+  width: 40px;
+  height: 80px;
+  background: linear-gradient(to top, #1e7e1e, #228b22, #7cfc00);
+}
+
+.medium-leaf .leaf-shape::before {
+  height: 70px;
+}
+
+/* Big leaves - evenly spaced every 60 degrees */
+.big-leaf-0 {
+  transform: translate(-50%, -50%) rotate(0deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+.big-leaf-1 {
+  transform: translate(-50%, -50%) rotate(60deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+.big-leaf-2 {
+  transform: translate(-50%, -50%) rotate(120deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+.big-leaf-3 {
+  transform: translate(-50%, -50%) rotate(180deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+.big-leaf-4 {
+  transform: translate(-50%, -50%) rotate(240deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+.big-leaf-5 {
+  transform: translate(-50%, -50%) rotate(300deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+/* Medium leaves - offset by 30 degrees and positioned at medium distance */
+.medium-leaf-0 {
+  transform: translate(-50%, -50%) rotate(30deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
+}
+
+.medium-leaf-1 {
+  transform: translate(-50%, -50%) rotate(90deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
+}
+
+.medium-leaf-2 {
+  transform: translate(-50%, -50%) rotate(150deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
+}
+
+.medium-leaf-3 {
+  transform: translate(-50%, -50%) rotate(210deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
+}
+
+.medium-leaf-4 {
+  transform: translate(-50%, -50%) rotate(270deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
+}
+
+.medium-leaf-5 {
+  transform: translate(-50%, -50%) rotate(330deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
 }
 
 @keyframes pulse {
