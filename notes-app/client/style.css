@@ -17,20 +17,81 @@ h1 {
   grid-template-columns: 1fr 2fr 1fr;
   grid-template-rows: 1fr 2fr 1fr;
   gap: 1rem;
-  background-color: #d2b48c;
+  
+  /* Wooden table background with grain effect */
+  background: 
+    /* Wood grain lines */
+    repeating-linear-gradient(
+      0deg,
+      #d4a574 0px,
+      #d4a574 2px,
+      #c9975a 2px,
+      #c9975a 4px,
+      #d4a574 4px,
+      #d4a574 8px,
+      #be8f52 8px,
+      #be8f52 12px,
+      #d4a574 12px
+    ),
+    /* Base wood color with subtle variations */
+    linear-gradient(
+      45deg,
+      #d2b48c 0%,
+      #deb887 25%,
+      #d2b48c 50%,
+      #cd853f 75%,
+      #d2b48c 100%
+    );
+  
+  /* Enhanced shadows and lighting */
+  box-shadow: 
+    /* Deep inset shadow for depth */
+    inset 0 0 50px rgba(101, 67, 33, 0.3),
+    /* Outer shadow to lift the table */
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    /* Subtle highlight on top edge */
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  
+  /* Table border with wood edge effect */
+  border: 8px solid #8b4513;
+  border-image: linear-gradient(
+    45deg,
+    #8b4513,
+    #a0522d,
+    #8b4513,
+    #654321
+  ) 1;
+  
   padding: 2rem;
-  border-radius: 20px;
-  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.2);
+  border-radius: 25px;
   height: 90vh;
   max-width: 1000px;
   margin: auto;
   position: relative;
   overflow: visible;
+  
+  /* Add texture with background size */
+  background-size: 200px 100%, 100% 100%;
+  background-blend-mode: multiply, normal;
+  
+  /* Subtle animation for living wood effect */
+  animation: subtle-wood-movement 8s ease-in-out infinite alternate;
 }
 
-.lamp,
-.plant {
-  font-size: 2rem;
+/* Add wood grain texture with pseudo-elements */
+.table::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 20% 30%, rgba(139, 69, 19, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(160, 82, 45, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 40% 80%, rgba(101, 67, 33, 0.1) 0%, transparent 50%);
+  border-radius: 25px;
+  pointer-events: none;
 }
 
 .lamp {
@@ -60,7 +121,7 @@ h1 {
   box-shadow:
     0 15px 30px rgba(0, 0, 0, 0.4),
     inset 0 2px 4px rgba(255, 255, 255, 0.1);
-  transform: rotate(-12deg);
+  transform: rotate(-12deg) scale(0.9);
   border: 2px solid #1a252f;
 }
 
@@ -312,17 +373,50 @@ ul#notes-list li .note-content {
   box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3);
 }
 
+/* Wood tip - realistic conical shape */
 .icon.pencil::after {
   content: "";
   position: absolute;
-  left: -1.7px;
+  left: 50%;
   bottom: -22px;
-  width: 0;
-  height: 0;
-  border-left: 15px solid transparent;
-  border-right: 15px solid transparent;
-  border-top: 25px solid #5a2b0a;
+  transform: translateX(-50%);
+  width: 25px;
+  height: 26px;
+  background: #D2B48C; /* Light wood color */
+  clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+  border-left: 1px solid #555;
+  border-right: 1px solid #555;
   filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Graphite tip - small center core */
+.icon.pencil .graphite-tip {
+  position: absolute;
+  left: 50%;
+  bottom: -22px;
+  transform: translateX(-50%);
+  width: 13px;
+  height: 12px;
+  background: #2C2C2C; /* Dark graphite color */
+  clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+  filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+  z-index: 10;
+}
+
+.icon.pencil .ferrule {
+  position: absolute;
+  left: -2px;
+  top: -6px;
+  width: 28px;
+  height: 12px;
+  background: linear-gradient(180deg, #C0C0C0 0%, #A8A8A8 50%, #909090 100%);
+  border: 1px solid #666;
+  border-radius: 2px;
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.6),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+  z-index: 5;
 }
 
 .icon.pencil .vertical-lines {

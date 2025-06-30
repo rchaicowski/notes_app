@@ -176,7 +176,6 @@ function deleteLast() {
   updateDisplay();
 }
 
-// Notes functions (Note: Using in-memory storage instead of localStorage for Claude.ai compatibility)
 function loadNotes() {
   // Notes are now stored in memory only
   renderNotes();
