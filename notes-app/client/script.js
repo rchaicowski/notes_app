@@ -10,6 +10,8 @@ let isEditMode = false;
 let isDeleteMode = false;
 let notes = [];
 
+// API Configuration
+const API_BASE_URL = 'http://localhost:5000/api/notes'; // Adjust port if different
 
 // Lamp toggle function
 let lampOn = true;
@@ -176,14 +178,83 @@ function deleteLast() {
   updateDisplay();
 }
 
-function loadNotes() {
-  // Notes are now stored in memory only
-  renderNotes();
+// Notes API Functions
+async function loadNotes() {
+  try {
+    const response = await fetch(API_BASE_URL);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const serverNotes = await response.json();
+    
+    // Map server notes to your frontend format
+    notes = serverNotes.map(note => ({
+      id: note.id,
+      content: note.content
+    }));
+    
+    renderNotes();
+  } catch (error) {
+    console.error('❌ Error loading notes:', error);
+    // Fallback to empty array if server is unreachable
+    notes = [];
+    renderNotes();
+  }
 }
 
-function saveNotes() {
-  // Notes are automatically saved in memory
-  // In a real app, you'd save to a backend or localStorage
+async function saveNote(noteData, isUpdate = false, noteId = null) {
+  try {
+    let response;
+    
+    if (isUpdate && noteId !== null) {
+      // UPDATE existing note
+      response = await fetch(`${API_BASE_URL}/${noteId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: noteData.content })
+      });
+    } else {
+      // CREATE new note
+      response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: noteData.content })
+      });
+    }
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const savedNote = await response.json();
+    return savedNote;
+    
+  } catch (error) {
+    console.error('❌ Error saving note:', error);
+    throw error;
+  }
+}
+
+async function deleteNoteFromServer(noteId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/${noteId}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+    
+  } catch (error) {
+    console.error('❌ Error deleting note:', error);
+    throw error;
+  }
 }
 
 function renderNotes() {
@@ -192,7 +263,7 @@ function renderNotes() {
   
   notes.forEach((note, index) => {
     const li = document.createElement('li');
-    li.dataset.id = index;
+    li.dataset.id = index; // Keep using index for frontend logic
     li.innerHTML = `
       <div class="note-content">${note.content}</div>
     `;
@@ -216,10 +287,8 @@ function selectNote(noteElement) {
     editNote(noteId, note.content);
     exitModes();
   } else if (isDeleteMode) {
-    if (confirm(`Are you sure you want to delete this note: "${note.content}"?`)) {
-      deleteNote(noteId, noteElement);
-      exitModes();
-    }
+    deleteNote(noteId, noteElement);
+    exitModes();
   }
 }
 
@@ -288,48 +357,71 @@ function editNote(noteId, content) {
   document.getElementById('content').focus();
 }
 
-// Handle the ADD button click (adds a new note or updates existing)
-document.getElementById('add-btn').addEventListener('click', function () {
+// Centralized function to handle both add and update operations
+async function handleAddOrUpdate() {
   const content = document.getElementById('content').value.trim();
-  const editingId = document.getElementById('note-form').dataset.editing;
+  const noteForm = document.getElementById('note-form');
+  const editingId = noteForm.dataset.editing;
 
   if (!content) return;
 
-  if (editingId !== undefined) {
-    // UPDATE existing note
-    notes[editingId].content = content;
-    document.getElementById('note-form').removeAttribute('data-editing');
-  } else {
-    // ADD new note
-    notes.push({ content: content });
+  try {
+    if (editingId !== undefined && editingId !== '') {
+      // UPDATE existing note
+      const noteIndex = parseInt(editingId);
+      const serverNoteId = notes[noteIndex].id;
+      
+      const updatedNote = await saveNote({ content }, true, serverNoteId);
+      notes[noteIndex] = { id: updatedNote.id, content: updatedNote.content };
+      
+      // Clear the editing state
+      noteForm.removeAttribute('data-editing');
+    } else {
+      // ADD new note
+      const newNote = await saveNote({ content });
+      notes.push({ id: newNote.id, content: newNote.content });
+    }
+    
+    renderNotes();
+    noteForm.reset();
+    
+  } catch (error) {
+    alert('Failed to save note. Please try again.');
   }
-  
-  saveNotes();
-  renderNotes();
-  document.getElementById('note-form').reset();
-});
-
-// Delete function
-function deleteNote(id, listItem) {
-  notes.splice(id, 1);
-  saveNotes();
-  renderNotes();
 }
 
-// Handle Enter key in input field
+// Handle the ADD button click
+document.getElementById('add-btn').addEventListener('click', handleAddOrUpdate);
+
+// Delete function - WITH API INTEGRATION
+async function deleteNote(index, listItem) {
+  const noteToDelete = notes[index];
+  
+  try {
+    await deleteNoteFromServer(noteToDelete.id);
+    notes.splice(index, 1);
+    renderNotes();
+  } catch (error) {
+    alert('Failed to delete note. Please try again.');
+  }
+}
+
+// Handle Enter key in input field - FIXED VERSION
 document.getElementById('content').addEventListener('keypress', function(e) {
   if (e.key === 'Enter') {
-    document.getElementById('add-btn').click();
+    e.preventDefault(); // Prevent any default behavior
+    handleAddOrUpdate(); // Use the same function as the button click
   }
 });
 
 // Handle Escape key to cancel editing or exit modes
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
-    if (document.getElementById('note-form').dataset.editing) {
+    const noteForm = document.getElementById('note-form');
+    if (noteForm.dataset.editing) {
       // Cancel editing
-      document.getElementById('note-form').reset();
-      document.getElementById('note-form').removeAttribute('data-editing');
+      noteForm.reset();
+      noteForm.removeAttribute('data-editing');
     } else if (isEditMode || isDeleteMode) {
       // Exit modes
       exitModes();
@@ -338,5 +430,5 @@ document.addEventListener('keydown', function(e) {
 });
 
 // Initialize the app
-loadNotes();
+loadNotes(); // Now actually loads from server
 updateDisplay();
