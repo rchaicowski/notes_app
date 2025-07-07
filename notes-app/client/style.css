@@ -916,6 +916,26 @@ ul#notes-list li .note-content {
   position: absolute;
 }
 
+/* Hover effects for rustling animation */
+.plant-group:hover .big-leaf-0 .leaf-shape { transform: rotate(3deg); }
+.plant-group:hover .big-leaf-1 .leaf-shape { transform: rotate(-2deg); }
+.plant-group:hover .big-leaf-2 .leaf-shape { transform: rotate(4deg); }
+.plant-group:hover .big-leaf-3 .leaf-shape { transform: rotate(-3deg); }
+.plant-group:hover .big-leaf-4 .leaf-shape { transform: rotate(2deg); }
+.plant-group:hover .big-leaf-5 .leaf-shape { transform: rotate(-4deg); }
+
+.plant-group:hover .medium-leaf-0 .leaf-shape { transform: rotate(-3deg); }
+.plant-group:hover .medium-leaf-1 .leaf-shape { transform: rotate(4deg); }
+.plant-group:hover .medium-leaf-2 .leaf-shape { transform: rotate(-2deg); }
+.plant-group:hover .medium-leaf-3 .leaf-shape { transform: rotate(3deg); }
+.plant-group:hover .medium-leaf-4 .leaf-shape { transform: rotate(-4deg); }
+.plant-group:hover .medium-leaf-5 .leaf-shape { transform: rotate(2deg); }
+
+/* Optional: Add some scale animation for extra effect */
+.plant-group:hover .leaf-shape {
+    transform: scale(1.05);
+}
+
 /* Page Navigation Styles */
 .page-navigation {
   position: absolute;

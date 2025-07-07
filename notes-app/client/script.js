@@ -19,6 +19,19 @@ const API_BASE_URL = 'http://localhost:5000/api/notes';
 let lampOn = true;
 let lampTimeouts = [];
 
+// Bush sound variables and function
+const bushSound = new Audio('./sounds/bush_sound.wav'); // Make sure this file exists!
+let lastPlayed = 0;
+
+function playBushSound() {
+  const now = Date.now();
+  if (now - lastPlayed > 300) {
+    bushSound.currentTime = 0;
+    bushSound.play();
+    lastPlayed = now;
+  }
+}
+
 function toggleLamp() {
   const powerButton = document.getElementById('power-button');
   const lampBulb = document.getElementById('lamp-bulb');
@@ -69,6 +82,14 @@ window.addEventListener('DOMContentLoaded', function () {
 
   powerButton.className = 'lamp-power-button on';
   lampBulb.className = 'lamp-bulb on';
+  
+  // Add plant rustling sound event listener
+  const plantGroup = document.getElementById('plantGroup');
+  if (plantGroup) {
+    plantGroup.addEventListener('mouseenter', () => {
+      playBushSound();
+    });
+  }
 });
 
 // Calculator functions
@@ -547,15 +568,6 @@ loadNotes();
 updateDisplay();
 
 // ==================== EVENT LISTENERS ====================
-
-// DOM Content Loaded
-window.addEventListener('DOMContentLoaded', function () {
-  const powerButton = document.getElementById('power-button');
-  const lampBulb = document.getElementById('lamp-bulb');
-
-  powerButton.className = 'lamp-power-button on';
-  lampBulb.className = 'lamp-bulb on';
-});
 
 // Button Click Events
 document.getElementById('edit-mode-btn').addEventListener('click', toggleEditMode);
