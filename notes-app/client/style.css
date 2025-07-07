@@ -822,18 +822,14 @@ ul#notes-list li .note-content {
   transform: rotate(25deg);
 }
 
-/* NEW: Big leaf styling - makes them 1.2x the medium size */
 .big-leaf .leaf-shape {
   width: 48px;
-  /* 1.2 x 40px = 48px */
   height: 96px;
-  /* 1.2 x 80px = 96px */
   background: linear-gradient(to top, #1a5f1a, #228b22, #32cd32, #90ee90);
 }
 
 .big-leaf .leaf-shape::before {
   height: 84px;
-  /* 1.2 x 70px = 84px */
 }
 
 .medium-leaf .leaf-shape {
@@ -918,6 +914,97 @@ ul#notes-list li .note-content {
   transform: translate(-50%, -50%) rotate(330deg) translateY(-45px);
   z-index: 20;
   position: absolute;
+}
+
+/* Page Navigation Styles */
+.page-navigation {
+  position: absolute;
+  bottom: 15px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  z-index: 10;
+}
+
+.page-corner {
+  width: 30px;
+  height: 30px;
+  background: #F5F5DC;
+  border: 1px solid #DDD;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  color: #666;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-corner:hover {
+  background: #FFFACD;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.page-corner:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.page-corner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-top: 8px solid #E0E0E0;
+  transition: all 0.2s;
+}
+
+.page-corner:hover::after {
+  border-top-color: #D0D0D0;
+}
+
+.page-info {
+  font-size: 12px;
+  color: #666;
+  background: rgba(255,255,255,0.8);
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1px solid #DDD;
+}
+
+.notes-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.notes-page.active {
+  opacity: 1;
+}
+
+.notes-page.previous {
+  opacity: 0;
+}
+
+/* Update existing #notes-list */
+#notes-list {
+  position: relative;
+  /* keep your existing styles */
 }
 
 @keyframes pulse {
