@@ -19,23 +19,68 @@ const API_BASE_URL = 'http://localhost:5000/api/notes';
 let lampOn = true;
 let lampTimeouts = [];
 
-// Bush sound variables and function
-const bushSound = new Audio('./sounds/bush_sound.wav'); // Make sure this file exists!
-let lastPlayed = 0;
+// Sound variables
+const sounds = {
+  bush: new Audio('./sounds/bush_sound.wav'),
+  lamp: new Audio('./sounds/lamp_sound.wav'),
+  eraser: new Audio('./sounds/eraser.wav'),
+  pencil: new Audio('./sounds/pencil.wav'),
+  calculator: new Audio('./sounds/calculator_button.wav')
+};
+
+// Set volume for each sound (0.0 to 1.0)
+sounds.bush.volume = 0.3;        
+sounds.lamp.volume = 0.5;        
+sounds.eraser.volume = 0.4;      
+sounds.pencil.volume = 0.4;      
+sounds.calculator.volume = 0.2;  
+
+// Sound timing controls
+let lastSoundPlayed = {
+  bush: 0,
+  lamp: 0,
+  eraser: 0,
+  pencil: 0,
+  calculator: 0
+};
+
+// Sound player function
+function playSound(soundName, minInterval = 100) {
+  const now = Date.now();
+  if (now - lastSoundPlayed[soundName] > minInterval && sounds[soundName]) {
+    sounds[soundName].currentTime = 0;
+    sounds[soundName].play().catch(e => console.log('Sound play failed:', e));
+    lastSoundPlayed[soundName] = now;
+  }
+}
 
 function playBushSound() {
-  const now = Date.now();
-  if (now - lastPlayed > 300) {
-    bushSound.currentTime = 0;
-    bushSound.play();
-    lastPlayed = now;
-  }
+  playSound('bush', 300);
+}
+
+function playLampSound() {
+  playSound('lamp', 500);
+}
+
+function playEraserSound() {
+  playSound('eraser', 200);
+}
+
+function playPencilSound() {
+  playSound('pencil', 200);
+}
+
+function playCalculatorSound() {
+  playSound('calculator', 100);
 }
 
 function toggleLamp() {
   const powerButton = document.getElementById('power-button');
   const lampBulb = document.getElementById('lamp-bulb');
   const tableContainer = document.getElementById('table-container');
+
+  // Play lamp sound
+  playLampSound();
 
   // Clear any previously scheduled timeouts
   lampTimeouts.forEach(timeout => clearTimeout(timeout));
@@ -92,7 +137,7 @@ window.addEventListener('DOMContentLoaded', function () {
   }
 });
 
-// Calculator functions
+// Calculator functions with sound
 function updateDisplay() {
   const display = document.getElementById('calc-display');
 
@@ -106,6 +151,8 @@ function updateDisplay() {
 }
 
 function inputNumber(num) {
+  playCalculatorSound();
+  
   if (calcWaitingForOperand) {
     calcDisplay = num;
     calcWaitingForOperand = false;
@@ -116,6 +163,8 @@ function inputNumber(num) {
 }
 
 function inputDecimal() {
+  playCalculatorSound();
+  
   if (calcWaitingForOperand) {
     calcDisplay = '0.';
     calcWaitingForOperand = false;
@@ -126,6 +175,8 @@ function inputDecimal() {
 }
 
 function inputOperator(nextOperator) {
+  playCalculatorSound();
+  
   const inputValue = parseFloat(calcDisplay);
 
   if (calcPrevious === '') {
@@ -146,6 +197,8 @@ function inputOperator(nextOperator) {
 }
 
 function calculate() {
+  playCalculatorSound();
+  
   const inputValue = parseFloat(calcDisplay);
 
   if (calcPrevious !== '' && calcOperator) {
@@ -183,6 +236,8 @@ function performCalculation(firstOperand, secondOperand, operator) {
 }
 
 function clearCalculator() {
+  playCalculatorSound();
+  
   calcDisplay = '';
   calcOperator = '';
   calcPrevious = '';
@@ -192,6 +247,8 @@ function clearCalculator() {
 }
 
 function deleteLast() {
+  playCalculatorSound();
+  
   if (calcDisplay.length > 1) {
     calcDisplay = calcDisplay.slice(0, -1);
   } else {
@@ -410,8 +467,10 @@ function selectNote(noteElement) {
   }
 }
 
-// Edit mode toggle
+// Edit mode toggle with sound
 function toggleEditMode() {
+  playPencilSound();
+  
   if (isEditMode) {
     exitModes();
   } else {
@@ -419,8 +478,10 @@ function toggleEditMode() {
   }
 }
 
-// Delete mode toggle
+// Delete mode toggle with sound
 function toggleDeleteMode() {
+  playEraserSound();
+  
   if (isDeleteMode) {
     exitModes();
   } else {
