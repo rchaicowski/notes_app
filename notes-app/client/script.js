@@ -1,644 +1,583 @@
-// Calculator variables
-let calcDisplay = '';
-let calcOperator = '';
-let calcPrevious = '';
-let calcWaitingForOperand = false;
-let calcExpression = ''; 
+// ==================== SOUND MANAGER ====================
+class SoundManager {
+  constructor() {
+    this.sounds = {
+      bush: new Audio('./sounds/bush_sound.wav'),
+      lamp: new Audio('./sounds/lamp_sound.wav'),
+      eraser: new Audio('./sounds/eraser.wav'),
+      pencil: new Audio('./sounds/pencil.wav'),
+      calculator: new Audio('./sounds/calculator_button.wav')
+    };
 
-// Notes variables
-let isEditMode = false;
-let isDeleteMode = false;
-let notes = [];
-let currentPage = 1;
-const notesPerPage = 12;
+    // Set volumes
+    this.sounds.bush.volume = 0.5;
+    this.sounds.lamp.volume = 0.5;
+    this.sounds.eraser.volume = 0.4;
+    this.sounds.pencil.volume = 0.4;
+    this.sounds.calculator.volume = 0.2;
 
-// API Configuration
-const API_BASE_URL = 'http://localhost:5000/api/notes'; 
+    this.lastPlayed = {};
+    Object.keys(this.sounds).forEach(key => {
+      this.lastPlayed[key] = 0;
+    });
+  }
 
-// Lamp toggle function
-let lampOn = true;
-let lampTimeouts = [];
-
-// Sound variables
-const sounds = {
-  bush: new Audio('./sounds/bush_sound.wav'),
-  lamp: new Audio('./sounds/lamp_sound.wav'),
-  eraser: new Audio('./sounds/eraser.wav'),
-  pencil: new Audio('./sounds/pencil.wav'),
-  calculator: new Audio('./sounds/calculator_button.wav')
-};
-
-// Set volume for each sound (0.0 to 1.0)
-sounds.bush.volume = 0.3;        
-sounds.lamp.volume = 0.5;        
-sounds.eraser.volume = 0.4;      
-sounds.pencil.volume = 0.4;      
-sounds.calculator.volume = 0.2;  
-
-// Sound timing controls
-let lastSoundPlayed = {
-  bush: 0,
-  lamp: 0,
-  eraser: 0,
-  pencil: 0,
-  calculator: 0
-};
-
-// Sound player function
-function playSound(soundName, minInterval = 100) {
-  const now = Date.now();
-  if (now - lastSoundPlayed[soundName] > minInterval && sounds[soundName]) {
-    sounds[soundName].currentTime = 0;
-    sounds[soundName].play().catch(e => console.log('Sound play failed:', e));
-    lastSoundPlayed[soundName] = now;
+  play(soundName, minInterval = 100) {
+    const now = Date.now();
+    if (now - this.lastPlayed[soundName] > minInterval && this.sounds[soundName]) {
+      this.sounds[soundName].currentTime = 0;
+      this.sounds[soundName].play().catch(e => console.log('Sound play failed:', e));
+      this.lastPlayed[soundName] = now;
+    }
   }
 }
 
-function playBushSound() {
-  playSound('bush', 300);
+// ==================== CALCULATOR CLASS ====================
+class Calculator {
+  constructor(soundManager) {
+    this.display = '';
+    this.operator = '';
+    this.previous = '';
+    this.waitingForOperand = false;
+    this.expression = '';
+    this.soundManager = soundManager;
+  }
+
+  updateDisplay() {
+    const displayEl = document.getElementById('calc-display');
+    if (this.expression && this.operator && !this.waitingForOperand) {
+      displayEl.textContent = this.expression + this.display;
+    } else if (this.expression && this.waitingForOperand) {
+      displayEl.textContent = this.expression;
+    } else {
+      displayEl.textContent = this.display || '0';
+    }
+  }
+
+  inputNumber(num) {
+    this.soundManager.play('calculator');
+    if (this.waitingForOperand) {
+      this.display = num;
+      this.waitingForOperand = false;
+    } else {
+      this.display = this.display === '0' ? num : this.display + num;
+    }
+    this.updateDisplay();
+  }
+
+  inputDecimal() {
+    this.soundManager.play('calculator');
+    if (this.waitingForOperand) {
+      this.display = '0.';
+      this.waitingForOperand = false;
+    } else if (this.display.indexOf('.') === -1) {
+      this.display += '.';
+    }
+    this.updateDisplay();
+  }
+
+  inputOperator(nextOperator) {
+    this.soundManager.play('calculator');
+    const inputValue = parseFloat(this.display);
+
+    if (this.previous === '') {
+      this.previous = inputValue;
+      this.expression = this.display + ' ' + nextOperator + ' ';
+    } else if (this.operator) {
+      const currentValue = this.previous || 0;
+      const newValue = this.performCalculation(currentValue, inputValue, this.operator);
+      this.display = String(newValue);
+      this.previous = newValue;
+      this.expression = String(newValue) + ' ' + nextOperator + ' ';
+    }
+
+    this.waitingForOperand = true;
+    this.operator = nextOperator;
+    this.updateDisplay();
+  }
+
+  calculate() {
+    this.soundManager.play('calculator');
+    const inputValue = parseFloat(this.display);
+
+    if (this.previous !== '' && this.operator) {
+      this.expression = (this.expression || this.previous + ' ' + this.operator + ' ') + this.display;
+      const newValue = this.performCalculation(this.previous, inputValue, this.operator);
+      this.display = String(newValue);
+
+      const displayEl = document.getElementById('calc-display');
+      displayEl.textContent = this.expression + ' = ' + this.display;
+
+      this.previous = '';
+      this.operator = '';
+      this.expression = '';
+      this.waitingForOperand = true;
+    }
+  }
+
+  performCalculation(firstOperand, secondOperand, operator) {
+    switch (operator) {
+      case '+': return firstOperand + secondOperand;
+      case '-': return firstOperand - secondOperand;
+      case '*': return firstOperand * secondOperand;
+      case '/': return secondOperand !== 0 ? firstOperand / secondOperand : 0;
+      default: return secondOperand;
+    }
+  }
+
+  clear() {
+    this.soundManager.play('calculator');
+    this.display = '';
+    this.operator = '';
+    this.previous = '';
+    this.expression = '';
+    this.waitingForOperand = false;
+    this.updateDisplay();
+  }
+
+  deleteLast() {
+    this.soundManager.play('calculator');
+    if (this.display.length > 1) {
+      this.display = this.display.slice(0, -1);
+    } else {
+      this.display = '0';
+    }
+    this.updateDisplay();
+  }
 }
 
-function playLampSound() {
-  playSound('lamp', 500);
-}
+// ==================== LAMP CONTROLLER ====================
+class LampController {
+  constructor(soundManager) {
+    this.isOn = true;
+    this.timeouts = [];
+    this.soundManager = soundManager;
+  }
 
-function playEraserSound() {
-  playSound('eraser', 200);
-}
+  toggle() {
+    this.soundManager.play('lamp', 500);
+    const powerButton = document.getElementById('power-button');
+    const lampBulb = document.getElementById('lamp-bulb');
+    const tableContainer = document.getElementById('table-container');
 
-function playPencilSound() {
-  playSound('pencil', 200);
-}
+    // Clear any previously scheduled timeouts
+    this.timeouts.forEach(timeout => clearTimeout(timeout));
+    this.timeouts = [];
 
-function playCalculatorSound() {
-  playSound('calculator', 100);
-}
+    if (!this.isOn) {
+      this.turnOn(powerButton, lampBulb, tableContainer);
+    } else {
+      this.turnOff(powerButton, lampBulb, tableContainer);
+    }
+  }
 
-function toggleLamp() {
-  const powerButton = document.getElementById('power-button');
-  const lampBulb = document.getElementById('lamp-bulb');
-  const tableContainer = document.getElementById('table-container');
-
-  // Play lamp sound
-  playLampSound();
-
-  // Clear any previously scheduled timeouts
-  lampTimeouts.forEach(timeout => clearTimeout(timeout));
-  lampTimeouts = [];
-
-  if (!lampOn) {
-    // Turning ON - immediate bright effect
-    lampOn = true;
+  turnOn(powerButton, lampBulb, tableContainer) {
+    this.isOn = true;
     powerButton.className = 'lamp-power-button on';
     lampBulb.className = 'lamp-bulb on';
     tableContainer.classList.remove('dimmed');
-  } else {
-    // Turning OFF - multi-stage 5 second transition
-    lampOn = false;
+  }
+
+  turnOff(powerButton, lampBulb, tableContainer) {
+    this.isOn = false;
     powerButton.className = 'lamp-power-button off';
     lampBulb.className = 'lamp-bulb warm-orange';
-
-    // Immediate dim the table
     tableContainer.classList.add('dimmed');
 
-    lampTimeouts.push(setTimeout(() => {
-      if (!lampOn) {
-        lampBulb.className = 'lamp-bulb transitioning-off';
-      }
+    this.timeouts.push(setTimeout(() => {
+      if (!this.isOn) lampBulb.className = 'lamp-bulb transitioning-off';
     }, 1500));
 
-    lampTimeouts.push(setTimeout(() => {
-      if (!lampOn) {
-        lampBulb.className = 'lamp-bulb dim-orange';
-      }
+    this.timeouts.push(setTimeout(() => {
+      if (!this.isOn) lampBulb.className = 'lamp-bulb dim-orange';
     }, 3000));
 
-    lampTimeouts.push(setTimeout(() => {
-      if (!lampOn) {
-        lampBulb.className = 'lamp-bulb';
-      }
+    this.timeouts.push(setTimeout(() => {
+      if (!this.isOn) lampBulb.className = 'lamp-bulb';
     }, 4500));
   }
 }
 
-window.addEventListener('DOMContentLoaded', function () {
-  const powerButton = document.getElementById('power-button');
-  const lampBulb = document.getElementById('lamp-bulb');
-
-  powerButton.className = 'lamp-power-button on';
-  lampBulb.className = 'lamp-bulb on';
-  
-  // Add plant rustling sound event listener
-  const plantGroup = document.getElementById('plantGroup');
-  if (plantGroup) {
-    plantGroup.addEventListener('mouseenter', () => {
-      playBushSound();
-    });
-  }
-});
-
-// Calculator functions with sound
-function updateDisplay() {
-  const display = document.getElementById('calc-display');
-
-  if (calcExpression && calcOperator && !calcWaitingForOperand) {
-    display.textContent = calcExpression + calcDisplay;
-  } else if (calcExpression && calcWaitingForOperand) {
-    display.textContent = calcExpression;
-  } else {
-    display.textContent = calcDisplay || '0';
-  }
-}
-
-function inputNumber(num) {
-  playCalculatorSound();
-  
-  if (calcWaitingForOperand) {
-    calcDisplay = num;
-    calcWaitingForOperand = false;
-  } else {
-    calcDisplay = calcDisplay === '0' ? num : calcDisplay + num;
-  }
-  updateDisplay();
-}
-
-function inputDecimal() {
-  playCalculatorSound();
-  
-  if (calcWaitingForOperand) {
-    calcDisplay = '0.';
-    calcWaitingForOperand = false;
-  } else if (calcDisplay.indexOf('.') === -1) {
-    calcDisplay += '.';
-  }
-  updateDisplay();
-}
-
-function inputOperator(nextOperator) {
-  playCalculatorSound();
-  
-  const inputValue = parseFloat(calcDisplay);
-
-  if (calcPrevious === '') {
-    calcPrevious = inputValue;
-    calcExpression = calcDisplay + ' ' + nextOperator + ' ';
-  } else if (calcOperator) {
-    const currentValue = calcPrevious || 0;
-    const newValue = performCalculation(currentValue, inputValue, calcOperator);
-
-    calcDisplay = String(newValue);
-    calcPrevious = newValue;
-    calcExpression = String(newValue) + ' ' + nextOperator + ' ';
+// ==================== NOTES MANAGER ====================
+class NotesManager {
+  constructor(soundManager) {
+    this.notes = [];
+    this.currentPage = 1;
+    this.notesPerPage = 12;
+    this.isEditMode = false;
+    this.isDeleteMode = false;
+    this.apiBaseUrl = 'http://localhost:5000/api/notes';
+    this.soundManager = soundManager;
   }
 
-  calcWaitingForOperand = true;
-  calcOperator = nextOperator;
-  updateDisplay();
-}
+  async loadNotes() {
+    try {
+      const response = await fetch(this.apiBaseUrl);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-function calculate() {
-  playCalculatorSound();
-  
-  const inputValue = parseFloat(calcDisplay);
-
-  if (calcPrevious !== '' && calcOperator) {
-    // Complete the expression before calculating
-    calcExpression = (calcExpression || calcPrevious + ' ' + calcOperator + ' ') + calcDisplay;
-
-    const newValue = performCalculation(calcPrevious, inputValue, calcOperator);
-    calcDisplay = String(newValue);
-
-    // Show the full expression first, then after a brief moment show the result
-    const display = document.getElementById('calc-display');
-    display.textContent = calcExpression + ' = ' + calcDisplay;
-
-    // Reset for next calculation
-    calcPrevious = '';
-    calcOperator = '';
-    calcExpression = '';
-    calcWaitingForOperand = true;
-  }
-}
-
-function performCalculation(firstOperand, secondOperand, operator) {
-  switch (operator) {
-    case '+':
-      return firstOperand + secondOperand;
-    case '-':
-      return firstOperand - secondOperand;
-    case '*':
-      return firstOperand * secondOperand;
-    case '/':
-      return secondOperand !== 0 ? firstOperand / secondOperand : 0;
-    default:
-      return secondOperand;
-  }
-}
-
-function clearCalculator() {
-  playCalculatorSound();
-  
-  calcDisplay = '';
-  calcOperator = '';
-  calcPrevious = '';
-  calcExpression = '';
-  calcWaitingForOperand = false;
-  updateDisplay();
-}
-
-function deleteLast() {
-  playCalculatorSound();
-  
-  if (calcDisplay.length > 1) {
-    calcDisplay = calcDisplay.slice(0, -1);
-  } else {
-    calcDisplay = '0';
-  }
-  updateDisplay();
-}
-
-// Notes API Functions
-async function loadNotes() {
-  try {
-    const response = await fetch(API_BASE_URL);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const serverNotes = await response.json();
+      this.notes = serverNotes.map(note => ({
+        id: note.id,
+        content: note.content
+      }));
+      this.renderNotes();
+    } catch (error) {
+      console.error('Error loading notes:', error);
+      this.notes = [];
+      this.renderNotes();
     }
-    const serverNotes = await response.json();
-
-    // Map server notes to your frontend format
-    notes = serverNotes.map(note => ({
-      id: note.id,
-      content: note.content
-    }));
-
-    renderNotes();
-  } catch (error) {
-    console.error('❌ Error loading notes:', error);
-    // Fallback to empty array if server is unreachable
-    notes = [];
-    renderNotes();
   }
-}
 
-async function saveNote(noteData, isUpdate = false, noteId = null) {
-  try {
-    let response;
-
-    if (isUpdate && noteId !== null) {
-      // UPDATE existing note
-      response = await fetch(`${API_BASE_URL}/${noteId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  async saveNote(noteData, isUpdate = false, noteId = null) {
+    try {
+      const options = {
+        method: isUpdate ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: noteData.content })
+      };
+
+      const url = isUpdate ? `${this.apiBaseUrl}/${noteId}` : this.apiBaseUrl;
+      const response = await fetch(url, options);
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving note:', error);
+      throw error;
+    }
+  }
+
+  async deleteNote(noteId) {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/${noteId}`, {
+        method: 'DELETE'
       });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      throw error;
+    }
+  }
+
+  toggleEditMode() {
+    this.soundManager.play('pencil', 200);
+    if (this.isEditMode) {
+      this.exitModes();
     } else {
-      // CREATE new note
-      response = await fetch(API_BASE_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: noteData.content })
+      this.enterEditMode();
+    }
+  }
+
+  toggleDeleteMode() {
+    this.soundManager.play('eraser', 200);
+    if (this.isDeleteMode) {
+      this.exitModes();
+    } else {
+      this.enterDeleteMode();
+    }
+  }
+
+  enterEditMode() {
+    this.exitModes();
+    this.isEditMode = true;
+    document.getElementById('edit-mode-btn').classList.add('active');
+    document.body.classList.add('edit-mode');
+    this.highlightNotes('edit');
+  }
+
+  enterDeleteMode() {
+    this.exitModes();
+    this.isDeleteMode = true;
+    document.getElementById('delete-mode-btn').classList.add('active');
+    document.body.classList.add('delete-mode');
+    this.highlightNotes('delete');
+  }
+
+  exitModes() {
+    this.isEditMode = false;
+    this.isDeleteMode = false;
+    document.getElementById('edit-mode-btn').classList.remove('active');
+    document.getElementById('delete-mode-btn').classList.remove('active');
+    document.body.classList.remove('edit-mode', 'delete-mode');
+    this.removeHighlights();
+  }
+
+  highlightNotes(mode) {
+    // Only highlight notes on the current page
+    const currentPageElement = document.getElementById(`page-${this.currentPage}`);
+    if (currentPageElement) {
+      const noteElements = currentPageElement.querySelectorAll('li');
+      noteElements.forEach(note => {
+        note.classList.add(`highlight-${mode}`);
+        note.style.cursor = 'pointer';
       });
     }
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const savedNote = await response.json();
-    return savedNote;
-
-  } catch (error) {
-    console.error('❌ Error saving note:', error);
-    throw error;
   }
-}
 
-async function deleteNoteFromServer(noteId) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/${noteId}`, {
-      method: 'DELETE'
+  removeHighlights() {
+    const noteElements = document.querySelectorAll('#notes-list li');
+    noteElements.forEach(note => {
+      note.classList.remove('highlight-edit', 'highlight-delete');
+      note.style.cursor = 'default';
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-
-  } catch (error) {
-    console.error('❌ Error deleting note:', error);
-    throw error;
-  }
-}
-
-function renderNotes() {
-  const list = document.getElementById('notes-list');
-  const totalPages = getTotalPages();
-
-  // Clear existing content
-  list.innerHTML = '';
-
-  if (notes.length === 0) {
-    const emptyDiv = document.createElement('div');
-    emptyDiv.className = 'empty-page';
-    emptyDiv.textContent = 'No notes yet. Add your first note!';
-    list.appendChild(emptyDiv);
-    updatePageInfo();
-    return;
   }
 
-  // Create pages
-  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+  renderNotes() {
+    const list = document.getElementById('notes-list');
+    list.innerHTML = '';
+
+    const currentNotes = this.getNotesForPage(this.currentPage);
+
     const pageDiv = document.createElement('div');
-    pageDiv.className = 'notes-page';
-    pageDiv.id = `page-${pageNum}`;
+    pageDiv.className = 'notes-page active';
+    pageDiv.id = `page-${this.currentPage}`;
 
-    if (pageNum === currentPage) {
-      pageDiv.classList.add('active');
-    }
-
-    const pageNotes = getNotesForPage(pageNum);
-
-    pageNotes.forEach((note, index) => {
-      const globalIndex = (pageNum - 1) * notesPerPage + index;
+    currentNotes.forEach((note, index) => {
+      const globalIndex = (this.currentPage - 1) * this.notesPerPage + index;
       const li = document.createElement('li');
       li.dataset.id = globalIndex;
+      li.dataset.page = this.currentPage;
       li.innerHTML = `<div class="note-content">${note.content}</div>`;
-
-      li.addEventListener('click', function (e) {
-        if (isEditMode || isDeleteMode) {
-          e.preventDefault();
-          selectNote(this);
-        }
-      });
 
       pageDiv.appendChild(li);
     });
 
     list.appendChild(pageDiv);
+
+    // Update click events
+    list.removeEventListener('click', this.handleNoteClick);
+    this.handleNoteClick = (e) => {
+      const li = e.target.closest('li');
+      if (!li || !li.dataset.id) return;
+      this.selectNote(li);
+    };
+    list.addEventListener('click', this.handleNoteClick);
+
+    this.updatePageInfo();
+
+    // Reapply highlights if necessary
+    if (this.isEditMode) {
+      this.highlightNotes('edit');
+    } else if (this.isDeleteMode) {
+      this.highlightNotes('delete');
+    }
   }
 
-  updatePageInfo();
-}
-
-function getTotalPages() {
-  return Math.ceil(notes.length / notesPerPage);
-}
-
-function getNotesForPage(page) {
-  const startIndex = (page - 1) * notesPerPage;
-  const endIndex = startIndex + notesPerPage;
-  return notes.slice(startIndex, endIndex);
-}
-
-function updatePageInfo() {
-  const totalPages = getTotalPages();
-  const pageInfo = document.getElementById('page-info');
-  const prevBtn = document.getElementById('prev-page');
-  const nextBtn = document.getElementById('next-page');
-
-  if (totalPages === 0) {
-    pageInfo.textContent = 'No pages';
-    prevBtn.disabled = true;
-    nextBtn.disabled = true;
-    return;
+  getTotalPages() {
+    return Math.ceil(this.notes.length / this.notesPerPage);
   }
 
-  pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-  prevBtn.disabled = currentPage === 1;
-  nextBtn.disabled = currentPage === totalPages;
-}
-
-function changePage(direction) {
-  const totalPages = getTotalPages();
-  const currentPageElement = document.getElementById(`page-${currentPage}`);
-
-  if (direction === 'next' && currentPage < totalPages) {
-    currentPageElement.classList.remove('active');
-    currentPageElement.classList.add('previous');
-    currentPage++;
-  } else if (direction === 'prev' && currentPage > 1) {
-    currentPageElement.classList.remove('active');
-    currentPageElement.classList.add('previous');
-    currentPage--;
-  } else {
-    return;
+  getNotesForPage(page) {
+    const startIndex = (page - 1) * this.notesPerPage;
+    const endIndex = startIndex + this.notesPerPage;
+    return this.notes.slice(startIndex, endIndex);
   }
 
-  // Add page flip animation
-  const notepad = document.querySelector('.notepad');
-  notepad.classList.add('page-flip-animation');
+  updatePageInfo() {
+    const totalPages = this.getTotalPages();
+    const pageInfo = document.getElementById('page-info');
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
 
-  setTimeout(() => {
-    const newPageElement = document.getElementById(`page-${currentPage}`);
-    if (newPageElement) {
-      newPageElement.classList.remove('previous');
-      newPageElement.classList.add('active');
+    if (totalPages === 0) {
+      pageInfo.textContent = 'No pages';
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+      return;
     }
 
-    notepad.classList.remove('page-flip-animation');
+    pageInfo.textContent = `Page ${this.currentPage} of ${totalPages}`;
+    prevBtn.disabled = this.currentPage === 1;
+    nextBtn.disabled = this.currentPage === totalPages;
+  }
 
-    // Clean up previous page states
-    document.querySelectorAll('.notes-page').forEach(page => {
-      if (!page.classList.contains('active')) {
-        page.classList.remove('previous');
+  selectNote(noteElement) {
+    const globalIndex = parseInt(noteElement.dataset.id);
+    const notePage = parseInt(noteElement.dataset.page);
+
+    if (notePage !== this.currentPage) {
+      console.warn('Attempted to select note from non-current page');
+      return;
+    }
+
+    const note = this.notes[globalIndex];
+
+    if (!note) {
+      console.error('Note not found at index:', globalIndex);
+      return;
+    }
+
+    if (this.isEditMode) {
+      this.editNote(globalIndex, note.content);
+      this.exitModes();
+    } else if (this.isDeleteMode) {
+      this.deleteNoteById(globalIndex, noteElement);
+      this.exitModes();
+    }
+  }
+
+  editNote(noteId, content) {
+    document.getElementById('content').value = content;
+    document.getElementById('note-form').dataset.editing = noteId;
+    document.getElementById('content').focus();
+  }
+
+  async deleteNoteById(index, listItem) {
+    const noteToDelete = this.notes[index];
+    try {
+      await this.deleteNote(noteToDelete.id);
+      this.notes.splice(index, 1);
+
+      // Handle page adjustment if current page becomes empty
+      const totalPages = this.getTotalPages();
+      if (this.currentPage > totalPages && totalPages > 0) {
+        this.currentPage = totalPages;
+      }
+
+      this.renderNotes();
+    } catch (error) {
+      alert('Failed to delete note. Please try again.');
+    }
+  }
+
+  changePage(direction) {
+    const totalPages = this.getTotalPages();
+
+    if (direction === 'next' && this.currentPage < totalPages) {
+      this.currentPage++;
+    } else if (direction === 'prev' && this.currentPage > 1) {
+      this.currentPage--;
+    } else {
+      return;
+    }
+
+    const notepad = document.querySelector('.notepad');
+    notepad.classList.add('page-flip-animation');
+
+    setTimeout(() => {
+      this.renderNotes();
+      notepad.classList.remove('page-flip-animation');
+    }, 200);
+  }
+
+  async handleAddOrUpdate() {
+    const content = document.getElementById('content').value.trim();
+    const noteForm = document.getElementById('note-form');
+    const editingId = noteForm.dataset.editing;
+
+    if (!content) return;
+
+    try {
+      if (editingId !== undefined && editingId !== '') {
+        const noteIndex = parseInt(editingId);
+        const serverNoteId = this.notes[noteIndex].id;
+        const updatedNote = await this.saveNote({ content }, true, serverNoteId);
+        this.notes[noteIndex] = { id: updatedNote.id, content: updatedNote.content };
+        noteForm.removeAttribute('data-editing');
+      } else {
+        const newNote = await this.saveNote({ content });
+        this.notes.push({ id: newNote.id, content: newNote.content });
+      }
+
+      this.renderNotes();
+      noteForm.reset();
+
+      if (editingId === undefined || editingId === '') {
+        const totalPages = this.getTotalPages();
+        if (this.currentPage !== totalPages) {
+          this.currentPage = totalPages;
+        }
+      }
+    } catch (error) {
+      alert('Failed to save note. Please try again.');
+    }
+  }
+}
+
+// ==================== APP INITIALIZATION ====================
+class NotesApp {
+  constructor() {
+    this.soundManager = new SoundManager();
+    this.calculator = new Calculator(this.soundManager);
+    this.lamp = new LampController(this.soundManager);
+    this.notesManager = new NotesManager(this.soundManager);
+
+    this.init();
+  }
+
+  init() {
+    // Initialize components
+    this.calculator.updateDisplay();
+    this.notesManager.loadNotes();
+    this.setupEventListeners();
+    this.setupPlantSound();
+  }
+
+  setupPlantSound() {
+    const plantGroup = document.getElementById('plantGroup');
+    if (plantGroup) {
+      plantGroup.addEventListener('mouseenter', () => {
+        this.soundManager.play('bush', 300);
+      });
+    }
+  }
+
+  setupEventListeners() {
+    // Calculator events
+    document.getElementById('edit-mode-btn').addEventListener('click',
+      () => this.notesManager.toggleEditMode());
+    document.getElementById('delete-mode-btn').addEventListener('click',
+      () => this.notesManager.toggleDeleteMode());
+    document.getElementById('add-btn').addEventListener('click',
+      () => this.notesManager.handleAddOrUpdate());
+    document.getElementById('prev-page').addEventListener('click',
+      () => this.notesManager.changePage('prev'));
+    document.getElementById('next-page').addEventListener('click',
+      () => this.notesManager.changePage('next'));
+
+    // Input events
+    document.getElementById('content').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.notesManager.handleAddOrUpdate();
       }
     });
-  }, 200);
 
-  updatePageInfo();
-}
-
-function selectNote(noteElement) {
-  const noteId = noteElement.dataset.id;
-  const note = notes[noteId];
-
-  if (isEditMode) {
-    editNote(noteId, note.content);
-    exitModes();
-  } else if (isDeleteMode) {
-    deleteNote(noteId, noteElement);
-    exitModes();
-  }
-}
-
-// Edit mode toggle with sound
-function toggleEditMode() {
-  playPencilSound();
-  
-  if (isEditMode) {
-    exitModes();
-  } else {
-    enterEditMode();
-  }
-}
-
-// Delete mode toggle with sound
-function toggleDeleteMode() {
-  playEraserSound();
-  
-  if (isDeleteMode) {
-    exitModes();
-  } else {
-    enterDeleteMode();
-  }
-}
-
-function enterEditMode() {
-  exitModes();
-  isEditMode = true;
-  document.getElementById('edit-mode-btn').classList.add('active');
-  document.body.classList.add('edit-mode');
-  highlightNotes('edit');
-}
-
-function enterDeleteMode() {
-  exitModes();
-  isDeleteMode = true;
-  document.getElementById('delete-mode-btn').classList.add('active');
-  document.body.classList.add('delete-mode');
-  highlightNotes('delete');
-}
-
-function exitModes() {
-  isEditMode = false;
-  isDeleteMode = false;
-  document.getElementById('edit-mode-btn').classList.remove('active');
-  document.getElementById('delete-mode-btn').classList.remove('active');
-  document.body.classList.remove('edit-mode', 'delete-mode');
-  removeHighlights();
-}
-
-function highlightNotes(mode) {
-  const noteElements = document.querySelectorAll('#notes-list li');
-  noteElements.forEach(note => {
-    note.classList.add(`highlight-${mode}`);
-    note.style.cursor = 'pointer';
-  });
-}
-
-function removeHighlights() {
-  const noteElements = document.querySelectorAll('#notes-list li');
-  noteElements.forEach(note => {
-    note.classList.remove('highlight-edit', 'highlight-delete');
-    note.style.cursor = 'default';
-  });
-}
-
-function editNote(noteId, content) {
-  document.getElementById('content').value = content;
-  document.getElementById('note-form').dataset.editing = noteId;
-  document.getElementById('content').focus();
-}
-
-// Centralized function to handle both add and update operations
-async function handleAddOrUpdate() {
-  const content = document.getElementById('content').value.trim();
-  const noteForm = document.getElementById('note-form');
-  const editingId = noteForm.dataset.editing;
-
-  if (!content) return;
-
-  try {
-    if (editingId !== undefined && editingId !== '') {
-      // UPDATE existing note
-      const noteIndex = parseInt(editingId);
-      const serverNoteId = notes[noteIndex].id;
-
-      const updatedNote = await saveNote({ content }, true, serverNoteId);
-      notes[noteIndex] = { id: updatedNote.id, content: updatedNote.content };
-
-      // Clear the editing state
-      noteForm.removeAttribute('data-editing');
-    } else {
-      // ADD new note
-      const newNote = await saveNote({ content });
-      notes.push({ id: newNote.id, content: newNote.content });
-    }
-
-    renderNotes();
-    noteForm.reset();
-
-  } catch (error) {
-    alert('Failed to save note. Please try again.');
+    // Global events
+    document.addEventListener('keydown', (e) => this.handleGlobalKeydown(e));
   }
 
-  if (editingId === undefined || editingId === '') {
-    // Navigate to the last page where the new note was added
-    const totalPages = getTotalPages();
-    if (currentPage !== totalPages) {
-      currentPage = totalPages;
+  handleGlobalKeydown(e) {
+    if (e.key === 'Escape') {
+      const noteForm = document.getElementById('note-form');
+      if (noteForm.dataset.editing) {
+        noteForm.reset();
+        noteForm.removeAttribute('data-editing');
+      } else if (this.notesManager.isEditMode || this.notesManager.isDeleteMode) {
+        this.notesManager.exitModes();
+      }
+    } else if (e.key === 'ArrowLeft' && !e.target.matches('input')) {
+      this.notesManager.changePage('prev');
+    } else if (e.key === 'ArrowRight' && !e.target.matches('input')) {
+      this.notesManager.changePage('next');
     }
   }
 }
 
-// Handle the ADD button click
-function handleAddButtonClick() {
-  handleAddOrUpdate();
-}
+// ==================== GLOBAL FUNCTIONS (for HTML onclick) ====================
+let app;
 
-// Delete function - WITH API INTEGRATION
-async function deleteNote(index, listItem) {
-  const noteToDelete = notes[index];
+// Calculator functions
+function inputNumber(num) { app.calculator.inputNumber(num); }
+function inputOperator(op) { app.calculator.inputOperator(op); }
+function inputDecimal() { app.calculator.inputDecimal(); }
+function calculate() { app.calculator.calculate(); }
+function clearCalculator() { app.calculator.clear(); }
+function deleteLast() { app.calculator.deleteLast(); }
+function toggleLamp() { app.lamp.toggle(); }
 
-  try {
-    await deleteNoteFromServer(noteToDelete.id);
-    notes.splice(index, 1);
-    renderNotes();
-  } catch (error) {
-    alert('Failed to delete note. Please try again.');
-  }
-}
-
-// Handle Enter key in input field
-function handleContentKeypress(e) {
-  if (e.key === 'Enter') {
-    e.preventDefault(); // Prevent any default behavior
-    handleAddOrUpdate(); // Use the same function as the button click
-  }
-}
-
-// Handle Escape key to cancel editing or exit modes + Arrow key navigation
-function handleGlobalKeydown(e) {
-  if (e.key === 'Escape') {
-    const noteForm = document.getElementById('note-form');
-    if (noteForm.dataset.editing) {
-      // Cancel editing
-      noteForm.reset();
-      noteForm.removeAttribute('data-editing');
-    } else if (isEditMode || isDeleteMode) {
-      // Exit modes
-      exitModes();
-    }
-  }
-  // Arrow key navigation (only when not typing in input)
-  else if (e.key === 'ArrowLeft' && !e.target.matches('input')) {
-    changePage('prev');
-  } else if (e.key === 'ArrowRight' && !e.target.matches('input')) {
-    changePage('next');
-  }
-}
-
-// Initialize the app
-loadNotes(); 
-updateDisplay();
-
-// ==================== EVENT LISTENERS ====================
-
-// Button Click Events
-document.getElementById('edit-mode-btn').addEventListener('click', toggleEditMode);
-document.getElementById('delete-mode-btn').addEventListener('click', toggleDeleteMode);
-document.getElementById('add-btn').addEventListener('click', handleAddButtonClick);
-document.getElementById('prev-page').addEventListener('click', () => changePage('prev'));
-document.getElementById('next-page').addEventListener('click', () => changePage('next'));
-
-// Input Events
-document.getElementById('content').addEventListener('keypress', handleContentKeypress);
-
-// Global Events
-document.addEventListener('keydown', handleGlobalKeydown);
+// ==================== START APP ====================
+window.addEventListener('DOMContentLoaded', () => {
+  app = new NotesApp();
+});
