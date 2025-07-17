@@ -1,0 +1,194 @@
+/* ==================== PLANT GROUP CONTAINER ==================== */
+.plant-group {
+  position: absolute;
+  top: 80px;
+  right: 80px;
+  width: 160px;
+  height: 160px;
+}
+
+/* ==================== VASE STYLING ==================== */
+.vase {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle at 30% 30%, #d2691e, #a0522d, #8b4513);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow:
+    inset -10px -10px 20px rgba(139, 69, 19, 0.3),
+    inset 10px 10px 20px rgba(255, 165, 0, 0.2),
+    0 10px 20px rgba(0, 0, 0, 0.2);
+  border: 3px solid #654321;
+}
+
+/* ==================== STEM BASE ==================== */
+.stem {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: #186318;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  box-shadow: 0 0 5px rgba(34, 139, 34, 0.5);
+}
+
+/* ==================== LEAF SHAPE AND DETAILS ==================== */
+.leaf {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  transition: all 0.3s ease;
+}
+
+.leaf-shape {
+  width: 60px;
+  height: 120px;
+  background: linear-gradient(to top, #228b22, #32cd32, #90ee90);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  position: relative;
+  transform-origin: center bottom;
+  box-shadow:
+    inset 2px 2px 5px rgba(255, 255, 255, 0.3),
+    inset -2px -2px 5px rgba(0, 0, 0, 0.2),
+    0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.leaf-shape::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 1px;
+  height: 100px;
+  background: linear-gradient(to bottom, #1e7e1e, #2e8b2e);
+  transform: translateX(-50%);
+}
+
+.leaf-shape::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 30%;
+  width: 40%;
+  height: 1px;
+  background: rgba(30, 126, 30, 0.4);
+  transform: rotate(25deg);
+}
+
+.big-leaf .leaf-shape {
+  width: 48px;
+  height: 96px;
+  background: linear-gradient(to top, #1a5f1a, #228b22, #32cd32, #90ee90);
+}
+
+.big-leaf .leaf-shape::before {
+  height: 84px;
+}
+
+.medium-leaf .leaf-shape {
+  width: 40px;
+  height: 80px;
+  background: linear-gradient(to top, #1e7e1e, #228b22, #7cfc00);
+}
+
+.medium-leaf .leaf-shape::before {
+  height: 70px;
+}
+
+.big-leaf-0 {
+  transform: translate(-50%, -50%) rotate(0deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+.big-leaf-1 {
+  transform: translate(-50%, -50%) rotate(60deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+.big-leaf-2 {
+  transform: translate(-50%, -50%) rotate(120deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+.big-leaf-3 {
+  transform: translate(-50%, -50%) rotate(180deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+.big-leaf-4 {
+  transform: translate(-50%, -50%) rotate(240deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+.big-leaf-5 {
+  transform: translate(-50%, -50%) rotate(300deg) translateY(-48px);
+  z-index: 1;
+  position: absolute;
+}
+
+.medium-leaf-0 {
+  transform: translate(-50%, -50%) rotate(30deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
+}
+
+.medium-leaf-1 {
+  transform: translate(-50%, -50%) rotate(90deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
+}
+
+.medium-leaf-2 {
+  transform: translate(-50%, -50%) rotate(150deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
+}
+
+.medium-leaf-3 {
+  transform: translate(-50%, -50%) rotate(210deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
+}
+
+.medium-leaf-4 {
+  transform: translate(-50%, -50%) rotate(270deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
+}
+
+.medium-leaf-5 {
+  transform: translate(-50%, -50%) rotate(330deg) translateY(-45px);
+  z-index: 20;
+  position: absolute;
+}
+
+/* ==================== HOVER EFFECTS ==================== */
+.plant-group:hover .big-leaf-0 .leaf-shape { transform: rotate(3deg); }
+.plant-group:hover .big-leaf-1 .leaf-shape { transform: rotate(-2deg); }
+.plant-group:hover .big-leaf-2 .leaf-shape { transform: rotate(4deg); }
+.plant-group:hover .big-leaf-3 .leaf-shape { transform: rotate(-3deg); }
+.plant-group:hover .big-leaf-4 .leaf-shape { transform: rotate(2deg); }
+.plant-group:hover .big-leaf-5 .leaf-shape { transform: rotate(-4deg); }
+
+.plant-group:hover .medium-leaf-0 .leaf-shape { transform: rotate(-3deg); }
+.plant-group:hover .medium-leaf-1 .leaf-shape { transform: rotate(4deg); }
+.plant-group:hover .medium-leaf-2 .leaf-shape { transform: rotate(-2deg); }
+.plant-group:hover .medium-leaf-3 .leaf-shape { transform: rotate(3deg); }
+.plant-group:hover .medium-leaf-4 .leaf-shape { transform: rotate(-4deg); }
+.plant-group:hover .medium-leaf-5 .leaf-shape { transform: rotate(2deg); }
+
+.plant-group:hover .leaf-shape {
+    transform: scale(1.05);
+}

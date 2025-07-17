@@ -1,0 +1,268 @@
+/* ==================== GLOBAL CONTROLS ==================== */
+#global-controls {
+  position: absolute;
+  right: -150px;
+  top: 20px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 40px;
+  z-index: 1000;
+}
+
+/* ==================== ICON WRAPPER ==================== */
+.icon-wrapper {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+  padding: 15px;
+  border-radius: 12px;
+}
+
+.icon-wrapper:hover {
+  transform: scale(1.05) rotate(3deg);
+}
+
+.icon-wrapper.active {
+  background: rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+  transform: scale(1.1);
+}
+
+.icon-wrapper.active .icon {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ==================== PENCIL ICON ==================== */
+.icon.pencil {
+  position: relative;
+  width: 25px;
+  height: 300px;
+  background: #FFD700;
+  border-radius: 6px;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2),
+    inset 2px 0 2px rgba(218, 165, 32, 0.4),
+    inset -2px 0 2px rgba(218, 165, 32, 0.4);
+  border: 2px solid #555;
+}
+
+/* Pencil eraser cap */
+.icon.pencil::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: -25px;
+  width: 26px;
+  height: 25px;
+  background-color: #e797a3;
+  border-radius: 6px 6px 0 0;
+  border: 2px solid #555;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3);
+}
+
+/* Pencil wood tip */
+.icon.pencil::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -22px;
+  transform: translateX(-50%);
+  width: 25px;
+  height: 26px;
+  background: #D2B48C;
+  clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+  border-left: 1px solid #555;
+  border-right: 1px solid #555;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Graphite tip */
+.icon.pencil .graphite-tip {
+  position: absolute;
+  left: 50%;
+  bottom: -22px;
+  transform: translateX(-50%);
+  width: 13px;
+  height: 12px;
+  background: #2C2C2C;
+  clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+  filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+  z-index: 10;
+}
+
+/* Metal ferrule */
+.icon.pencil .ferrule {
+  position: absolute;
+  left: -2px;
+  top: -6px;
+  width: 28px;
+  height: 12px;
+  background: linear-gradient(180deg, #C0C0C0, #A8A8A8 50%, #909090);
+  border: 1px solid #666;
+  border-radius: 2px;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.6),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+  z-index: 5;
+}
+
+/* Decorative vertical lines on pencil */
+.icon.pencil .vertical-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.icon.pencil .vertical-lines::before,
+.icon.pencil .vertical-lines::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  bottom: 0;
+  width: 1.5px;
+  background: #c0a52d;
+  box-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.icon.pencil .vertical-lines::before {
+  left: 6px;
+}
+
+.icon.pencil .vertical-lines::after {
+  right: 6px;
+}
+
+.icon-wrapper:hover .icon.pencil .vertical-lines::before,
+.icon-wrapper:hover .icon.pencil .vertical-lines::after {
+  width: 2px;
+}
+
+/* Pencil text */
+.icon.pencil .pencil-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  font-family: 'Arial', sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  color: #8f6407;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+  letter-spacing: 8px;
+  pointer-events: none;
+}
+
+/* ==================== ERASER ICON ==================== */
+.icon.eraser {
+  width: 110px;
+  height: 50px;
+  background: linear-gradient(to right, #FA8072 0%, #FA8072 50%, #87CEEB 50%, #87CEEB 100%);
+  border-radius: 10px;
+  border: 3px solid #555;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  transform: rotate(-20deg);
+}
+
+.icon.eraser::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 25px;
+  background-color: #333;
+  border-radius: 1px;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Eraser text */
+.icon.eraser .eraser-text {
+  position: absolute;
+  top: 50%;
+  left: 30%;
+  transform: translate(-50%, -50%);
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  color: #8B0000;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+}
+
+.icon.eraser .eraser-text-metal {
+  position: absolute;
+  top: 50%;
+  right: 30%;
+  transform: translate(50%, -50%);
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  color: #2F4F4F;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+}
+
+/* ==================== HIGHLIGHT MODES ==================== */
+.highlight-edit {
+  background-color: rgba(40, 167, 69, 0.1) !important;
+  border-left: 3px solid #28a745 !important;
+  transition: all 0.3s ease;
+}
+
+.highlight-edit:hover {
+  background-color: rgba(40, 167, 69, 0.2) !important;
+  transform: translateX(5px);
+}
+
+.highlight-delete {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  border-left: 3px solid #dc3545 !important;
+  transition: all 0.3s ease;
+}
+
+.highlight-delete:hover {
+  background-color: rgba(220, 53, 69, 0.2) !important;
+  transform: translateX(5px);
+}
+
+/* ==================== MODE LABELS ==================== */
+.edit-mode .notepad::before {
+  content: "✏️ Edit Mode - Click a note to edit";
+  position: absolute;
+  top: -15px;
+  left: 0;
+  right: 0;
+  background-color: #28a745;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  text-align: center;
+  z-index: 1000;
+}
+
+.delete-mode .notepad::before {
+  content: "🗑️ Delete Mode - Click a note to delete";
+  position: absolute;
+  top: -15px;
+  left: 0;
+  right: 0;
+  background-color: #dc3545;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  text-align: center;
+  z-index: 1000;
+}

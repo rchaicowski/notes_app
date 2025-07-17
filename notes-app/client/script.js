@@ -304,7 +304,6 @@ class NotesManager {
   }
 
   highlightNotes(mode) {
-    // Only highlight notes on the current page
     const currentPageElement = document.getElementById(`page-${this.currentPage}`);
     if (currentPageElement) {
       const noteElements = currentPageElement.querySelectorAll('li');
@@ -345,7 +344,6 @@ class NotesManager {
 
     list.appendChild(pageDiv);
 
-    // Update click events
     list.removeEventListener('click', this.handleNoteClick);
     this.handleNoteClick = (e) => {
       const li = e.target.closest('li');
@@ -356,7 +354,6 @@ class NotesManager {
 
     this.updatePageInfo();
 
-    // Reapply highlights if necessary
     if (this.isEditMode) {
       this.highlightNotes('edit');
     } else if (this.isDeleteMode) {
@@ -429,7 +426,6 @@ class NotesManager {
       await this.deleteNote(noteToDelete.id);
       this.notes.splice(index, 1);
 
-      // Handle page adjustment if current page becomes empty
       const totalPages = this.getTotalPages();
       if (this.currentPage > totalPages && totalPages > 0) {
         this.currentPage = totalPages;
@@ -475,20 +471,16 @@ class NotesManager {
         const updatedNote = await this.saveNote({ content }, true, serverNoteId);
         this.notes[noteIndex] = { id: updatedNote.id, content: updatedNote.content };
         noteForm.removeAttribute('data-editing');
+        this.renderNotes();
       } else {
         const newNote = await this.saveNote({ content });
         this.notes.push({ id: newNote.id, content: newNote.content });
-      }
-
-      this.renderNotes();
-      noteForm.reset();
-
-      if (editingId === undefined || editingId === '') {
         const totalPages = this.getTotalPages();
-        if (this.currentPage !== totalPages) {
-          this.currentPage = totalPages;
-        }
+        this.currentPage = totalPages;
+        this.renderNotes();
       }
+
+      noteForm.reset();
     } catch (error) {
       alert('Failed to save note. Please try again.');
     }
@@ -507,7 +499,6 @@ class NotesApp {
   }
 
   init() {
-    // Initialize components
     this.calculator.updateDisplay();
     this.notesManager.loadNotes();
     this.setupEventListeners();
@@ -524,7 +515,6 @@ class NotesApp {
   }
 
   setupEventListeners() {
-    // Calculator events
     document.getElementById('edit-mode-btn').addEventListener('click',
       () => this.notesManager.toggleEditMode());
     document.getElementById('delete-mode-btn').addEventListener('click',
@@ -568,7 +558,6 @@ class NotesApp {
 // ==================== GLOBAL FUNCTIONS (for HTML onclick) ====================
 let app;
 
-// Calculator functions
 function inputNumber(num) { app.calculator.inputNumber(num); }
 function inputOperator(op) { app.calculator.inputOperator(op); }
 function inputDecimal() { app.calculator.inputDecimal(); }

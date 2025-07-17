@@ -1,0 +1,104 @@
+/* ==================== Calculator Container ==================== */
+.calculator {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  align-self: center;
+  justify-self: start;
+  width: 200px;
+  height: 280px;
+  background: linear-gradient(145deg, #2c3e50, #34495e);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow:
+    0 15px 30px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  transform: rotate(-12deg) scale(0.8); /* Slightly skewed for visual effect */
+  border: 2px solid #1a252f;
+}
+
+/* ==================== Calculator Display ==================== */
+.calc-display {
+  width: 100%;
+  height: 50px;
+  background: #1a1a1a;
+  border: 2px inset #333;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 15px;
+  box-sizing: border-box;
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  color: #00ff00;
+  text-shadow: 0 0 5px #00ff00; /* Old-school terminal glow */
+  overflow: hidden;
+}
+
+/* ==================== Buttons Grid ==================== */
+.calc-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  height: 200px;
+}
+
+/* ==================== Generic Button ==================== */
+.calc-btn {
+  background: linear-gradient(145deg, #7f8c8d, #95a5a6);
+  border: 2px outset #95a5a6;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #2c3e50;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.calc-btn:hover {
+  background: linear-gradient(145deg, #95a5a6, #bdc3c7);
+  transform: translateY(-1px);
+}
+
+.calc-btn:active {
+  border: 2px inset #95a5a6;
+  transform: translateY(1px);
+}
+
+/* ==================== Operator Button ==================== */
+.calc-btn.operator {
+  background: linear-gradient(145deg, #e67e22, #f39c12);
+  border-color: #f39c12;
+  color: white;
+}
+
+.calc-btn.operator:hover {
+  background: linear-gradient(145deg, #f39c12, #f1c40f);
+}
+
+/* ==================== Equals Button ==================== */
+.calc-btn.equals {
+  background: linear-gradient(145deg, #27ae60, #2ecc71);
+  border-color: #2ecc71;
+  color: white;
+}
+
+.calc-btn.equals:hover {
+  background: linear-gradient(145deg, #2ecc71, #58d68d);
+}
+
+/* ==================== Clear Button ==================== */
+.calc-btn.clear {
+  background: linear-gradient(145deg, #c0392b, #e74c3c);
+  border-color: #e74c3c;
+  color: white;
+}
+
+.calc-btn.clear:hover {
+  background: linear-gradient(145deg, #e74c3c, #ec7063);
+}

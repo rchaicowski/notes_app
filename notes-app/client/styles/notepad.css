@@ -1,0 +1,135 @@
+/* ==================== SPIRALS ON NOTEPAD ==================== */
+.spirals {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 35px;
+  z-index: 10;
+}
+
+.spirals span {
+  width: 9px;
+  height: 40px;
+  background: linear-gradient(to bottom, #aaa, #555);
+  border-radius: 50px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.spirals span::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 51%;
+  transform: translateX(-50%);
+  width: 13px;
+  height: 14px;
+  background: #2a2a2a;
+  border-radius: 50%;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+  z-index: -1;
+}
+
+/* ==================== NOTEPAD CONTAINER ==================== */
+.notepad {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+  background-color: #fdf6e3;
+  border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3),
+              0 -5px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  padding-top: 40px;
+  overflow: visible;
+  max-height: 600px;
+  height: 444px;
+  position: relative;
+  max-width: 500px;
+  width: 310px;
+  margin: 100px auto;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 23px,
+    #d3cfc7 24px
+  );
+  background-size: 100% 24px;
+  line-height: 24px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  z-index: 1;
+  border: 2px solid #555;
+}
+
+/* ==================== FORM (INPUT + BUTTON) ==================== */
+form {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+form input#content {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #aaa;
+  font-family: inherit;
+  font-size: 16px;
+  padding: 5px;
+}
+
+form input#content:focus {
+  outline: none;
+  border-color: #333;
+}
+
+.add-btn {
+  background: none;
+  border: none;
+  color: #d8580d;
+  font-size: 30px;
+  cursor: pointer;
+  padding: 0 5px;
+  align-self: center;
+  transition: color 0.3s ease;
+}
+
+.add-btn:hover {
+  color: #000;
+}
+
+/* ==================== NOTES LIST ==================== */
+ul#notes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+ul#notes-list li {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 24px;
+  line-height: 24px;
+  background: transparent;
+  box-shadow: none;
+  min-height: 24px;
+  padding: 2px 0;
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+ul#notes-list li .note-content {
+  flex: 1;
+}
