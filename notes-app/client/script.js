@@ -566,7 +566,73 @@ function clearCalculator() { app.calculator.clear(); }
 function deleteLast() { app.calculator.deleteLast(); }
 function toggleLamp() { app.lamp.toggle(); }
 
+// ==================== SETTINGS CONTROLLER ====================
+class SettingsController {
+  constructor() {
+    this.panel = document.getElementById('settingsPanel');
+    this.overlay = document.getElementById('settingsOverlay');
+    this.trigger = document.getElementById('settingsTrigger');
+    this.closeBtn = document.getElementById('settingsClose');
+    
+    this.init();
+  }
+  
+  init() {
+    this.trigger.addEventListener('click', () => this.open());
+    this.closeBtn.addEventListener('click', () => this.close());
+    this.overlay.addEventListener('click', () => this.close());
+    
+    // ESC key to close
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.panel.classList.contains('open')) {
+        this.close();
+      }
+    });
+    
+    this.setupControls();
+  }
+  
+  open() {
+    this.panel.classList.add('open');
+    this.overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  
+  close() {
+    this.panel.classList.remove('open');
+    this.overlay.classList.remove('open');
+    document.body.style.overflow = 'auto';
+  }
+  
+  setupControls() {
+    // Storage Mode Toggle
+    const storageToggle = document.getElementById('storageMode');
+    storageToggle.addEventListener('change', (e) => {
+      const isOnline = e.target.checked;
+      // Here you would call your storage manager
+      console.log('Storage mode changed to:', isOnline ? 'online' : 'offline');
+    });
+    
+    // Sound Enable Toggle
+    const soundToggle = document.getElementById('soundEnabled');
+    soundToggle.addEventListener('change', (e) => {
+      const enabled = e.target.checked;
+      // Update your sound settings here
+      console.log('Sounds enabled:', enabled);
+    });
+    
+    // Notes per Page
+    const notesPerPageSelect = document.getElementById('notesPerPage');
+    notesPerPageSelect.addEventListener('change', (e) => {
+      const notesPerPage = parseInt(e.target.value);
+      // Update your pagination here
+      console.log('Notes per page changed to:', notesPerPage);
+    });
+  }
+}
+
 // ==================== START APP ====================
 window.addEventListener('DOMContentLoaded', () => {
   app = new NotesApp();
+  new SettingsController();
 });

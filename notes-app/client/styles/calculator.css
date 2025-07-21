@@ -5,7 +5,7 @@
   align-self: center;
   justify-self: start;
   width: 200px;
-  height: 280px;
+  height: 290px;
   background: linear-gradient(145deg, #2c3e50, #34495e);
   border-radius: 15px;
   padding: 20px;
@@ -39,9 +39,10 @@
 /* ==================== Buttons Grid ==================== */
 .calc-buttons {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, 40px); /* Fixed width columns */
   gap: 8px;
   height: 200px;
+  justify-content: center; /* Center the grid */
 }
 
 /* ==================== Generic Button ==================== */
@@ -58,6 +59,8 @@
   align-items: center;
   justify-content: center;
   user-select: none;
+  width: 43px;
+  height: 40px;
 }
 
 .calc-btn:hover {
@@ -101,4 +104,15 @@
 
 .calc-btn.clear:hover {
   background: linear-gradient(145deg, #e74c3c, #ec7063);
+}
+
+/* ==================== Special Buttons ==================== */
+.calc-btn[onclick*="inputNumber('0')"] {
+  grid-column: span 2;
+  width: 88px; /* Two button widths (40px * 2) + gap (8px) */
+}
+
+.calc-btn.equals {
+  grid-row: span 2;
+  height: 88px; /* Two button heights (40px * 2) + gap (8px) */
 }

@@ -1,0 +1,262 @@
+/* Settings Button and Panel Styles */
+.settings-trigger {
+  position: absolute;
+  top: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(145deg, #8b4513, #654321);
+  border: 2px solid #5d3a1a;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 8px rgba(14, 9, 9, 0.3),
+    inset 0 1px 3px rgba(255,255,255,0.2);
+  z-index: 1000;
+}
+
+.settings-trigger:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 
+    0 6px 12px rgba(0,0,0,0.4),
+    inset 0 1px 3px rgba(255,255,255,0.2);
+}
+
+.settings-trigger:active {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Gear Icon */
+.settings-gear {
+  width: 20px;
+  height: 20px;
+  background: #ddd;
+  border-radius: 50%;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.settings-gear::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: #ddd;
+  border-radius: 50%;
+  clip-path: polygon(
+    50% 0%, 60% 20%, 100% 20%, 80% 50%, 
+    100% 80%, 60% 80%, 50% 100%, 40% 80%, 
+    0% 80%, 20% 50%, 0% 20%, 40% 20%
+  );
+}
+
+.settings-gear::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 8px;
+  height: 8px;
+  background: #8b4513;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.settings-trigger:hover .settings-gear {
+  transform: rotate(45deg);
+}
+
+/* Settings Panel */
+.settings-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  width: 320px;
+  background: #f5f5dc;
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.settings-panel.open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Settings Content Styles */
+.settings-header {
+  background: #8b4513;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  position: relative;
+  border-radius: 8px 8px 0 0;
+}
+
+.settings-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin: 0;
+}
+
+.settings-close {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+}
+
+.settings-content {
+  padding: 15px;
+}
+
+.settings-section {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.settings-section h3 {
+  color: #8b4513;
+  font-size: 1.1em;
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #654321;
+  font-weight: 500;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #8b4513;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+}
+
+/* Select and Input Styles */
+select, input[type="range"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  color: #654321;
+}
+
+/* Export/Import Buttons */
+button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+button.export {
+  background: #8b4513;
+  color: white;
+  margin-right: 8px;
+}
+
+button.import {
+  background: #6c757d;
+  color: white;
+}
+
+.settings-close:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Overlay */
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.settings-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}

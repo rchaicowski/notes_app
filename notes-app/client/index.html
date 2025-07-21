@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="styles/notepad.css">
   <link rel="stylesheet" href="styles/pencil-eraser.css">
   <link rel="stylesheet" href="styles/navigation.css">
+  <link rel="stylesheet" href="styles/settings.css">
 </head>
 
 <body>
@@ -30,6 +31,62 @@
       <div class="lamp-head"></div>
       <div class="lamp-head-back"></div>
       <div class="lamp-bulb on" id="lamp-bulb"></div>
+    </div>
+
+    <div class="settings-trigger" id="settingsTrigger">
+      <div class="settings-gear"></div>
+    </div>
+
+    <div class="settings-overlay" id="settingsOverlay"></div>
+    <div class="settings-panel" id="settingsPanel">
+      <div class="settings-header">
+        <h2 class="settings-title">Settings</h2>
+        <button class="settings-close" id="settingsClose">×</button>
+      </div>
+      
+      <div class="settings-content">
+        <!-- Storage Section -->
+        <div class="settings-section">
+          <h3>📁 Storage</h3>
+          <div class="form-group">
+            <label for="storageMode">Storage Mode:</label>
+            <div style="display: flex; align-items: center; gap: 15px;">
+              <span>Offline</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="storageMode">
+                <span class="toggle-slider"></span>
+              </label>
+              <span>Online</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Audio Section -->
+        <div class="settings-section">
+          <h3>🔊 Audio</h3>
+          <div class="form-group">
+            <label for="soundEnabled">Enable Sounds:</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="soundEnabled" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        
+        <!-- Interface Section -->
+        <div class="settings-section">
+          <h3>🎨 Interface</h3>
+          <div class="form-group">
+            <label for="notesPerPage">Notes per Page:</label>
+            <select id="notesPerPage">
+              <option value="8">8 notes</option>
+              <option value="12" selected>12 notes</option>
+              <option value="16">16 notes</option>
+              <option value="20">20 notes</option>
+            </select>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="plant-group" id="plantGroup">
