@@ -574,7 +574,35 @@ class SettingsController {
     this.trigger = document.getElementById('settingsTrigger');
     this.closeBtn = document.getElementById('settingsClose');
     
+    // Load saved settings
+    this.loadSavedSettings();
     this.init();
+  }
+  
+  loadSavedSettings() {
+    // Load volume setting
+    const savedVolume = localStorage.getItem('masterVolume') || 50;
+    const savedSoundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+
+    // Initialize volume slider and toggle
+    const volumeSlider = document.getElementById('masterVolume');
+    const volumeValue = document.getElementById('masterVolumeValue');
+    const soundToggle = document.getElementById('soundEnabled');
+
+    if (volumeSlider && volumeValue) {
+      volumeSlider.value = savedVolume;
+      volumeValue.textContent = `${savedVolume}%`;
+    }
+    if (soundToggle) {
+      soundToggle.checked = savedSoundEnabled;
+    }
+
+    // Apply settings to existing sounds
+    if (app && app.soundManager) {
+      Object.values(app.soundManager.sounds).forEach(sound => {
+        sound.volume = (savedVolume / 100) * (savedSoundEnabled ? 1 : 0);
+      });
+    }
   }
   
   init() {
@@ -613,20 +641,52 @@ class SettingsController {
       console.log('Storage mode changed to:', isOnline ? 'online' : 'offline');
     });
     
-    // Sound Enable Toggle
+    // Sound Controls
+    const volumeSlider = document.getElementById('masterVolume');
+    const volumeValue = document.getElementById('masterVolumeValue');
     const soundToggle = document.getElementById('soundEnabled');
-    soundToggle.addEventListener('change', (e) => {
-      const enabled = e.target.checked;
-      // Update your sound settings here
-      console.log('Sounds enabled:', enabled);
-    });
+
+    if (volumeSlider && volumeValue) {
+      volumeSlider.addEventListener('input', (e) => {
+        const value = e.target.value;
+        volumeValue.textContent = `${value}%`;
+        
+        // Update all sound volumes
+        if (app && app.soundManager) {
+          const actualVolume = (value / 100) * (soundToggle.checked ? 1 : 0);
+          Object.values(app.soundManager.sounds).forEach(sound => {
+            sound.volume = actualVolume;
+          });
+        }
+        
+        localStorage.setItem('masterVolume', value);
+      });
+    }
+
+    if (soundToggle) {
+      soundToggle.addEventListener('change', (e) => {
+        const enabled = e.target.checked;
+        localStorage.setItem('soundEnabled', enabled);
+        
+        // Update all sound volumes
+        if (app && app.soundManager) {
+          const volume = volumeSlider ? volumeSlider.value / 100 : 0.5;
+          const actualVolume = enabled ? volume : 0;
+          Object.values(app.soundManager.sounds).forEach(sound => {
+            sound.volume = actualVolume;
+          });
+        }
+      });
+    }
     
     // Notes per Page
     const notesPerPageSelect = document.getElementById('notesPerPage');
     notesPerPageSelect.addEventListener('change', (e) => {
       const notesPerPage = parseInt(e.target.value);
-      // Update your pagination here
-      console.log('Notes per page changed to:', notesPerPage);
+      if (app && app.notesManager) {
+        app.notesManager.notesPerPage = notesPerPage;
+        app.notesManager.renderNotes();
+      }
     });
   }
 }

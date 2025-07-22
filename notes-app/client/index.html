@@ -66,6 +66,13 @@
         <div class="settings-section">
           <h3>🔊 Audio</h3>
           <div class="form-group">
+            <label for="masterVolume">Volume:</label>
+            <div class="range-container">
+              <input type="range" id="masterVolume" min="0" max="100" value="50">
+              <span class="range-value" id="masterVolumeValue">50%</span>
+            </div>
+          </div>
+          <div class="form-group">
             <label for="soundEnabled">Enable Sounds:</label>
             <label class="toggle-switch">
               <input type="checkbox" id="soundEnabled" checked>
