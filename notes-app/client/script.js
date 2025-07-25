@@ -200,7 +200,7 @@ class LampController {
 
 // ==================== NOTES MANAGER ====================
 class NotesManager {
-  constructor(soundManager) {
+  constructor(soundManager, storageManager) {
     this.notes = [];
     this.currentPage = 1;
     this.notesPerPage = 12;
@@ -208,24 +208,33 @@ class NotesManager {
     this.isDeleteMode = false;
     this.apiBaseUrl = 'http://localhost:5000/api/notes';
     this.soundManager = soundManager;
+    this.storageManager = storageManager;
   }
 
   async loadNotes() {
-    try {
-      const response = await fetch(this.apiBaseUrl);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    if (this.storageManager.isOnline) {
+      try {
+        const response = await fetch(this.apiBaseUrl);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-      const serverNotes = await response.json();
-      this.notes = serverNotes.map(note => ({
-        id: note.id,
-        content: note.content
-      }));
-      this.renderNotes();
-    } catch (error) {
-      console.error('Error loading notes:', error);
-      this.notes = [];
-      this.renderNotes();
+        const serverNotes = await response.json();
+        this.notes = serverNotes.map(note => ({
+          id: note.id,
+          content: note.content
+        }));
+        this.renderNotes();
+      } catch (error) {
+        console.error('Error loading notes:', error);
+        this.fallbackToLocalNotes();
+      }
+    } else {
+      this.fallbackToLocalNotes();
     }
+  }
+
+  fallbackToLocalNotes() {
+    this.notes = this.storageManager.getFromLocalStorage();
+    this.renderNotes();
   }
 
   async saveNote(noteData, isUpdate = false, noteId = null) {
@@ -423,7 +432,16 @@ class NotesManager {
   async deleteNoteById(index, listItem) {
     const noteToDelete = this.notes[index];
     try {
-      await this.deleteNote(noteToDelete.id);
+      if (this.storageManager.isOnline) {
+        await this.deleteNote(noteToDelete.id);
+      } else {
+        // Remove from local storage
+        const localNotes = this.storageManager.getFromLocalStorage();
+        const updatedNotes = localNotes.filter(n => n.id !== noteToDelete.id);
+        localStorage.setItem('notes', JSON.stringify(updatedNotes));
+      }
+
+      // Remove from memory
       this.notes.splice(index, 1);
 
       const totalPages = this.getTotalPages();
@@ -433,6 +451,7 @@ class NotesManager {
 
       this.renderNotes();
     } catch (error) {
+      console.error('Failed to delete note:', error);
       alert('Failed to delete note. Please try again.');
     }
   }
@@ -467,21 +486,33 @@ class NotesManager {
     try {
       if (editingId !== undefined && editingId !== '') {
         const noteIndex = parseInt(editingId);
-        const serverNoteId = this.notes[noteIndex].id;
-        const updatedNote = await this.saveNote({ content }, true, serverNoteId);
-        this.notes[noteIndex] = { id: updatedNote.id, content: updatedNote.content };
+        const note = this.notes[noteIndex];
+        if (this.storageManager.isOnline) {
+          const updatedNote = await this.saveNote({ content }, true, note.id);
+          this.notes[noteIndex] = { id: updatedNote.id, content: updatedNote.content };
+        } else {
+          note.content = content;
+          await this.storageManager.saveNote(note);
+        }
         noteForm.removeAttribute('data-editing');
-        this.renderNotes();
       } else {
-        const newNote = await this.saveNote({ content });
-        this.notes.push({ id: newNote.id, content: newNote.content });
+        const newNote = { content };
+        if (this.storageManager.isOnline) {
+          const savedNote = await this.saveNote(newNote);
+          this.notes.push(savedNote);
+        } else {
+          newNote.id = Date.now(); // Temporary ID for offline mode
+          await this.storageManager.saveNote(newNote);
+          this.notes.push(newNote);
+        }
         const totalPages = this.getTotalPages();
         this.currentPage = totalPages;
-        this.renderNotes();
       }
 
+      this.renderNotes();
       noteForm.reset();
     } catch (error) {
+      console.error('Failed to save note:', error);
       alert('Failed to save note. Please try again.');
     }
   }
@@ -491,9 +522,17 @@ class NotesManager {
 class NotesApp {
   constructor() {
     this.soundManager = new SoundManager();
+    this.settingsController = new SettingsController();
     this.calculator = new Calculator(this.soundManager);
     this.lamp = new LampController(this.soundManager);
-    this.notesManager = new NotesManager(this.soundManager);
+    this.notesManager = new NotesManager(this.soundManager, this.settingsController.storageManager);
+
+    // Apply initial sound settings
+    const volume = this.settingsController.savedVolume / 100;
+    const enabled = this.settingsController.soundEnabled;
+    Object.values(this.soundManager.sounds).forEach(sound => {
+      sound.volume = volume * (enabled ? 1 : 0);
+    });
 
     this.init();
   }
@@ -574,13 +613,30 @@ class SettingsController {
     this.trigger = document.getElementById('settingsTrigger');
     this.closeBtn = document.getElementById('settingsClose');
     
+    // Initialize storage manager
+    this.storageManager = new StorageManager();
+    this.updateStorageIndicator();
+
     // Load saved settings
     this.loadSavedSettings();
     this.init();
   }
+
+  updateStorageIndicator() {
+    const indicator = document.querySelector('.storage-mode-indicator');
+    if (indicator) {
+      if (this.storageManager.isOnline) {
+        indicator.className = 'storage-mode-indicator online';
+        indicator.innerHTML = '<div class="status-dot online"></div>Currently using online storage';
+      } else {
+        indicator.className = 'storage-mode-indicator offline';
+        indicator.innerHTML = '<div class="status-dot offline"></div>Currently using offline storage';
+      }
+    }
+  }
   
   loadSavedSettings() {
-    // Load volume setting
+    // Load volume and sound settings
     const savedVolume = localStorage.getItem('masterVolume') || 50;
     const savedSoundEnabled = localStorage.getItem('soundEnabled') !== 'false';
 
@@ -588,6 +644,7 @@ class SettingsController {
     const volumeSlider = document.getElementById('masterVolume');
     const volumeValue = document.getElementById('masterVolumeValue');
     const soundToggle = document.getElementById('soundEnabled');
+    const storageToggle = document.getElementById('storageMode');
 
     if (volumeSlider && volumeValue) {
       volumeSlider.value = savedVolume;
@@ -596,13 +653,13 @@ class SettingsController {
     if (soundToggle) {
       soundToggle.checked = savedSoundEnabled;
     }
-
-    // Apply settings to existing sounds
-    if (app && app.soundManager) {
-      Object.values(app.soundManager.sounds).forEach(sound => {
-        sound.volume = (savedVolume / 100) * (savedSoundEnabled ? 1 : 0);
-      });
+    if (storageToggle) {
+      storageToggle.checked = this.storageManager.isOnline;
     }
+
+    // Store settings for later use
+    this.savedVolume = savedVolume;
+    this.soundEnabled = savedSoundEnabled;
   }
   
   init() {
@@ -637,8 +694,8 @@ class SettingsController {
     const storageToggle = document.getElementById('storageMode');
     storageToggle.addEventListener('change', (e) => {
       const isOnline = e.target.checked;
-      // Here you would call your storage manager
-      console.log('Storage mode changed to:', isOnline ? 'online' : 'offline');
+      this.storageManager.setMode(isOnline);
+      this.updateStorageIndicator();
     });
     
     // Sound Controls
@@ -691,8 +748,118 @@ class SettingsController {
   }
 }
 
+// ==================== STORAGE MANAGER ====================
+class StorageManager {
+  constructor() {
+    this.isOnline = localStorage.getItem('storageMode') === 'online';
+    this.apiUrl = 'http://localhost:5000/api/notes';
+    this.pendingSync = JSON.parse(localStorage.getItem('pendingSync') || '[]');
+    
+    // Listen for online/offline events
+    window.addEventListener('online', () => this.handleOnline());
+    window.addEventListener('offline', () => this.handleOffline());
+  }
+
+  async handleOnline() {
+    if (this.isOnline && this.pendingSync.length > 0) {
+      await this.syncPendingNotes();
+    }
+  }
+
+  handleOffline() {
+    if (this.isOnline) {
+      this.fallbackToOffline();
+    }
+  }
+
+  async syncPendingNotes() {
+    const indicator = document.querySelector('.storage-mode-indicator');
+    if (indicator) {
+      indicator.className = 'storage-mode-indicator syncing';
+      indicator.innerHTML = '<div class="status-dot online"></div>Syncing notes...';
+    }
+
+    for (const note of this.pendingSync) {
+      try {
+        await fetch(this.apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(note)
+        });
+      } catch (error) {
+        console.error('Failed to sync note:', error);
+        return; // Stop syncing if there's an error
+      }
+    }
+
+    // Clear pending sync after successful sync
+    this.pendingSync = [];
+    localStorage.setItem('pendingSync', '[]');
+
+    if (indicator) {
+      indicator.className = 'storage-mode-indicator online';
+      indicator.innerHTML = '<div class="status-dot online"></div>All notes synced';
+      setTimeout(() => {
+        indicator.innerHTML = '<div class="status-dot online"></div>Currently using online storage';
+      }, 2000);
+    }
+  }
+
+  async saveNote(note) {
+    if (this.isOnline) {
+      try {
+        const response = await fetch(this.apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(note)
+        });
+        return await response.json();
+      } catch (error) {
+        console.error('Failed to save note online:', error);
+        this.addToPendingSync(note);
+        this.fallbackToOffline();
+      }
+    } else {
+      this.saveToLocalStorage(note);
+      this.addToPendingSync(note);
+    }
+  }
+
+  addToPendingSync(note) {
+    this.pendingSync.push(note);
+    localStorage.setItem('pendingSync', JSON.stringify(this.pendingSync));
+  }
+
+  saveToLocalStorage(note) {
+    const notes = this.getFromLocalStorage();
+    notes.push(note);
+    localStorage.setItem('notes', JSON.stringify(notes));
+  }
+
+  getFromLocalStorage() {
+    return JSON.parse(localStorage.getItem('notes') || '[]');
+  }
+
+  fallbackToOffline() {
+    this.isOnline = false;
+    localStorage.setItem('storageMode', 'offline');
+    const indicator = document.querySelector('.storage-mode-indicator');
+    if (indicator) {
+      indicator.className = 'storage-mode-indicator offline';
+      indicator.innerHTML = '<div class="status-dot offline"></div>Currently using offline storage';
+    }
+  }
+
+  setMode(isOnline) {
+    this.isOnline = isOnline;
+    localStorage.setItem('storageMode', isOnline ? 'online' : 'offline');
+    if (isOnline && this.pendingSync.length > 0) {
+      this.syncPendingNotes();
+    }
+  }
+}
+
 // ==================== START APP ====================
 window.addEventListener('DOMContentLoaded', () => {
   app = new NotesApp();
-  new SettingsController();
 });
