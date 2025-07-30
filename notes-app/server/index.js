@@ -8,8 +8,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+const { requestLogger } = require('./middleware/requestLogger');
+
 app.use(cors());
 app.use(express.json());
+app.use(requestLogger); // Add logging middleware
 
 // Routes
 const notesRoutes = require('./routes/notes');

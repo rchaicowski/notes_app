@@ -11,10 +11,8 @@ function sanitizeInput(input, maxLength = 255) {
 
 // GET all notes
 router.get('/', async (req, res, next) => {
-    console.log('📖 Loading all notes...');
     try {
         const result = await pool.query('SELECT id, content FROM notes ORDER BY id ASC');
-        console.log(`✅ Loaded ${result.rows.length} notes`);
         res.json(result.rows);
     } catch (error) {
         next(error);
@@ -23,13 +21,11 @@ router.get('/', async (req, res, next) => {
 
 // POST a new note (only content)
 router.post('/', validateNote, async (req, res, next) => {
-    console.log('📨 Received content:', req.body.content);
     try {
         const result = await pool.query(
             'INSERT INTO notes (content) VALUES ($1) RETURNING *',
             [req.body.content]
         );
-        console.log('✅ Note added with ID:', result.rows[0].id);
         res.status(201).json(result.rows[0]);
     } catch (error) {
         next(error);
@@ -39,8 +35,6 @@ router.post('/', validateNote, async (req, res, next) => {
 // PUT (update) a note (only content)
 router.put('/:id', validateNote, async (req, res, next) => {
     const { id } = req.params;
-    console.log(`✏️ Updating note ID ${id} with content:`, req.body.content);
-    
     try {
         const result = await pool.query(
             'UPDATE notes SET content = $1 WHERE id = $2 RETURNING *',
@@ -51,7 +45,6 @@ router.put('/:id', validateNote, async (req, res, next) => {
             throw new AppError('Note not found', 404);
         }
 
-        console.log(`✅ Note ID ${id} updated successfully`);
         res.json(result.rows[0]);
     } catch (error) {
         next(error);
@@ -61,8 +54,6 @@ router.put('/:id', validateNote, async (req, res, next) => {
 // DELETE a note
 router.delete('/:id', async (req, res, next) => {
     const { id } = req.params;
-    console.log(`🗑️ Deleting note ID ${id}...`);
-
     try {
         const result = await pool.query('DELETE FROM notes WHERE id = $1 RETURNING *', [id]);
 
@@ -70,7 +61,6 @@ router.delete('/:id', async (req, res, next) => {
             throw new AppError('Note not found', 404);
         }
 
-        console.log(`✅ Note ID ${id} deleted: "${result.rows[0].content}"`);
         res.json({ message: 'Note deleted', note: result.rows[0] });
     } catch (error) {
         next(error);
