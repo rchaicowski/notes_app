@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { validateNote } = require('../middleware/validateRequest');
 const { AppError } = require('../middleware/errorHandler');
+const { limiter, strictLimiter } = require('../middleware/rateLimiter');
 
 function sanitizeInput(input, maxLength = 255) {
   if (typeof input !== 'string') return '';
@@ -10,7 +11,7 @@ function sanitizeInput(input, maxLength = 255) {
 }
 
 // GET all notes
-router.get('/', async (req, res, next) => {
+router.get('/', limiter, async (req, res, next) => {
     try {
         const result = await pool.query('SELECT id, content FROM notes ORDER BY id ASC');
         res.json(result.rows);
@@ -20,7 +21,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // POST a new note (only content)
-router.post('/', validateNote, async (req, res, next) => {
+router.post('/', strictLimiter, validateNote, async (req, res, next) => {
     try {
         const result = await pool.query(
             'INSERT INTO notes (content) VALUES ($1) RETURNING *',
@@ -33,7 +34,7 @@ router.post('/', validateNote, async (req, res, next) => {
 });
 
 // PUT (update) a note (only content)
-router.put('/:id', validateNote, async (req, res, next) => {
+router.put('/:id', strictLimiter, validateNote, async (req, res, next) => {
     const { id } = req.params;
     try {
         const result = await pool.query(
@@ -52,7 +53,7 @@ router.put('/:id', validateNote, async (req, res, next) => {
 });
 
 // DELETE a note
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', strictLimiter, async (req, res, next) => {
     const { id } = req.params;
     try {
         const result = await pool.query('DELETE FROM notes WHERE id = $1 RETURNING *', [id]);

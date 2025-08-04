@@ -4,7 +4,7 @@ const requestLogger = (req, res, next) => {
     const timestamp = new Date().toISOString();
 
     // Log the incoming request with timestamp
-    console.log(`\n� ${timestamp} - ${req.method} ${req.url}`);
+    console.log(`\n📝 ${timestamp} - ${req.method} ${req.url}`);
     
     // Log request body if present (useful for POST/PUT requests)
     if (req.body && Object.keys(req.body).length > 0) {
