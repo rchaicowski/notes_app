@@ -12,7 +12,6 @@ class NotesApp {
     this.lamp = new LampController(this.soundManager);
     this.notesManager = new NotesManager(this.soundManager, this.settingsController.storageManager);
 
-    // Apply initial sound settings
     const volume = this.settingsController.savedVolume / 100;
     const enabled = this.settingsController.soundEnabled;
     Object.values(this.soundManager.sounds).forEach(s => s.volume = volume * (enabled ? 1 : 0));
@@ -23,6 +22,7 @@ class NotesApp {
   init() {
     this.calculator.updateDisplay();
     this.notesManager.loadNotes();
+    this.notesManager.initializeCharacterLimit();
     this.setupEventListeners();
     this.setupPlantSound();
   }

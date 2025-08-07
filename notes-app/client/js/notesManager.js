@@ -8,6 +8,7 @@ export class NotesManager {
     this.apiBaseUrl = 'http://localhost:5000/api/notes';
     this.soundManager = soundManager;
     this.storageManager = storageManager;
+    this.maxCharacters = 35;
   }
 
   async loadNotes() {
@@ -166,9 +167,17 @@ export class NotesManager {
   }
 
   editNote(id, content) {
-    document.getElementById('content').value = content;
-    document.getElementById('note-form').dataset.editing = id;
-    document.getElementById('content').focus();
+    const contentInput = document.getElementById('content');
+    const form = document.getElementById('note-form');
+    
+    contentInput.value = content;
+    form.setAttribute('data-editing', id.toString());
+    contentInput.focus();
+    
+    const charCount = document.getElementById('char-count');
+    if (charCount) {
+      this.updateCharacterCount(content, charCount);
+    }
   }
 
   async deleteNoteById(index) {
@@ -195,29 +204,104 @@ export class NotesManager {
     setTimeout(() => { this.renderNotes(); notepad.classList.remove('page-flip-animation'); }, 200);
   }
 
+  // Character limit functionality
+  setupCharacterLimit() {
+    const contentInput = document.getElementById('content');
+    const charCountDisplay = this.createCharacterCountDisplay();
+    
+    // Insert character count display after the input
+    contentInput.parentNode.insertBefore(charCountDisplay, contentInput.nextSibling);
+    
+    contentInput.addEventListener('input', (e) => {
+      this.updateCharacterCount(e.target.value, charCountDisplay);
+    });
+    
+    contentInput.addEventListener('keydown', (e) => {
+      // Prevent typing if at max characters (except backspace, delete, arrow keys)
+      if (e.target.value.length >= this.maxCharacters && 
+          !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.key)) {
+        e.preventDefault();
+      }
+    });
+  }
+
+  createCharacterCountDisplay() {
+    const charCount = document.createElement('div');
+    charCount.id = 'char-count';
+    charCount.textContent = `0/${this.maxCharacters}`;
+    return charCount;
+  }
+
+  updateCharacterCount(value, display) {
+    const currentLength = value.length;
+    display.textContent = `${currentLength}/${this.maxCharacters}`;
+    
+    // Change color based on proximity to limit
+    if (currentLength >= this.maxCharacters) {
+      display.style.color = '#d8580d';
+      display.style.fontWeight = 'bold';
+    } else if (currentLength >= this.maxCharacters - 5) {
+      display.style.color = '#d8580d';
+      display.style.fontWeight = 'normal';
+    } else {
+      display.style.color = '#666';
+      display.style.fontWeight = 'normal';
+    }
+  }
+
+  initializeCharacterLimit() {
+    setTimeout(() => {
+      this.setupCharacterLimit();
+    }, 100);
+  }
+
   async handleAddOrUpdate() {
     const content = document.getElementById('content').value.trim();
     const form = document.getElementById('note-form');
-    const editingId = form.dataset.editing;
+    const editingId = form.getAttribute('data-editing');
+    
     if (!content) return;
+    
+    // Check character limit
+    if (content.length > this.maxCharacters) {
+      return;
+    }
 
     try {
-      if (editingId) {
+      if (editingId !== null && editingId !== undefined && editingId !== '' && editingId !== 'null') {
+        // Editing existing note
         const idx = parseInt(editingId);
         const note = this.notes[idx];
         if (this.storageManager.isOnline) {
           const updated = await this.saveNote({ content }, true, note.id);
           this.notes[idx] = { id: updated.id, content: updated.content };
-        } else { note.content = content; await this.storageManager.saveNote(note); }
+        } else { 
+          note.content = content; 
+          await this.storageManager.saveNote(note); 
+        }
         form.removeAttribute('data-editing');
       } else {
+        // Creating new note
         const newNote = { content };
-        if (this.storageManager.isOnline) this.notes.push(await this.saveNote(newNote));
-        else { newNote.id = Date.now(); await this.storageManager.saveNote(newNote); this.notes.push(newNote); }
+        if (this.storageManager.isOnline) {
+          this.notes.push(await this.saveNote(newNote));
+        } else { 
+          newNote.id = Date.now(); 
+          await this.storageManager.saveNote(newNote); 
+          this.notes.push(newNote); 
+        }
         this.currentPage = this.getTotalPages();
       }
       this.renderNotes();
       form.reset();
-    } catch { alert('Failed to save note.'); }
+      
+      // Reset character count display
+      const charCount = document.getElementById('char-count');
+      if (charCount) {
+        this.updateCharacterCount('', charCount);
+      }
+    } catch { 
+      alert('Failed to save note.'); 
+    }
   }
 }

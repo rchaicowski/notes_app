@@ -104,32 +104,79 @@ form input#content:focus {
   color: #000;
 }
 
-/* ==================== NOTES LIST ==================== */
+/* ==================== NOTES LIST - SINGLE LINE ==================== */
 ul#notes-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
+/* Single line notes with fixed height */
 ul#notes-list li {
-  white-space: normal;
-  word-wrap: break-word;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  height: 24px;
+  white-space: nowrap;          /* Keep text on single line */
+  overflow: hidden;             /* Hide overflow text */
+  text-overflow: ellipsis;      /* Add "..." for truncated text */
+  height: 24px;                 /* Fixed height - single line */
   line-height: 24px;
   background: transparent;
   box-shadow: none;
-  min-height: 24px;
   padding: 2px 0;
-  margin: 0;
+  margin: 0 0 2px 0;            /* Small margin between notes */
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  font-family: inherit;
-  font-size: 14px;
+  align-items: center;          /* Center align for single line */
+  font-family: 'Courier New', Courier, monospace;  /* Keep original font */
+  font-size: 14px;              /* Keep original size */
 }
 
 ul#notes-list li .note-content {
   flex: 1;
+  font-family: 'Courier New', Courier, monospace;  /* Keep original font */
+  font-size: 14px;              /* Keep original size */
+  line-height: 24px;            /* Keep original line height */
+  white-space: nowrap;          /* Single line only */
+  overflow: hidden;             /* Hide overflow */
+  text-overflow: ellipsis;      /* Add "..." for long text */
+  max-width: 100%;              /* Ensure content doesn't exceed container */
+}
+
+/* Character count and warning styling */
+#char-count {
+  font-size: 14px;
+  color: #666;
+  text-align: right;
+  margin-top: 8px;
+  font-family: 'Courier New', Courier, monospace;
+  transition: color 0.3s ease;
+}
+
+#char-limit-warning {
+  color: #d8580d;
+  font-size: 12px;
+  font-weight: bold;
+  margin-top: 2px;
+  font-family: 'Courier New', Courier, monospace;
+  animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Edit and delete mode highlights */
+ul#notes-list li.highlight-edit {
+  background-color: rgba(0, 123, 255, 0.1);
+  border-left: 3px solid #007bff;
+  padding-left: 5px;
+  cursor: pointer;
+}
+
+ul#notes-list li.highlight-delete {
+  background-color: rgba(220, 53, 69, 0.1);
+  border-left: 3px solid #dc3545;
+  padding-left: 5px;
+  cursor: pointer;
 }
