@@ -105,7 +105,13 @@ export class StorageManager {
   }
 
   addToPendingSync(note) {
-    this.pendingSync.push(note);
+    // Check if note already exists in pendingSync and update it
+    const existingIndex = this.pendingSync.findIndex(n => n.id === note.id);
+    if (existingIndex !== -1) {
+      this.pendingSync[existingIndex] = note;
+    } else {
+      this.pendingSync.push(note);
+    }
     localStorage.setItem('pendingSync', JSON.stringify(this.pendingSync));
   }
 
@@ -118,7 +124,16 @@ export class StorageManager {
 
   saveToLocalStorage(note) {
     const notes = this.getFromLocalStorage();
-    notes.push(note);
+    const existingIndex = notes.findIndex(n => n.id === note.id);
+    
+    if (existingIndex !== -1) {
+      // Update existing note
+      notes[existingIndex] = note;
+    } else {
+      // Add new note
+      notes.push(note);
+    }
+    
     localStorage.setItem('notes', JSON.stringify(notes));
   }
 
