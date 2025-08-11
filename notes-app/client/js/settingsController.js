@@ -55,9 +55,28 @@ export class SettingsController {
     const soundToggle = document.getElementById('soundEnabled');
     const notesPerPageSelect = document.getElementById('notesPerPage');
 
-    storageToggle?.addEventListener('change', e => {
-      this.storageManager.setMode(e.target.checked);
-      this.updateStorageIndicator();
+    storageToggle?.addEventListener('change', async (e) => {
+      // Disable the toggle while switching modes to prevent multiple switches
+      storageToggle.disabled = true;
+      
+      try {
+        await this.storageManager.setMode(e.target.checked);
+        this.updateStorageIndicator();
+        
+        // Show pending status if there are items to sync
+        const status = this.storageManager.getPendingStatus();
+        if (status.pendingSync + status.pendingUpdates + status.pendingDeletes > 0) {
+          console.log('Pending sync items:', status);
+        }
+        
+      } catch (error) {
+        console.error('Error switching storage mode:', error);
+        // Revert toggle state on error
+        e.target.checked = this.storageManager.isOnline;
+      } finally {
+        // Re-enable the toggle
+        storageToggle.disabled = false;
+      }
     });
 
     volumeSlider?.addEventListener('input', e => {

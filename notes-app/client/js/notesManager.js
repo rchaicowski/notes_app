@@ -16,13 +16,43 @@ export class NotesManager {
       try {
         const response = await fetch(this.apiBaseUrl);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        this.notes = (await response.json()).map(note => ({ id: note.id, content: note.content }));
+        const onlineNotes = (await response.json()).map(note => ({ id: note.id, content: note.content }));
+        
+        // Merge with local notes that haven't been synced yet
+        const localNotes = this.storageManager.getFromLocalStorage();
+        const pendingNotes = this.storageManager.pendingSync;
+        
+        // Start with online notes
+        this.notes = [...onlineNotes];
+        
+        // Add any local notes that don't exist online (temporary IDs or unsynced)
+        localNotes.forEach(localNote => {
+          const existsOnline = this.notes.some(onlineNote => onlineNote.id === localNote.id);
+          const isPending = pendingNotes.some(pendingNote => pendingNote.id === localNote.id);
+          
+          if (!existsOnline && (this.storageManager.isTemporaryId(localNote.id) || isPending)) {
+            this.notes.push(localNote);
+          }
+        });
+        
         this.renderNotes();
+        
+        // Sync any pending changes
+        await this.storageManager.syncPendingNotes();
+        await this.storageManager.syncPendingDeletes();
+        
+        // Reload after sync to get updated IDs
+        if (this.storageManager.pendingSync.length > 0 || this.storageManager.pendingDeletes.length > 0) {
+          await this.loadNotes();
+        }
+        
       } catch (error) {
         console.error('Error loading notes:', error);
         this.fallbackToLocalNotes();
       }
-    } else this.fallbackToLocalNotes();
+    } else {
+      this.fallbackToLocalNotes();
+    }
   }
 
   fallbackToLocalNotes() {
@@ -185,9 +215,12 @@ export class NotesManager {
     try {
       await this.storageManager.deleteNote(note.id);
       this.notes.splice(index, 1);
-      if (this.currentPage > this.getTotalPages()) this.currentPage = this.getTotalPages();
+      if (this.currentPage > this.getTotalPages() && this.getTotalPages() > 0) {
+        this.currentPage = this.getTotalPages();
+      }
       this.renderNotes();
     } catch (error) {
+      console.error('Failed to delete note:', error);
       alert('Failed to delete note.');
     }
   }
@@ -272,26 +305,16 @@ export class NotesManager {
         // Editing existing note
         const idx = parseInt(editingId);
         const note = this.notes[idx];
-        if (this.storageManager.isOnline) {
-          const updated = await this.saveNote({ content }, true, note.id);
-          this.notes[idx] = { id: updated.id, content: updated.content };
-        } else { 
-          note.content = content; 
-          await this.storageManager.saveNote(note); 
-        }
+        const updatedNote = await this.storageManager.updateNote(note.id, content);
+        this.notes[idx] = updatedNote;
         form.removeAttribute('data-editing');
       } else {
         // Creating new note
-        const newNote = { content };
-        if (this.storageManager.isOnline) {
-          this.notes.push(await this.saveNote(newNote));
-        } else { 
-          newNote.id = Date.now(); 
-          await this.storageManager.saveNote(newNote); 
-          this.notes.push(newNote); 
-        }
+        const newNote = await this.storageManager.saveNote({ content });
+        this.notes.push(newNote);
         this.currentPage = this.getTotalPages();
       }
+      
       this.renderNotes();
       form.reset();
       
@@ -300,8 +323,9 @@ export class NotesManager {
       if (charCount) {
         this.updateCharacterCount('', charCount);
       }
-    } catch { 
-      alert('Failed to save note.'); 
+    } catch (error) {
+      console.error('Failed to save note:', error);
+      alert('Failed to save note.');
     }
   }
 }
