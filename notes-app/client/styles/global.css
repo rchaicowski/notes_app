@@ -63,9 +63,18 @@ h1 {
   background-blend-mode: multiply, normal;
 }
 
-#table-container.dimmed {
-  filter: brightness(0.4);
-  transition: filter 0.8s ease;
+@media (max-aspect-ratio: 1/1) {
+  .notepad {
+    transform: translateX(-40px);
+  }
+  
+  .calculator {
+     transform: rotate(-12deg) scale(0.8) translateX(-30px) !important;
+  }
+  
+  .table {
+    gap: 0.8rem;
+  }
 }
 
 /* ===================== Animations ===================== */
@@ -77,3 +86,4 @@ h1 {
     transform: scale(1.05);
   }
 }
+
