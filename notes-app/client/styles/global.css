@@ -63,6 +63,11 @@ h1 {
   background-blend-mode: multiply, normal;
 }
 
+#table-container.dimmed {
+  filter: brightness(0.4);
+  transition: filter 0.8s ease;
+}  
+
 @media (max-aspect-ratio: 1/1) {
   .notepad {
     transform: translateX(-40px);
