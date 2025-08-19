@@ -1,79 +1,156 @@
-/* Settings Button and Panel Styles */
 .settings-trigger {
   position: absolute;
-  top: 35px;
+  top: 15px;
   left: 50%;
   transform: translateX(-50%);
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(145deg, #8b4513, #654321);
-  border: 2px solid #5d3a1a;
-  border-radius: 50%;
+  width: 168px; 
+  height: 90px; 
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  box-shadow: 
-    0 4px 8px rgba(14, 9, 9, 0.3),
-    inset 0 1px 3px rgba(255,255,255,0.2);
-  z-index: 1000;
+  transition: all 0.4s ease;
+  z-index: 0; 
+  overflow: visible;
 }
 
 .settings-trigger:hover {
-  transform: translateX(-50%) translateY(-2px);
+  transform: translateX(-50%) translateY(-2.4px); 
+}
+
+.matchbox-cover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, #d32f2f, #b71c1c);
+  border: 2.4px solid #8d1515; 
+  border-radius: 4.8px; 
   box-shadow: 
-    0 6px 12px rgba(0,0,0,0.4),
-    inset 0 1px 3px rgba(255,255,255,0.2);
+    0 4.8px 9.6px rgba(0, 0, 0, 0.3), 
+    inset 0 1.2px 3.6px rgba(255,255,255,0.2); 
+  z-index: 25; 
 }
 
-.settings-trigger:active {
-  transform: translateX(-50%) translateY(0);
+.matchbox-cover::after {
+  content: 'SETTINGS';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px; 
+  height: 48px; 
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16.8px; 
+  font-weight: bold;
+  color: #b71c1c;
+  letter-spacing: 0.6px; 
+  text-shadow: 0 1.2px 1.2px rgba(0,0,0,0.1); 
 }
 
-/* Gear Icon */
+.matchbox-inner {
+  position: absolute;
+  top: 1.2px; 
+  left: 1.2px; 
+  width: calc(100% - 2.4px); 
+  height: calc(100% - 2.4px); 
+  background: linear-gradient(145deg, #8d6e63, #6d4c41);
+  border: 2.4px solid #5d4037; 
+  border-radius: 3.6px; 
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(0);
+  z-index: 0; 
+  box-shadow: 
+    0 2.4px 4.8px rgba(0, 0, 0, 0.2), 
+    inset 0 1.2px 2.4px rgba(255,255,255,0.3); 
+}
+
 .settings-gear {
-  width: 20px;
-  height: 20px;
-  background: #ddd;
-  border-radius: 50%;
-  position: relative;
-  transition: transform 0.3s ease;
+  display: none;
 }
 
-.settings-gear::before {
+.settings-trigger:hover .matchbox-inner {
+  transform: translateX(36px); 
+}
+
+.settings-trigger:hover {
+  box-shadow: 0 7.2px 14.4px rgba(0,0,0,0.4); 
+}
+
+.paperclip {
+  position: absolute;
+  width: 14px; 
+  height: 36px; 
+  opacity: 0;
+  transition: all 0.4s ease 0.2s;
+}
+
+.paperclip::before {
   content: '';
   position: absolute;
-  top: -3px;
-  left: -3px;
-  right: -3px;
-  bottom: -3px;
-  background: #ddd;
-  border-radius: 50%;
-  clip-path: polygon(
-    50% 0%, 60% 20%, 100% 20%, 80% 50%, 
-    100% 80%, 60% 80%, 50% 100%, 40% 80%, 
-    0% 80%, 20% 50%, 0% 20%, 40% 20%
-  );
+  top: 0;
+  left: 0;
+  width: 14px; 
+  height: 36px; 
+  border: 2px solid #999; 
+  border-radius: 7px; 
+  background: transparent;
+  box-sizing: border-box;
 }
 
-.settings-gear::after {
+.paperclip::after {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 8px;
-  height: 8px;
-  background: #8b4513;
-  border-radius: 50%;
-  z-index: 1;
+  top: 12px; 
+  left: 1px; 
+  width: 11px; 
+  height: 22px; 
+  border: 2px solid #999; 
+  border-radius: 5px; 
+  background: transparent;
+  box-sizing: border-box;
 }
 
-.settings-trigger:hover .settings-gear {
+.paperclip:nth-child(1) {
+  top: 42px;
+  left: 140px; 
+  transform: rotate(50deg);
+}
+
+.paperclip:nth-child(2) {
+  top: 11px;
+  left: 146px; 
+  transform: rotate(12deg);
+}
+
+.paperclip:nth-child(3) {
+  top: 10px;
+  left: 136px; 
+  transform: rotate(-25deg);
+}
+
+.paperclip:nth-child(4) {
+  top: 50px;
+  left: 138px; 
+  transform: rotate(-20deg);
+}
+
+.paperclip:nth-child(5) {
+  top: 30px; 
+  left: 125px; 
   transform: rotate(45deg);
 }
 
-/* Settings Panel */
+.settings-trigger:hover .paperclip:nth-child(1),
+.settings-trigger:hover .paperclip:nth-child(2),
+.settings-trigger:hover .paperclip:nth-child(3),
+.settings-trigger:hover .paperclip:nth-child(4),
+.settings-trigger:hover .paperclip:nth-child(5) {
+  opacity: 1;
+}
+
 .settings-panel {
   position: fixed;
   top: 50%;
@@ -95,7 +172,6 @@
   visibility: visible;
 }
 
-/* Volume Slider Styles */
 .range-container {
   display: flex;
   align-items: center;
@@ -139,7 +215,6 @@
   font-weight: 500;
 }
 
-/* Settings Content Styles */
 .settings-header {
   background: #8b4513;
   color: white;
@@ -205,7 +280,6 @@
   font-weight: 500;
 }
 
-/* Toggle Switch */
 .toggle-switch {
   position: relative;
   display: inline-block;
@@ -251,7 +325,6 @@ input:checked + .toggle-slider:before {
   transform: translateX(26px);
 }
 
-/* Select and Input Styles */
 select, input[type="range"] {
   width: 100%;
   padding: 8px;
@@ -261,7 +334,6 @@ select, input[type="range"] {
   color: #654321;
 }
 
-/* Export/Import Buttons */
 button {
   padding: 8px 16px;
   border: none;
@@ -286,7 +358,6 @@ button.import {
   background: rgba(255,255,255,0.2);
 }
 
-/* Overlay */
 .settings-overlay {
   position: fixed;
   top: 0;
@@ -305,7 +376,6 @@ button.import {
   visibility: visible;
 }
 
-/* Storage Mode Indicator */
 .storage-mode-indicator {
   display: flex;
   align-items: center;

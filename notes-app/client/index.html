@@ -17,9 +17,7 @@
 
 <body>
   <h1>My Notes</h1>
-
   <div id="table-container" class="table">
-
     <div class="lamp">
       <div class="lamp-base" onclick="toggleLamp()">
         <div class="lamp-power-button on" id="power-button"></div>
@@ -33,70 +31,50 @@
       <div class="lamp-head-back"></div>
       <div class="lamp-bulb on" id="lamp-bulb"></div>
     </div>
-
     <div class="settings-trigger" id="settingsTrigger">
-      <div class="settings-gear"></div>
+      <div class="matchbox-cover"></div>
+      <div class="matchbox-inner">
+        <div class="paperclip"></div>
+        <div class="paperclip"></div>
+        <div class="paperclip"></div>
+        <div class="paperclip"></div>
+        <div class="paperclip"></div>
+      </div>
     </div>
-
     <div class="settings-overlay" id="settingsOverlay"></div>
     <div class="settings-panel" id="settingsPanel">
       <div class="settings-header">
-        <h2 class="settings-title">Settings</h2>
-        <button class="settings-close" id="settingsClose">×</button>
+        <h2 class="settings-title">Settings</h2> <button class="settings-close" id="settingsClose">×</button>
       </div>
-      
-      <div class="settings-content">
-        <!-- Storage Section -->
+      <div class="settings-content"> <!-- Storage Section -->
         <div class="settings-section">
           <h3>📁 Storage</h3>
-          <div class="form-group">
-            <label for="storageMode">Storage Mode:</label>
-            <div style="display: flex; align-items: center; gap: 15px;">
-              <span>Offline</span>
-              <label class="toggle-switch">
-                <input type="checkbox" id="storageMode">
-                <span class="toggle-slider"></span>
-              </label>
-              <span>Online</span>
-            </div>
+          <div class="form-group"> <label for="storageMode">Storage Mode:</label>
+            <div style="display: flex; align-items: center; gap: 15px;"> <span>Offline</span> <label
+                class="toggle-switch"> <input type="checkbox" id="storageMode"> <span class="toggle-slider"></span>
+              </label> <span>Online</span> </div>
           </div>
-        </div>
-        
-        <!-- Audio Section -->
+        </div> <!-- Audio Section -->
         <div class="settings-section">
           <h3>🔊 Audio</h3>
-          <div class="form-group">
-            <label for="masterVolume">Volume:</label>
-            <div class="range-container">
-              <input type="range" id="masterVolume" min="0" max="100" value="50">
-              <span class="range-value" id="masterVolumeValue">50%</span>
-            </div>
+          <div class="form-group"> <label for="masterVolume">Volume:</label>
+            <div class="range-container"> <input type="range" id="masterVolume" min="0" max="100" value="50"> <span
+                class="range-value" id="masterVolumeValue">50%</span> </div>
           </div>
-          <div class="form-group">
-            <label for="soundEnabled">Enable Sounds:</label>
-            <label class="toggle-switch">
-              <input type="checkbox" id="soundEnabled" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-        
-        <!-- Interface Section -->
+          <div class="form-group"> <label for="soundEnabled">Enable Sounds:</label> <label class="toggle-switch"> <input
+                type="checkbox" id="soundEnabled" checked> <span class="toggle-slider"></span> </label> </div>
+        </div> <!-- Interface Section -->
         <div class="settings-section">
           <h3>🎨 Interface</h3>
-          <div class="form-group">
-            <label for="notesPerPage">Notes per Page:</label>
-            <select id="notesPerPage">
+          <div class="form-group"> <label for="notesPerPage">Notes per Page:</label> <select id="notesPerPage">
               <option value="8">8 notes</option>
               <option value="12" selected>12 notes</option>
               <option value="16">16 notes</option>
               <option value="20">20 notes</option>
-            </select>
-          </div>
+            </select> </div>
         </div>
       </div>
     </div>
-
     <div class="plant-group" id="plantGroup">
       <div class="vase"></div>
       <div class="stem"></div>
@@ -137,47 +115,25 @@
         <div class="leaf-shape"></div>
       </div>
     </div>
-
     <div class="calculator">
       <div class="calc-display" id="calc-display">0</div>
-      <div class="calc-buttons">
-        <button class="calc-btn clear" onclick="clearCalculator()">C</button>
-        <button class="calc-btn operator" onclick="inputOperator('/')">/</button>
-        <button class="calc-btn operator" onclick="inputOperator('*')">×</button>
-        <button class="calc-btn operator" onclick="deleteLast()">⌫</button>
-
-        <button class="calc-btn" onclick="inputNumber('7')">7</button>
-        <button class="calc-btn" onclick="inputNumber('8')">8</button>
-        <button class="calc-btn" onclick="inputNumber('9')">9</button>
-        <button class="calc-btn operator" onclick="inputOperator('-')">-</button>
-
-        <button class="calc-btn" onclick="inputNumber('4')">4</button>
-        <button class="calc-btn" onclick="inputNumber('5')">5</button>
-        <button class="calc-btn" onclick="inputNumber('6')">6</button>
-        <button class="calc-btn operator" onclick="inputOperator('+')">+</button>
-
-        <button class="calc-btn" onclick="inputNumber('1')">1</button>
-        <button class="calc-btn" onclick="inputNumber('2')">2</button>
-        <button class="calc-btn" onclick="inputNumber('3')">3</button>
-        <button class="calc-btn equals" onclick="calculate()" style="grid-row: span 2">=</button>
-
-        <button class="calc-btn" onclick="inputNumber('0')" style="grid-column: span 2">0</button>
-        <button class="calc-btn" onclick="inputDecimal()">.</button>
-      </div>
+      <div class="calc-buttons"> <button class="calc-btn clear" onclick="clearCalculator()">C</button> <button
+          class="calc-btn operator" onclick="inputOperator('/')">/</button> <button class="calc-btn operator"
+          onclick="inputOperator('*')">×</button> <button class="calc-btn operator" onclick="deleteLast()">⌫</button>
+        <button class="calc-btn" onclick="inputNumber('7')">7</button> <button class="calc-btn"
+          onclick="inputNumber('8')">8</button> <button class="calc-btn" onclick="inputNumber('9')">9</button> <button
+          class="calc-btn operator" onclick="inputOperator('-')">-</button> <button class="calc-btn"
+          onclick="inputNumber('4')">4</button> <button class="calc-btn" onclick="inputNumber('5')">5</button> <button
+          class="calc-btn" onclick="inputNumber('6')">6</button> <button class="calc-btn operator"
+          onclick="inputOperator('+')">+</button> <button class="calc-btn" onclick="inputNumber('1')">1</button> <button
+          class="calc-btn" onclick="inputNumber('2')">2</button> <button class="calc-btn"
+          onclick="inputNumber('3')">3</button> <button class="calc-btn equals" onclick="calculate()"
+          style="grid-row: span 2">=</button> <button class="calc-btn" onclick="inputNumber('0')"
+          style="grid-column: span 2">0</button> <button class="calc-btn" onclick="inputDecimal()">.</button> </div>
     </div>
-
     <div class="notepad">
-      <div class="spirals">
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-
+      <div class="spirals"> <span></span> <span></span> <span></span> <span></span> <span></span> <span></span>
+        <span></span> <span></span> </div>
       <div id="global-controls">
         <div class="icon-wrapper" id="edit-mode-btn" title="Edit Mode">
           <div class="icon pencil">
@@ -194,20 +150,15 @@
           </div>
         </div>
       </div>
-
-      <form id="note-form">
-        <input type="text" id="content" placeholder="Note" required />
-        <button type="button" id="add-btn" class="add-btn">+</button>
-      </form>
+      <form id="note-form"> <input type="text" id="content" placeholder="Note" required /> <button type="button"
+          id="add-btn" class="add-btn">+</button> </form>
       <ul id="notes-list"></ul>
-      <div class="page-navigation">
-        <button class="page-corner" id="prev-page" title="Previous Page">‹</button>
-        <div class="page-info" id="page-info">Page 1 of 1</div>
-        <button class="page-corner" id="next-page" title="Next Page">›</button>
+      <div class="page-navigation"> <button class="page-corner" id="prev-page" title="Previous Page">‹</button>
+        <div class="page-info" id="page-info">Page 1 of 1</div> <button class="page-corner" id="next-page"
+          title="Next Page">›</button>
       </div>
     </div>
   </div>
-
   <script type="module" src="js/app.js"></script>
 </body>
 
