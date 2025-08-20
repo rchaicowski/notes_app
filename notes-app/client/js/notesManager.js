@@ -232,6 +232,8 @@ export class NotesManager {
       this.currentPage += (direction === 'next' ? 1 : -1);
     } else return;
 
+    this.soundManager.play('page_turn', 200);
+
     const notepad = document.querySelector('.notepad');
     notepad.classList.add('page-flip-animation');
     setTimeout(() => { this.renderNotes(); notepad.classList.remove('page-flip-animation'); }, 200);
