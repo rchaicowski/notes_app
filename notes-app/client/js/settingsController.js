@@ -38,15 +38,38 @@ export class SettingsController {
   }
 
   init() {
-    this.trigger.addEventListener('click', () => this.open());
+    // Changed from hover to click, and added sound effect
+    this.trigger.addEventListener('click', () => {
+      // Play box sound when opening
+      if (window.app?.soundManager) {
+        window.app.soundManager.play('box');
+      }
+      this.open();
+    });
+    
     this.closeBtn.addEventListener('click', () => this.close());
     this.overlay.addEventListener('click', () => this.close());
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && this.panel.classList.contains('open')) this.close(); });
+    document.addEventListener('keydown', e => { 
+      if (e.key === 'Escape' && this.panel.classList.contains('open')) this.close(); 
+    });
     this.setupControls();
   }
 
-  open() { this.panel.classList.add('open'); this.overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
-  close() { this.panel.classList.remove('open'); this.overlay.classList.remove('open'); document.body.style.overflow = 'auto'; }
+  open() { 
+    // Add 'open' class to trigger to keep the box open
+    this.trigger.classList.add('open');
+    this.panel.classList.add('open'); 
+    this.overlay.classList.add('open'); 
+    document.body.style.overflow = 'hidden'; 
+  }
+  
+  close() { 
+    // Remove 'open' class from trigger to close the box
+    this.trigger.classList.remove('open');
+    this.panel.classList.remove('open'); 
+    this.overlay.classList.remove('open'); 
+    document.body.style.overflow = 'auto'; 
+  }
 
   setupControls() {
     const storageToggle = document.getElementById('storageMode');

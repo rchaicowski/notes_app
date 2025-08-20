@@ -5,7 +5,8 @@ export class SoundManager {
       lamp: new Audio('./sounds/lamp_sound.wav'),
       eraser: new Audio('./sounds/eraser.wav'),
       pencil: new Audio('./sounds/pencil.wav'),
-      calculator: new Audio('./sounds/calculator_button.wav')
+      calculator: new Audio('./sounds/calculator_button.wav'),
+      box: new Audio('./sounds/box.wav') 
     };
 
     this.sounds.bush.volume = 0.5;
@@ -13,6 +14,7 @@ export class SoundManager {
     this.sounds.eraser.volume = 0.4;
     this.sounds.pencil.volume = 0.4;
     this.sounds.calculator.volume = 0.2;
+    this.sounds.box.volume = 0.5; 
 
     this.lastPlayed = {};
     Object.keys(this.sounds).forEach(key => this.lastPlayed[key] = 0);

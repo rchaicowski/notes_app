@@ -11,6 +11,7 @@
   overflow: visible;
 }
 
+/* Removed hover effect, now only triggers on click */
 .settings-trigger:hover {
   transform: translateX(-50%) translateY(-2.4px); 
 }
@@ -71,11 +72,12 @@
   display: none;
 }
 
-.settings-trigger:hover .matchbox-inner {
+/* Changed from hover to open class - box opens on click and stays open */
+.settings-trigger.open .matchbox-inner {
   transform: translateX(36px); 
 }
 
-.settings-trigger:hover {
+.settings-trigger.open {
   box-shadow: 0 7.2px 14.4px rgba(0,0,0,0.4); 
 }
 
@@ -143,11 +145,12 @@
   transform: rotate(45deg);
 }
 
-.settings-trigger:hover .paperclip:nth-child(1),
-.settings-trigger:hover .paperclip:nth-child(2),
-.settings-trigger:hover .paperclip:nth-child(3),
-.settings-trigger:hover .paperclip:nth-child(4),
-.settings-trigger:hover .paperclip:nth-child(5) {
+/* Changed from hover to open class - paperclips show when box is opened */
+.settings-trigger.open .paperclip:nth-child(1),
+.settings-trigger.open .paperclip:nth-child(2),
+.settings-trigger.open .paperclip:nth-child(3),
+.settings-trigger.open .paperclip:nth-child(4),
+.settings-trigger.open .paperclip:nth-child(5) {
   opacity: 1;
 }
 
