@@ -16,25 +16,46 @@ const validateNote = (req, res, next) => {
 
         // Check if content exists
         if (!content) {
-            throw new AppError('Content is required', 400);
+            throw new AppError('Note content is required', 400);
         }
 
         // Check content type
         if (typeof content !== 'string') {
-            throw new AppError('Content must be text', 400);
+            throw new AppError('Note content must be text', 400);
         }
 
-        // Check content length
-        if (content.length > noteValidationRules.content.maxLength) {
-            throw new AppError(`Content must be less than ${noteValidationRules.content.maxLength} characters`, 400);
+        // Remove dangerous HTML/Script tags
+        const sanitized = content
+            .replace(/<[^>]*>/g, '')  // Remove HTML tags
+            .replace(/javascript:/gi, ''); // Remove javascript: protocols
+
+        // Check length after sanitization
+        if (sanitized.trim().length === 0) {
+            throw new AppError('Note content cannot be empty', 400);
         }
 
-        if (content.trim().length < noteValidationRules.content.minLength) {
-            throw new AppError('Content cannot be empty', 400);
+        if (sanitized.length > 1000) {
+            throw new AppError('Note content cannot exceed 1000 characters', 400);
         }
 
-        // If all validation passes, sanitize the content
-        req.body.content = content.trim();
+        // Store sanitized content
+        req.body.content = sanitized.trim();
+        next();
+    } catch (error) {
+        error.name = 'ValidationError';
+        next(error);
+    }
+};
+
+const validateId = (req, res, next) => {
+    try {
+        const id = parseInt(req.params.id);
+        
+        if (isNaN(id) || id <= 0) {
+            throw new AppError('Invalid note ID', 400);
+        }
+
+        req.params.id = id;
         next();
     } catch (error) {
         error.name = 'ValidationError';

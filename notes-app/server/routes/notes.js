@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { validateNote } = require('../middleware/validateRequest');
+const { validateId } = require('../middleware/validateId');
 const { AppError } = require('../middleware/errorHandler');
 const { limiter, strictLimiter } = require('../middleware/rateLimiter');
 
@@ -34,7 +35,7 @@ router.post('/', strictLimiter, validateNote, async (req, res, next) => {
 });
 
 // PUT (update) a note (only content)
-router.put('/:id', strictLimiter, validateNote, async (req, res, next) => {
+router.put('/:id', strictLimiter, validateId, validateNote, async (req, res, next) => {
     const { id } = req.params;
     try {
         const result = await pool.query(
@@ -53,7 +54,7 @@ router.put('/:id', strictLimiter, validateNote, async (req, res, next) => {
 });
 
 // DELETE a note
-router.delete('/:id', strictLimiter, async (req, res, next) => {
+router.delete('/:id', strictLimiter, validateId, async (req, res, next) => {
     const { id } = req.params;
     try {
         const result = await pool.query('DELETE FROM notes WHERE id = $1 RETURNING *', [id]);
