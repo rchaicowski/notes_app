@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { validateNote } = require('../middleware/validateRequest');
 const { validateId } = require('../middleware/validateId');
+const { validateQueryParams, validateHeaders } = require('../middleware/validateCommon');
 const { AppError } = require('../middleware/errorHandler');
 const { limiter, strictLimiter } = require('../middleware/rateLimiter');
 
@@ -11,8 +12,8 @@ function sanitizeInput(input, maxLength = 255) {
   return input.trim().slice(0, maxLength);
 }
 
-// GET all notes
-router.get('/', limiter, async (req, res, next) => {
+// GET all notes with pagination
+router.get('/', limiter, validateQueryParams, async (req, res, next) => {
     try {
         const result = await pool.query('SELECT id, content FROM notes ORDER BY id ASC');
         res.json(result.rows);
@@ -22,7 +23,7 @@ router.get('/', limiter, async (req, res, next) => {
 });
 
 // POST a new note (only content)
-router.post('/', strictLimiter, validateNote, async (req, res, next) => {
+router.post('/', strictLimiter, validateHeaders, validateNote, async (req, res, next) => {
     try {
         const result = await pool.query(
             'INSERT INTO notes (content) VALUES ($1) RETURNING *',
@@ -35,7 +36,7 @@ router.post('/', strictLimiter, validateNote, async (req, res, next) => {
 });
 
 // PUT (update) a note (only content)
-router.put('/:id', strictLimiter, validateId, validateNote, async (req, res, next) => {
+router.put('/:id', strictLimiter, validateHeaders, validateId, validateNote, async (req, res, next) => {
     const { id } = req.params;
     try {
         const result = await pool.query(
