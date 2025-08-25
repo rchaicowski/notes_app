@@ -7,11 +7,6 @@ const { validateQueryParams, validateHeaders } = require('../middleware/validate
 const { AppError } = require('../middleware/errorHandler');
 const { limiter, strictLimiter } = require('../middleware/rateLimiter');
 
-function sanitizeInput(input, maxLength = 255) {
-  if (typeof input !== 'string') return '';
-  return input.trim().slice(0, maxLength);
-}
-
 // GET all notes with pagination
 router.get('/', limiter, validateQueryParams, async (req, res, next) => {
     try {
