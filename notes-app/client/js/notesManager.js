@@ -1,3 +1,5 @@
+import { getAuthToken, isAuthenticated } from './auth.js';
+
 export class NotesManager {
   constructor(soundManager, storageManager) {
     this.notes = [];
@@ -9,43 +11,49 @@ export class NotesManager {
     this.soundManager = soundManager;
     this.storageManager = storageManager;
     this.maxCharacters = 35;
+
+    // Listen for authentication changes
+    window.addEventListener('auth-changed', (event) => {
+      if (event.detail.isAuthenticated) {
+        this.loadNotes();
+      } else {
+        this.notes = [];
+        this.renderNotes();
+      }
+    });
+  }
+
+  getAuthHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getAuthToken()}`
+    };
   }
 
   async loadNotes() {
+    if (!isAuthenticated()) {
+      this.notes = [];
+      this.renderNotes();
+      return;
+    }
+
     if (this.storageManager.isOnline) {
       try {
-        const response = await fetch(this.apiBaseUrl);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const onlineNotes = (await response.json()).map(note => ({ id: note.id, content: note.content }));
-        
-        // Merge with local notes that haven't been synced yet
-        const localNotes = this.storageManager.getFromLocalStorage();
-        const pendingNotes = this.storageManager.pendingSync;
-        
-        // Start with online notes
-        this.notes = [...onlineNotes];
-        
-        // Add any local notes that don't exist online (temporary IDs or unsynced)
-        localNotes.forEach(localNote => {
-          const existsOnline = this.notes.some(onlineNote => onlineNote.id === localNote.id);
-          const isPending = pendingNotes.some(pendingNote => pendingNote.id === localNote.id);
-          
-          if (!existsOnline && (this.storageManager.isTemporaryId(localNote.id) || isPending)) {
-            this.notes.push(localNote);
-          }
+        const response = await fetch(this.apiBaseUrl, {
+          headers: this.getAuthHeaders()
         });
         
-        this.renderNotes();
-        
-        // Sync any pending changes
-        await this.storageManager.syncPendingNotes();
-        await this.storageManager.syncPendingDeletes();
-        
-        // Reload after sync to get updated IDs
-        if (this.storageManager.pendingSync.length > 0 || this.storageManager.pendingDeletes.length > 0) {
-          await this.loadNotes();
+        if (!response.ok) {
+          if (response.status === 401) {
+            this.notes = [];
+            this.renderNotes();
+            return;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         
+        this.notes = await response.json();
+        this.renderNotes();
       } catch (error) {
         console.error('Error loading notes:', error);
         this.fallbackToLocalNotes();
@@ -61,15 +69,26 @@ export class NotesManager {
   }
 
   async saveNote(noteData, isUpdate = false, noteId = null) {
+    if (!isAuthenticated()) {
+      throw new Error('Please log in to save notes');
+    }
+
     try {
       const options = {
         method: isUpdate ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: this.getAuthHeaders(),
         body: JSON.stringify({ content: noteData.content })
       };
       const url = isUpdate ? `${this.apiBaseUrl}/${noteId}` : this.apiBaseUrl;
       const response = await fetch(url, options);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please log in to save notes');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       return await response.json();
     } catch (error) {
       console.error('Error saving note:', error);
@@ -78,9 +97,23 @@ export class NotesManager {
   }
 
   async deleteNote(noteId) {
+    if (!isAuthenticated()) {
+      throw new Error('Please log in to delete notes');
+    }
+
     try {
-      const response = await fetch(`${this.apiBaseUrl}/${noteId}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(`${this.apiBaseUrl}/${noteId}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please log in to delete notes');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       return await response.json();
     } catch (error) {
       console.error('Error deleting note:', error);
@@ -197,31 +230,48 @@ export class NotesManager {
   }
 
   editNote(id, content) {
-    const contentInput = document.getElementById('content');
-    const form = document.getElementById('note-form');
-    
-    contentInput.value = content;
-    form.setAttribute('data-editing', id.toString());
-    contentInput.focus();
-    
-    const charCount = document.getElementById('char-count');
-    if (charCount) {
-      this.updateCharacterCount(content, charCount);
+    try {
+      const contentInput = document.getElementById('content');
+      const form = document.getElementById('note-form');
+      
+      if (!contentInput || !form) {
+        throw new Error('Required elements not found');
+      }
+      
+      contentInput.value = content;
+      form.setAttribute('data-editing', id.toString());
+      contentInput.focus();
+      
+      const charCount = document.getElementById('char-count');
+      if (charCount) {
+        this.updateCharacterCount(content, charCount);
+      }
+      
+      this.soundManager.play('pencil', 200);
+    } catch (error) {
+      console.error('Error setting up edit:', error);
+      alert('Could not edit note');
     }
   }
 
   async deleteNoteById(index) {
     const note = this.notes[index];
+    if (!note) {
+      alert('Note not found');
+      return;
+    }
+
     try {
-      await this.storageManager.deleteNote(note.id);
+      await this.deleteNote(note.id);
       this.notes.splice(index, 1);
       if (this.currentPage > this.getTotalPages() && this.getTotalPages() > 0) {
         this.currentPage = this.getTotalPages();
       }
       this.renderNotes();
+      this.soundManager.play('eraser', 200);
     } catch (error) {
       console.error('Failed to delete note:', error);
-      alert('Failed to delete note.');
+      alert(error.message || 'Failed to delete note.');
     }
   }
 
@@ -307,12 +357,15 @@ export class NotesManager {
         // Editing existing note
         const idx = parseInt(editingId);
         const note = this.notes[idx];
-        const updatedNote = await this.storageManager.updateNote(note.id, content);
+        if (!note) {
+          throw new Error('Note not found');
+        }
+        const updatedNote = await this.saveNote({ content }, true, note.id);
         this.notes[idx] = updatedNote;
         form.removeAttribute('data-editing');
       } else {
         // Creating new note
-        const newNote = await this.storageManager.saveNote({ content });
+        const newNote = await this.saveNote({ content });
         this.notes.push(newNote);
         this.currentPage = this.getTotalPages();
       }
@@ -327,7 +380,7 @@ export class NotesManager {
       }
     } catch (error) {
       console.error('Failed to save note:', error);
-      alert('Failed to save note.');
+      alert(error.message || 'Failed to save note.');
     }
   }
 }

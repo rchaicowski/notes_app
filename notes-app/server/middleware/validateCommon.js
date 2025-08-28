@@ -43,4 +43,27 @@ const validateHeaders = (req, res, next) => {
     }
 };
 
-module.exports = { validateQueryParams, validateHeaders };
+const validateUser = (req, res, next) => {
+    try {
+        const { email, password, name } = req.body;
+
+        if (!email || typeof email !== 'string' || !email.includes('@')) {
+            throw new AppError('Valid email is required', 400);
+        }
+
+        if (!password || typeof password !== 'string' || password.length < 6) {
+            throw new AppError('Password must be at least 6 characters', 400);
+        }
+
+        if (name && (typeof name !== 'string' || name.length < 2)) {
+            throw new AppError('Name must be at least 2 characters', 400);
+        }
+
+        next();
+    } catch (error) {
+        error.name = 'ValidationError';
+        next(error);
+    }
+};
+
+module.exports = { validateQueryParams, validateHeaders, validateUser };

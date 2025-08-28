@@ -39,7 +39,10 @@ app.use(requestLogger); // Add logging middleware
 
 // Routes
 const notesRoutes = require('./routes/notes');
-app.use('/api/notes', notesRoutes);  // ✅ All note routes are here now
+const userRoutes = require('./routes/users');
+
+app.use('/api/notes', notesRoutes);  // Notes routes
+app.use('/api/users', userRoutes);   // User routes
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

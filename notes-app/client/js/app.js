@@ -3,6 +3,7 @@ import { SettingsController } from './settingsController.js';
 import { Calculator } from './calculator.js';
 import { LampController } from './lampController.js';
 import { NotesManager } from './notesManager.js';
+import './auth.js';
 
 class NotesApp {
   constructor() {
