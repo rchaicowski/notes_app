@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="styles/pencil-eraser.css">
   <link rel="stylesheet" href="styles/navigation.css">
   <link rel="stylesheet" href="styles/settings.css">
+  <link rel="stylesheet" href="styles/login.css">
 </head>
 
 <body>
@@ -168,8 +169,22 @@
     <!-- Login Form -->
     <form id="loginForm" class="auth-form">
       <h2>Login</h2>
-      <input type="email" id="loginEmail" placeholder="Email" required>
-      <input type="password" id="loginPassword" placeholder="Password" required>
+      <input 
+        type="email" 
+        id="loginEmail" 
+        name="email"
+        placeholder="Email" 
+        autocomplete="username"
+        required
+      >
+      <input 
+        type="password" 
+        id="loginPassword" 
+        name="password"
+        placeholder="Password" 
+        autocomplete="current-password"
+        required
+      >
       <button type="submit">Login</button>
       <div class="auth-toggle">
         Don't have an account? <span id="showRegister">Register</span>
@@ -179,9 +194,30 @@
     <!-- Register Form -->
     <form id="registerForm" class="auth-form hidden">
       <h2>Register</h2>
-      <input type="text" id="registerName" placeholder="Name" required>
-      <input type="email" id="registerEmail" placeholder="Email" required>
-      <input type="password" id="registerPassword" placeholder="Password" required>
+      <input 
+        type="text" 
+        id="registerName" 
+        name="name"
+        placeholder="Name" 
+        autocomplete="name"
+        required
+      >
+      <input 
+        type="email" 
+        id="registerEmail" 
+        name="email"
+        placeholder="Email" 
+        autocomplete="email"
+        required
+      >
+      <input 
+        type="password" 
+        id="registerPassword" 
+        name="password"
+        placeholder="Password" 
+        autocomplete="new-password"
+        required
+      >
       <button type="submit">Register</button>
       <div class="auth-toggle">
         Already have an account? <span id="showLogin">Login</span>

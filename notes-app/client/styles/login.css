@@ -1,0 +1,120 @@
+.auth-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.auth-form {
+    background: #fff;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.auth-form h2 {
+    margin: 0 0 1.5rem;
+    color: #333;
+    font-size: 1.8rem;
+    text-align: center;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.auth-form input:focus {
+    border-color: #4CAF50;
+    outline: none;
+}
+
+.auth-form button {
+    width: 100%;
+    padding: 12px;
+    margin: 16px 0;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.auth-form button:hover {
+    background: #45a049;
+}
+
+.auth-toggle {
+    text-align: center;
+    margin-top: 1rem;
+    color: #666;
+}
+
+.auth-toggle span {
+    color: #4CAF50;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.3s;
+}
+
+.auth-toggle span:hover {
+    color: #45a049;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#userInfo {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#logoutBtn {
+    color: #ff4444;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+}
+
+#logoutBtn:hover {
+    color: #ff0000;
+}

@@ -3,7 +3,7 @@ import { SettingsController } from './settingsController.js';
 import { Calculator } from './calculator.js';
 import { LampController } from './lampController.js';
 import { NotesManager } from './notesManager.js';
-import './auth.js';
+import { LoginManager } from './loginManager.js';
 
 class NotesApp {
   constructor() {
@@ -11,6 +11,7 @@ class NotesApp {
     this.settingsController = new SettingsController();
     this.calculator = new Calculator(this.soundManager);
     this.lamp = new LampController(this.soundManager);
+    this.loginManager = new LoginManager();
     this.notesManager = new NotesManager(this.soundManager, this.settingsController.storageManager);
 
     const volume = this.settingsController.savedVolume / 100;
