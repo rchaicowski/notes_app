@@ -8,17 +8,28 @@ export class SettingsController {
     this.closeBtn = document.getElementById('settingsClose');
 
     this.storageManager = new StorageManager();
-    this.updateStorageIndicator();
-
     this.loadSavedSettings();
+    this.updateStorageModeDisplay();
     this.init();
   }
 
-  updateStorageIndicator() {
-    const indicator = document.querySelector('.storage-mode-indicator');
-    if (!indicator) return;
-    indicator.className = `storage-mode-indicator ${this.storageManager.isOnline ? 'online' : 'offline'}`;
-    indicator.innerHTML = `<div class="status-dot ${this.storageManager.isOnline ? 'online' : 'offline'}"></div>Currently using ${this.storageManager.isOnline ? 'online' : 'offline'} storage`;
+  updateStorageModeDisplay() {
+    const storageModeDisplay = document.getElementById('storageModeDisplay');
+    const switchToOnlineBtn = document.getElementById('switchToOnline');
+    const isOffline = localStorage.getItem('offlineMode') === 'true';
+
+    if (storageModeDisplay) {
+      storageModeDisplay.textContent = isOffline ? 'Offline' : 'Online';
+      storageModeDisplay.className = isOffline ? 'mode-offline' : 'mode-online';
+    }
+
+    if (switchToOnlineBtn) {
+      if (isOffline) {
+        switchToOnlineBtn.classList.remove('hidden');
+      } else {
+        switchToOnlineBtn.classList.add('hidden');
+      }
+    }
   }
 
   loadSavedSettings() {
@@ -27,17 +38,30 @@ export class SettingsController {
     const volumeSlider = document.getElementById('masterVolume');
     const volumeValue = document.getElementById('masterVolumeValue');
     const soundToggle = document.getElementById('soundEnabled');
-    const storageToggle = document.getElementById('storageMode');
 
     if (volumeSlider && volumeValue) { volumeSlider.value = savedVolume; volumeValue.textContent = `${savedVolume}%`; }
     if (soundToggle) soundToggle.checked = savedSoundEnabled;
-    if (storageToggle) storageToggle.checked = this.storageManager.isOnline;
 
     this.savedVolume = savedVolume;
     this.soundEnabled = savedSoundEnabled;
   }
 
   init() {
+    // Listen for offline mode changes
+    window.addEventListener('offline-mode-changed', () => {
+      this.updateStorageModeDisplay();
+    });
+
+    // Setup switch to online button
+    document.getElementById('switchToOnline')?.addEventListener('click', () => {
+      localStorage.removeItem('offlineMode');
+      this.close();
+      document.getElementById('authContainer')?.classList.remove('hidden');
+      window.dispatchEvent(new CustomEvent('offline-mode-changed', { 
+        detail: { isOffline: false } 
+      }));
+    });
+
     // Changed from hover to click, and added sound effect
     this.trigger.addEventListener('click', () => {
       // Play box sound when opening
@@ -72,35 +96,10 @@ export class SettingsController {
   }
 
   setupControls() {
-    const storageToggle = document.getElementById('storageMode');
     const volumeSlider = document.getElementById('masterVolume');
     const volumeValue = document.getElementById('masterVolumeValue');
     const soundToggle = document.getElementById('soundEnabled');
     const notesPerPageSelect = document.getElementById('notesPerPage');
-
-    storageToggle?.addEventListener('change', async (e) => {
-      // Disable the toggle while switching modes to prevent multiple switches
-      storageToggle.disabled = true;
-      
-      try {
-        await this.storageManager.setMode(e.target.checked);
-        this.updateStorageIndicator();
-        
-        // Show pending status if there are items to sync
-        const status = this.storageManager.getPendingStatus();
-        if (status.pendingSync + status.pendingUpdates + status.pendingDeletes > 0) {
-          console.log('Pending sync items:', status);
-        }
-        
-      } catch (error) {
-        console.error('Error switching storage mode:', error);
-        // Revert toggle state on error
-        e.target.checked = this.storageManager.isOnline;
-      } finally {
-        // Re-enable the toggle
-        storageToggle.disabled = false;
-      }
-    });
 
     volumeSlider?.addEventListener('input', e => {
       const value = e.target.value;

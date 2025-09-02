@@ -1,7 +1,12 @@
 export class LoginManager {
     constructor() {
+        // Clear any previous offline mode setting on fresh load
+        if (!localStorage.getItem('token')) {
+            localStorage.removeItem('offlineMode');
+        }
         this.token = localStorage.getItem('token');
         this.user = JSON.parse(localStorage.getItem('user'));
+        this.offlineMode = localStorage.getItem('offlineMode') === 'true';
         this.initializeUI();
         this.setupEventListeners();
     }
@@ -11,12 +16,19 @@ export class LoginManager {
         const userInfo = document.getElementById('userInfo');
         
         if (this.token) {
+            // User is logged in
             authContainer?.classList.add('hidden');
             userInfo?.classList.remove('hidden');
             this.updateUserInfo();
         } else {
+            // No token, show auth container by default
             authContainer?.classList.remove('hidden');
             userInfo?.classList.add('hidden');
+            
+            // Only hide auth container if explicitly in offline mode
+            if (this.offlineMode) {
+                authContainer?.classList.add('hidden');
+            }
         }
     }
 
@@ -26,6 +38,8 @@ export class LoginManager {
         document.getElementById('logoutBtn')?.addEventListener('click', () => this.handleLogout());
         document.getElementById('showRegister')?.addEventListener('click', () => this.toggleForms('register'));
         document.getElementById('showLogin')?.addEventListener('click', () => this.toggleForms('login'));
+        document.getElementById('deleteAccountBtn')?.addEventListener('click', () => this.handleDeleteAccount());
+        document.getElementById('useOfflineMode')?.addEventListener('click', () => this.enableOfflineMode());
     }
 
     async handleLogin(e) {
@@ -79,6 +93,38 @@ export class LoginManager {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.reload();
+    }
+
+    async handleDeleteAccount() {
+        if (!confirm('Are you sure you want to delete your account? This action cannot be undone and all your notes will be deleted.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/api/users/account', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to delete account');
+
+            localStorage.clear(); // Clear all local storage
+            window.location.reload();
+        } catch (error) {
+            console.error('Delete account failed:', error);
+            this.showError('Failed to delete account. Please try again.');
+        }
+    }
+
+    enableOfflineMode() {
+        localStorage.setItem('offlineMode', 'true');
+        document.getElementById('authContainer')?.classList.add('hidden');
+        document.getElementById('userInfo')?.classList.add('hidden');
+        window.dispatchEvent(new CustomEvent('offline-mode-changed', { 
+            detail: { isOffline: true } 
+        }));
     }
 
     setAuthData(data) {

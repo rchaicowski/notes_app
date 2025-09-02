@@ -5,6 +5,53 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const { validateHeaders, validateUser } = require('../middleware/validateCommon');
 const { limiter } = require('../middleware/rateLimiter');
+const { auth } = require('../middleware/auth');
+
+// Delete account
+router.delete('/account', auth, async (req, res, next) => {
+    try {
+        // Begin transaction
+        await pool.query('BEGIN');
+
+        // Get user's email for cooldown check
+        const userEmail = await pool.query(
+            'SELECT email FROM users WHERE id = $1',
+            [req.user.id]
+        );
+
+        if (userEmail.rows.length === 0) {
+            await pool.query('ROLLBACK');
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Delete all user's notes first
+        await pool.query('DELETE FROM notes WHERE user_id = $1', [req.user.id]);
+
+        // Delete the user
+        const result = await pool.query(
+            'DELETE FROM users WHERE id = $1 RETURNING email',
+            [req.user.id]
+        );
+
+        // Store the deleted email with a cooldown timestamp
+        await pool.query(
+            'INSERT INTO deleted_emails (email, deleted_at) VALUES ($1, CURRENT_TIMESTAMP)',
+            [userEmail.rows[0].email]
+        );
+
+        // Commit transaction
+        await pool.query('COMMIT');
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+        await pool.query('ROLLBACK');
+        next(error);
+    }
+});
 
 // Register new user
 router.post('/register', limiter, validateHeaders, validateUser, async (req, res, next) => {
@@ -16,10 +63,25 @@ router.post('/register', limiter, validateHeaders, validateUser, async (req, res
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
-        // Check if user exists
-        const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        // Begin transaction
+        await pool.query('BEGIN');
+
+        // Check if user exists or is in cooldown
+        const [userExists, recentlyDeleted] = await Promise.all([
+            pool.query('SELECT * FROM users WHERE email = $1', [email]),
+            pool.query('SELECT * FROM deleted_emails WHERE email = $1 AND deleted_at > NOW() - INTERVAL \'15 minutes\'', [email])
+        ]);
+
         if (userExists.rows.length > 0) {
+            await pool.query('ROLLBACK');
             return res.status(400).json({ error: 'Email already registered' });
+        }
+
+        if (recentlyDeleted.rows.length > 0) {
+            await pool.query('ROLLBACK');
+            return res.status(400).json({ 
+                error: 'This email was recently associated with a deleted account. Please wait 15 minutes before registering again.' 
+            });
         }
 
         // Hash password
@@ -32,6 +94,9 @@ router.post('/register', limiter, validateHeaders, validateUser, async (req, res
             [email, password_hash, name]
         );
 
+        // Remove from deleted_emails if exists
+        await pool.query('DELETE FROM deleted_emails WHERE email = $1', [email]);
+
         // Generate token
         const token = jwt.sign(
             { id: result.rows[0].id, email: result.rows[0].email },
@@ -39,11 +104,15 @@ router.post('/register', limiter, validateHeaders, validateUser, async (req, res
             { expiresIn: '24h' }
         );
 
+        // Commit transaction
+        await pool.query('COMMIT');
+
         res.status(201).json({
             user: result.rows[0],
             token
         });
     } catch (error) {
+        await pool.query('ROLLBACK');
         next(error);
     }
 });
@@ -88,6 +157,10 @@ router.post('/login', limiter, validateHeaders, async (req, res, next) => {
             token
         });
     } catch (error) {
+        // Handle unique constraint violation
+        if (error.code === '23505' && error.constraint === 'users_email_key') {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
         next(error);
     }
 });

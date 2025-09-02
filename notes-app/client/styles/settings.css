@@ -506,57 +506,132 @@ button.import:hover {
   visibility: visible;
 }
 
-/* Enhanced Storage Mode Indicator */
-.storage-mode-indicator {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+/* Storage Mode Display */
+.storage-mode-status {
   padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.6);
   border-radius: 8px;
-  margin-top: 12px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border: 1px solid transparent;
+  font-size: 0.95rem;
+  color: #5d4e37;
 }
 
-.storage-mode-indicator.online {
+#storageModeDisplay {
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+#storageModeDisplay.mode-online {
   background: rgba(76, 175, 80, 0.1);
   color: #2e7d2e;
-  border-color: rgba(76, 175, 80, 0.2);
 }
 
-.storage-mode-indicator.offline {
-  background: rgba(255, 193, 7, 0.1);
-  color: #856404;
-  border-color: rgba(255, 193, 7, 0.2);
-}
-
-.storage-mode-indicator.syncing {
-  background: rgba(76, 175, 80, 0.1);
-  color: #2e7d2e;
-  border-color: rgba(76, 175, 80, 0.2);
-  animation: pulse 1.5s infinite;
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
-}
-
-.status-dot.online {
-  background: linear-gradient(135deg, #28a745, #20c997);
-}
-
-.status-dot.offline {
-  background: linear-gradient(135deg, #ffc107, #fd7e14);
+#storageModeDisplay.mode-offline {
+  background: rgba(255, 152, 0, 0.1);
+  color: #e65100;
 }
 
 @keyframes pulse {
   0% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.7; transform: scale(0.95); }
   100% { opacity: 1; transform: scale(1); }
+}
+
+/* Storage Mode Display */
+.storage-mode-status {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #5d4e37;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.btn-switch-mode {
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(74, 144, 226, 0.2);
+}
+
+.btn-switch-mode:hover {
+  background: linear-gradient(135deg, #357abd, #2868a9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.btn-switch-mode .cloud-icon {
+  font-size: 1.2em;
+}
+
+.btn-switch-mode.hidden {
+  display: none;
+}
+
+#storageModeDisplay {
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+#storageModeDisplay.mode-online {
+  background: rgba(76, 175, 80, 0.1);
+  color: #2e7d2e;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+#storageModeDisplay.mode-offline {
+  background: rgba(255, 152, 0, 0.1);
+  color: #e65100;
+  border: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+/* Delete Account Button Styling */
+.btn-danger {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.2);
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #c82333, #bd2130);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.warning-text {
+  color: #721c24;
+  font-size: 0.9rem;
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(220, 53, 69, 0.1);
+  border-radius: 4px;
+  text-align: center;
 }
 
 /* Responsive Design */

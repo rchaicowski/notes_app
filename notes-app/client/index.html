@@ -50,10 +50,12 @@
       <div class="settings-content"> <!-- Storage Section -->
         <div class="settings-section">
           <h3>📁 Storage</h3>
-          <div class="form-group"> <label for="storageMode">Storage Mode:</label>
-            <div style="display: flex; align-items: center; gap: 15px;"> <span>Offline</span> <label
-                class="toggle-switch"> <input type="checkbox" id="storageMode"> <span class="toggle-slider"></span>
-              </label> <span>Online</span> </div>
+          <div class="form-group"> 
+            <label for="storageMode">Storage Mode:</label>
+            <div class="storage-mode-status">Current Mode: <span id="storageModeDisplay">Online</span></div>
+            <button id="switchToOnline" class="btn-switch-mode hidden">
+              <span class="cloud-icon">☁️</span> Switch to Online Mode (Login)
+            </button>
           </div>
         </div> <!-- Audio Section -->
         <div class="settings-section">
@@ -73,6 +75,14 @@
               <option value="16">16 notes</option>
               <option value="20">20 notes</option>
             </select> </div>
+        </div>
+        <!-- Account Section -->
+        <div class="settings-section">
+          <h3>👤 Account</h3>
+          <div class="form-group">
+            <button id="deleteAccountBtn" class="btn-danger">Delete Account</button>
+            <p class="warning-text">This action cannot be undone. All your notes will be permanently deleted.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -161,8 +171,10 @@
     </div>
   </div>
   <div id="userInfo" class="hidden">
-    Welcome <span id="userName"></span>
-    <span id="logoutBtn">Logout</span>
+    <div class="user-controls">
+      <div class="user-welcome">Welcome <span id="userName"></span></div>
+      <span id="logoutBtn" class="btn-action">Logout</span>
+    </div>
   </div>
 
   <div id="authContainer" class="auth-container">
@@ -195,6 +207,10 @@
       <div class="auth-toggle">
         Don't have an account? <span id="showRegister">Register</span>
       </div>
+      <div class="auth-separator">
+        <span>or</span>
+      </div>
+      <button id="useOfflineMode" class="btn-offline">Continue in Offline Mode</button>
     </form>
 
     <!-- Register Form -->

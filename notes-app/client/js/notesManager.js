@@ -11,6 +11,13 @@ export class NotesManager {
     this.soundManager = soundManager;
     this.storageManager = storageManager;
     this.maxCharacters = 35;
+    this.isOffline = localStorage.getItem('offlineMode') === 'true';
+
+    // Listen for offline mode changes
+    window.addEventListener('offline-mode-changed', (event) => {
+      this.isOffline = event.detail.isOffline;
+      this.loadNotes();
+    });
 
     // Listen for authentication changes
     window.addEventListener('auth-changed', (event) => {
@@ -37,7 +44,7 @@ export class NotesManager {
       return;
     }
 
-    if (this.storageManager.isOnline) {
+    if (!this.isOffline) {
       try {
         const response = await fetch(this.apiBaseUrl, {
           headers: this.getAuthHeaders()
