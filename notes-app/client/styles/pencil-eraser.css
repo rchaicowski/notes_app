@@ -173,24 +173,11 @@
   transform: rotate(-20deg);
 }
 
-.icon.eraser::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 2px;
-  height: 25px;
-  background-color: #333;
-  border-radius: 1px;
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-}
-
 /* Eraser text */
 .icon.eraser .eraser-text {
   position: absolute;
   top: 50%;
-  left: 30%;
+  left: 50%;
   transform: translate(-50%, -50%);
   font-family: 'Arial', sans-serif;
   font-size: 16px;
@@ -198,19 +185,12 @@
   color: #8B0000;
   text-shadow: 0 0 2px rgba(255, 255, 255, 0.7);
   pointer-events: none;
+  white-space: nowrap;
+  letter-spacing: 2px;
 }
 
 .icon.eraser .eraser-text-metal {
-  position: absolute;
-  top: 50%;
-  right: 30%;
-  transform: translate(50%, -50%);
-  font-family: 'Arial', sans-serif;
-  font-size: 16px;
-  font-weight: bold;
-  color: #2F4F4F;
-  text-shadow: 0 0 2px rgba(255, 255, 255, 0.7);
-  pointer-events: none;
+  display: none;
 }
 
 /* ==================== HIGHLIGHT MODES ==================== */
