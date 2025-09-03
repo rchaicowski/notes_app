@@ -38,34 +38,33 @@ export class NotesManager {
   }
 
   async loadNotes() {
-    if (!isAuthenticated()) {
-      this.notes = [];
-      this.renderNotes();
+    if (this.isOffline) {
+      this.fallbackToLocalNotes();
       return;
     }
 
-    if (!this.isOffline) {
-      try {
-        const response = await fetch(this.apiBaseUrl, {
-          headers: this.getAuthHeaders()
-        });
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            this.notes = [];
-            this.renderNotes();
-            return;
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
+    if (!isAuthenticated()) {
+      this.fallbackToLocalNotes();
+      return;
+    }
+
+    try {
+      const response = await fetch(this.apiBaseUrl, {
+        headers: this.getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          this.fallbackToLocalNotes();
+          return;
         }
-        
-        this.notes = await response.json();
-        this.renderNotes();
-      } catch (error) {
-        console.error('Error loading notes:', error);
-        this.fallbackToLocalNotes();
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } else {
+      
+      this.notes = await response.json();
+      this.renderNotes();
+    } catch (error) {
+      console.error('Error loading notes:', error);
       this.fallbackToLocalNotes();
     }
   }
@@ -76,8 +75,32 @@ export class NotesManager {
   }
 
   async saveNote(noteData, isUpdate = false, noteId = null) {
+    // In offline mode, save directly to local storage
+    if (this.isOffline) {
+      const note = {
+        id: isUpdate ? noteId : Date.now(),
+        content: noteData.content,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      if (isUpdate) {
+        const notes = this.storageManager.getFromLocalStorage();
+        const index = notes.findIndex(n => n.id === noteId);
+        if (index !== -1) {
+          notes[index] = { ...notes[index], ...note };
+          localStorage.setItem('notes', JSON.stringify(notes));
+          return notes[index];
+        }
+      }
+      
+      this.storageManager.saveToLocalStorage(note);
+      return note;
+    }
+
+    // Online mode requires authentication
     if (!isAuthenticated()) {
-      throw new Error('Please log in to save notes');
+      throw new Error('Please log in to save notes online');
     }
 
     try {
@@ -91,7 +114,7 @@ export class NotesManager {
       
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Please log in to save notes');
+          throw new Error('Please log in to save notes online');
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -104,8 +127,15 @@ export class NotesManager {
   }
 
   async deleteNote(noteId) {
+    // In offline mode, delete directly from local storage
+    if (this.isOffline) {
+      this.storageManager.deleteFromLocalStorage(noteId);
+      return { success: true };
+    }
+
+    // Online mode requires authentication
     if (!isAuthenticated()) {
-      throw new Error('Please log in to delete notes');
+      throw new Error('Please log in to delete notes online');
     }
 
     try {
@@ -116,7 +146,7 @@ export class NotesManager {
       
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Please log in to delete notes');
+          throw new Error('Please log in to delete notes online');
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
