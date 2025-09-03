@@ -64,30 +64,36 @@ h1 {
 
 @media (max-aspect-ratio: 1/1) {
   .notepad {
-    transform: translateX(-40px) translateY(30px) 
+    transform: translateX(-40px) translateY(30px)
   }
-  
+
   .calculator {
     transform: rotate(-12deg) scale(0.8) translateX(-30px) !important;
   }
-  
+
   .table {
     gap: 0.8rem;
-    height: 75vh; /* Reduced height only for vertical screens */
+    height: 75vh;
+    /* Reduced height only for vertical screens */
   }
-  
+
   .settings-trigger {
     transform: translateX(-60%) translateY(75px) !important;
+  }
+
+  .settings-panel {
+    height: 58vh;
   }
 }
 
 /* ===================== Animations ===================== */
 @keyframes pulse {
+
   0%,
   100% {
     transform: scale(1);
   }
-  
+
   50% {
     transform: scale(1.05);
   }
