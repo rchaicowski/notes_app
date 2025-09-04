@@ -13,13 +13,11 @@ export class NotesManager {
     this.maxCharacters = 35;
     this.isOffline = localStorage.getItem('offlineMode') === 'true';
 
-    // Listen for offline mode changes
     window.addEventListener('offline-mode-changed', (event) => {
       this.isOffline = event.detail.isOffline;
       this.loadNotes();
     });
 
-    // Listen for authentication changes
     window.addEventListener('auth-changed', (event) => {
       if (event.detail.isAuthenticated) {
         this.loadNotes();
@@ -52,7 +50,7 @@ export class NotesManager {
       const response = await fetch(this.apiBaseUrl, {
         headers: this.getAuthHeaders()
       });
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           this.fallbackToLocalNotes();
@@ -60,7 +58,7 @@ export class NotesManager {
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       this.notes = await response.json();
       this.renderNotes();
     } catch (error) {
@@ -75,7 +73,6 @@ export class NotesManager {
   }
 
   async saveNote(noteData, isUpdate = false, noteId = null) {
-    // In offline mode, save directly to local storage
     if (this.isOffline) {
       const note = {
         id: isUpdate ? noteId : Date.now(),
@@ -83,7 +80,7 @@ export class NotesManager {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      
+
       if (isUpdate) {
         const notes = this.storageManager.getFromLocalStorage();
         const index = notes.findIndex(n => n.id === noteId);
@@ -93,12 +90,11 @@ export class NotesManager {
           return notes[index];
         }
       }
-      
+
       this.storageManager.saveToLocalStorage(note);
       return note;
     }
 
-    // Online mode requires authentication
     if (!isAuthenticated()) {
       throw new Error('Please log in to save notes online');
     }
@@ -111,14 +107,14 @@ export class NotesManager {
       };
       const url = isUpdate ? `${this.apiBaseUrl}/${noteId}` : this.apiBaseUrl;
       const response = await fetch(url, options);
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error('Please log in to save notes online');
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error saving note:', error);
@@ -127,13 +123,11 @@ export class NotesManager {
   }
 
   async deleteNote(noteId) {
-    // In offline mode, delete directly from local storage
     if (this.isOffline) {
       this.storageManager.deleteFromLocalStorage(noteId);
       return { success: true };
     }
 
-    // Online mode requires authentication
     if (!isAuthenticated()) {
       throw new Error('Please log in to delete notes online');
     }
@@ -143,14 +137,14 @@ export class NotesManager {
         method: 'DELETE',
         headers: this.getAuthHeaders()
       });
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error('Please log in to delete notes online');
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error deleting note:', error);
@@ -240,22 +234,49 @@ export class NotesManager {
     else if (this.isDeleteMode) this.highlightNotes('delete');
   }
 
-  getTotalPages() { return Math.ceil(this.notes.length / this.notesPerPage); }
-  getNotesForPage(page) { return this.notes.slice((page - 1) * this.notesPerPage, page * this.notesPerPage); }
+  getTotalPages() { 
+    return Math.ceil(this.notes.length / this.notesPerPage); 
+  }
+  
+  getNotesForPage(page) { 
+    return this.notes.slice((page - 1) * this.notesPerPage, page * this.notesPerPage); 
+  }
 
   updatePageInfo() {
     const totalPages = this.getTotalPages();
     const pageInfo = document.getElementById('page-info');
     const prevBtn = document.getElementById('prev-page');
     const nextBtn = document.getElementById('next-page');
+
     if (totalPages === 0) {
-      pageInfo.textContent = 'No pages';
+      if (window.app?.languageController) {
+        const noPages = window.app.languageController.getTranslation('page.noPages') || 'No pages';
+        pageInfo.textContent = noPages;
+      } else {
+        pageInfo.textContent = 'No pages';
+      }
       prevBtn.disabled = nextBtn.disabled = true;
       return;
     }
-    pageInfo.textContent = `Page ${this.currentPage} of ${totalPages}`;
+
+    if (this.currentPage > totalPages) {
+      this.currentPage = totalPages;
+    }
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
+
+    if (window.app?.languageController) {
+      const template = window.app.languageController.getTranslation('page.info');
+      pageInfo.textContent = template.replace('{current}', this.currentPage).replace('{total}', totalPages);
+    } else {
+      pageInfo.textContent = `Page ${this.currentPage} of ${totalPages}`;
+    }
+
     prevBtn.disabled = this.currentPage === 1;
     nextBtn.disabled = this.currentPage === totalPages;
+
+    this.totalPages = totalPages;
   }
 
   selectNote(noteEl) {
@@ -270,20 +291,20 @@ export class NotesManager {
     try {
       const contentInput = document.getElementById('content');
       const form = document.getElementById('note-form');
-      
+
       if (!contentInput || !form) {
         throw new Error('Required elements not found');
       }
-      
+
       contentInput.value = content;
       form.setAttribute('data-editing', id.toString());
       contentInput.focus();
-      
+
       const charCount = document.getElementById('char-count');
       if (charCount) {
         this.updateCharacterCount(content, charCount);
       }
-      
+
       this.soundManager.play('pencil', 200);
     } catch (error) {
       console.error('Error setting up edit:', error);
@@ -301,9 +322,14 @@ export class NotesManager {
     try {
       await this.deleteNote(note.id);
       this.notes.splice(index, 1);
-      if (this.currentPage > this.getTotalPages() && this.getTotalPages() > 0) {
-        this.currentPage = this.getTotalPages();
+      
+      const newTotalPages = this.getTotalPages();
+      if (newTotalPages === 0) {
+        this.currentPage = 1;
+      } else if (this.currentPage > newTotalPages) {
+        this.currentPage = newTotalPages;
       }
+      
       this.renderNotes();
       this.soundManager.play('eraser', 200);
     } catch (error) {
@@ -315,7 +341,7 @@ export class NotesManager {
   changePage(direction) {
     const total = this.getTotalPages();
     if ((direction === 'next' && this.currentPage < total) ||
-        (direction === 'prev' && this.currentPage > 1)) {
+      (direction === 'prev' && this.currentPage > 1)) {
       this.currentPage += (direction === 'next' ? 1 : -1);
     } else return;
 
@@ -326,22 +352,19 @@ export class NotesManager {
     setTimeout(() => { this.renderNotes(); notepad.classList.remove('page-flip-animation'); }, 200);
   }
 
-  // Character limit functionality
   setupCharacterLimit() {
     const contentInput = document.getElementById('content');
     const charCountDisplay = this.createCharacterCountDisplay();
-    
-    // Insert character count display after the input
+
     contentInput.parentNode.insertBefore(charCountDisplay, contentInput.nextSibling);
-    
+
     contentInput.addEventListener('input', (e) => {
       this.updateCharacterCount(e.target.value, charCountDisplay);
     });
-    
+
     contentInput.addEventListener('keydown', (e) => {
-      // Prevent typing if at max characters (except backspace, delete, arrow keys)
-      if (e.target.value.length >= this.maxCharacters && 
-          !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.key)) {
+      if (e.target.value.length >= this.maxCharacters &&
+        !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.key)) {
         e.preventDefault();
       }
     });
@@ -357,8 +380,7 @@ export class NotesManager {
   updateCharacterCount(value, display) {
     const currentLength = value.length;
     display.textContent = `${currentLength}/${this.maxCharacters}`;
-    
-    // Change color based on proximity to limit
+
     if (currentLength >= this.maxCharacters) {
       display.style.color = '#d8580d';
       display.style.fontWeight = 'bold';
@@ -381,17 +403,15 @@ export class NotesManager {
     const content = document.getElementById('content').value.trim();
     const form = document.getElementById('note-form');
     const editingId = form.getAttribute('data-editing');
-    
+
     if (!content) return;
-    
-    // Check character limit
+
     if (content.length > this.maxCharacters) {
       return;
     }
 
     try {
       if (editingId !== null && editingId !== undefined && editingId !== '' && editingId !== 'null') {
-        // Editing existing note
         const idx = parseInt(editingId);
         const note = this.notes[idx];
         if (!note) {
@@ -401,16 +421,14 @@ export class NotesManager {
         this.notes[idx] = updatedNote;
         form.removeAttribute('data-editing');
       } else {
-        // Creating new note
         const newNote = await this.saveNote({ content });
         this.notes.push(newNote);
         this.currentPage = this.getTotalPages();
       }
-      
+
       this.renderNotes();
       form.reset();
-      
-      // Reset character count display
+
       const charCount = document.getElementById('char-count');
       if (charCount) {
         this.updateCharacterCount('', charCount);

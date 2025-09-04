@@ -1,4 +1,5 @@
 import { StorageManager } from './storageManager.js';
+import { LanguageController } from './languageController.js';
 
 export class SettingsController {
   constructor() {
@@ -8,6 +9,8 @@ export class SettingsController {
     this.closeBtn = document.getElementById('settingsClose');
 
     this.storageManager = new StorageManager();
+    this.languageController = new LanguageController();
+    
     this.loadSavedSettings();
     this.updateStorageModeDisplay();
     this.init();
@@ -19,7 +22,11 @@ export class SettingsController {
     const isOffline = localStorage.getItem('offlineMode') === 'true';
 
     if (storageModeDisplay) {
-      storageModeDisplay.textContent = isOffline ? 'Offline' : 'Online';
+      const modeText = isOffline ? 
+        this.languageController.getTranslation('settings.offline') : 
+        this.languageController.getTranslation('settings.online');
+      
+      storageModeDisplay.textContent = modeText;
       storageModeDisplay.className = isOffline ? 'mode-offline' : 'mode-online';
     }
 
@@ -39,7 +46,10 @@ export class SettingsController {
     const volumeValue = document.getElementById('masterVolumeValue');
     const soundToggle = document.getElementById('soundEnabled');
 
-    if (volumeSlider && volumeValue) { volumeSlider.value = savedVolume; volumeValue.textContent = `${savedVolume}%`; }
+    if (volumeSlider && volumeValue) { 
+      volumeSlider.value = savedVolume; 
+      volumeValue.textContent = `${savedVolume}%`; 
+    }
     if (soundToggle) soundToggle.checked = savedSoundEnabled;
 
     this.savedVolume = savedVolume;
@@ -47,12 +57,14 @@ export class SettingsController {
   }
 
   init() {
-    // Listen for offline mode changes
     window.addEventListener('offline-mode-changed', () => {
       this.updateStorageModeDisplay();
     });
 
-    // Setup switch to online button
+    window.addEventListener('language-changed', () => {
+      this.updateStorageModeDisplay();
+    });
+
     document.getElementById('switchToOnline')?.addEventListener('click', () => {
       localStorage.removeItem('offlineMode');
       this.close();
@@ -62,9 +74,8 @@ export class SettingsController {
       }));
     });
 
-    // Changed from hover to click, and added sound effect
     this.trigger.addEventListener('click', () => {
-      // Play box sound when opening
+
       if (window.app?.soundManager) {
         window.app.soundManager.play('box');
       }
@@ -80,7 +91,6 @@ export class SettingsController {
   }
 
   open() { 
-    // Add 'open' class to trigger to keep the box open
     this.trigger.classList.add('open');
     this.panel.classList.add('open'); 
     this.overlay.classList.add('open'); 
@@ -88,7 +98,6 @@ export class SettingsController {
   }
   
   close() { 
-    // Remove 'open' class from trigger to close the box
     this.trigger.classList.remove('open');
     this.panel.classList.remove('open'); 
     this.overlay.classList.remove('open'); 
@@ -99,7 +108,6 @@ export class SettingsController {
     const volumeSlider = document.getElementById('masterVolume');
     const volumeValue = document.getElementById('masterVolumeValue');
     const soundToggle = document.getElementById('soundEnabled');
-    const notesPerPageSelect = document.getElementById('notesPerPage');
 
     volumeSlider?.addEventListener('input', e => {
       const value = e.target.value;
@@ -121,12 +129,5 @@ export class SettingsController {
       }
     });
 
-    notesPerPageSelect?.addEventListener('change', e => {
-      const n = parseInt(e.target.value);
-      if (window.app?.notesManager) {
-        window.app.notesManager.notesPerPage = n;
-        window.app.notesManager.renderNotes();
-      }
-    });
   }
 }

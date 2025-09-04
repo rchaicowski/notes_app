@@ -13,6 +13,9 @@ class NotesApp {
     this.lamp = new LampController(this.soundManager);
     this.loginManager = new LoginManager();
     this.notesManager = new NotesManager(this.soundManager, this.settingsController.storageManager);
+    
+    // Language controller is initialized within settingsController
+    this.languageController = this.settingsController.languageController;
 
     const volume = this.settingsController.savedVolume / 100;
     const enabled = this.settingsController.soundEnabled;
@@ -27,6 +30,45 @@ class NotesApp {
     this.notesManager.initializeCharacterLimit();
     this.setupEventListeners();
     this.setupPlantSound();
+    this.setupLanguageHandlers();
+  }
+
+  setupLanguageHandlers() {
+    // Listen for language changes to update dynamic content
+    window.addEventListener('language-changed', () => {
+      // Update page info when language changes
+      this.updatePageInfo();
+      
+      // Update settings box label
+      this.updateSettingsLabel();
+    });
+  }
+
+   updatePageInfo() {
+    const pageInfo = document.getElementById('page-info');
+    if (pageInfo && this.notesManager) {
+      const totalPages = this.notesManager.getTotalPages();
+      
+      // Handle no pages case
+      if (totalPages === 0) {
+        const noPages = this.languageController.getTranslation('page.noPages') || 'No pages';
+        pageInfo.textContent = noPages;
+        return;
+      }
+      
+      // Use current page directly (not +1)
+      const current = this.notesManager.currentPage;
+      const total = totalPages;
+      
+      const template = this.languageController.getTranslation('page.info');
+      pageInfo.textContent = template.replace('{current}', current).replace('{total}', total);
+    }
+  }
+
+  updateSettingsLabel() {
+    const settingsLabel = document.querySelector('.matchbox-cover::after');
+    // This is handled via CSS content, but we could update it dynamically if needed
+    // For now, the CSS approach with data attributes works fine
   }
 
   setupPlantSound() {
@@ -38,11 +80,20 @@ class NotesApp {
     document.getElementById('edit-mode-btn')?.addEventListener('click', () => this.notesManager.toggleEditMode());
     document.getElementById('delete-mode-btn')?.addEventListener('click', () => this.notesManager.toggleDeleteMode());
     document.getElementById('add-btn')?.addEventListener('click', () => this.notesManager.handleAddOrUpdate());
-    document.getElementById('prev-page')?.addEventListener('click', () => this.notesManager.changePage('prev'));
-    document.getElementById('next-page')?.addEventListener('click', () => this.notesManager.changePage('next'));
+    document.getElementById('prev-page')?.addEventListener('click', () => {
+      this.notesManager.changePage('prev');
+      this.updatePageInfo(); // Update page info after page change
+    });
+    document.getElementById('next-page')?.addEventListener('click', () => {
+      this.notesManager.changePage('next');
+      this.updatePageInfo(); // Update page info after page change
+    });
 
     document.getElementById('content')?.addEventListener('keypress', e => {
-      if (e.key === 'Enter') { e.preventDefault(); this.notesManager.handleAddOrUpdate(); }
+      if (e.key === 'Enter') { 
+        e.preventDefault(); 
+        this.notesManager.handleAddOrUpdate(); 
+      }
     });
 
     document.addEventListener('keydown', e => this.handleGlobalKeydown(e));
@@ -51,10 +102,21 @@ class NotesApp {
   handleGlobalKeydown(e) {
     const form = document.getElementById('note-form');
     if (e.key === 'Escape') {
-      if (form?.dataset.editing) { form.reset(); form.removeAttribute('data-editing'); }
-      else if (this.notesManager.isEditMode || this.notesManager.isDeleteMode) this.notesManager.exitModes();
-    } else if (e.key === 'ArrowLeft' && !e.target.matches('input')) this.notesManager.changePage('prev');
-    else if (e.key === 'ArrowRight' && !e.target.matches('input')) this.notesManager.changePage('next');
+      if (form?.dataset.editing) { 
+        form.reset(); 
+        form.removeAttribute('data-editing'); 
+      }
+      else if (this.notesManager.isEditMode || this.notesManager.isDeleteMode) {
+        this.notesManager.exitModes();
+      }
+    } else if (e.key === 'ArrowLeft' && !e.target.matches('input')) {
+      this.notesManager.changePage('prev');
+      this.updatePageInfo();
+    }
+    else if (e.key === 'ArrowRight' && !e.target.matches('input')) {
+      this.notesManager.changePage('next');
+      this.updatePageInfo();
+    }
   }
 }
 
