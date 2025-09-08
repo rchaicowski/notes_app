@@ -13,6 +13,7 @@ export class SettingsController {
     
     this.loadSavedSettings();
     this.updateStorageModeDisplay();
+    this.updateSettingsButtonText();
     this.init();
   }
 
@@ -39,6 +40,22 @@ export class SettingsController {
     }
   }
 
+  updateSettingsButtonText() {
+    const settingsText = this.languageController.getTranslation('settings.trigger');
+    document.documentElement.style.setProperty('--settings-text', `"${settingsText}"`);
+    
+    let fontSize = '16.8px'; 
+    if (settingsText.length > 12) {
+      fontSize = '12px';
+    } else if (settingsText.length > 10) {
+      fontSize = '14.5px';
+    } else if (settingsText.length > 8) {
+      fontSize = '15.5px';
+    }
+    
+    document.documentElement.style.setProperty('--settings-font-size', fontSize);
+  }
+
   loadSavedSettings() {
     const savedVolume = localStorage.getItem('masterVolume') || 50;
     const savedSoundEnabled = localStorage.getItem('soundEnabled') !== 'false';
@@ -63,6 +80,7 @@ export class SettingsController {
 
     window.addEventListener('language-changed', () => {
       this.updateStorageModeDisplay();
+      this.updateSettingsButtonText();
     });
 
     document.getElementById('switchToOnline')?.addEventListener('click', () => {
