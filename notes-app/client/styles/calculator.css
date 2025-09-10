@@ -12,7 +12,7 @@
   box-shadow:
     0 15px 30px rgba(0, 0, 0, 0.4),
     inset 0 2px 4px rgba(255, 255, 255, 0.1);
-  transform: rotate(-12deg) scale(0.8); /* Slightly skewed for visual effect */
+  transform: rotate(-12deg) scale(0.8); 
   border: 2px solid #1a252f;
 }
 
@@ -27,22 +27,32 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 0 15px;
+  padding: 0 10px;
   box-sizing: border-box;
   font-family: 'Courier New', monospace;
-  font-size: 18px;
+  font-size: 20px; 
   color: #00ff00;
-  text-shadow: 0 0 5px #00ff00; /* Old-school terminal glow */
+  text-shadow: 0 0 5px #00ff00; 
   overflow: hidden;
+  white-space: nowrap;
+  line-height: 1;
+  transition: font-size 0.2s ease; 
 }
+
+.calc-display.size-1 { font-size: 20px; } 
+.calc-display.size-2 { font-size: 18px; } 
+.calc-display.size-3 { font-size: 16px; } 
+.calc-display.size-4 { font-size: 14px; } 
+.calc-display.size-5 { font-size: 12px; } 
+.calc-display.size-6 { font-size: 10px; } 
 
 /* ==================== Buttons Grid ==================== */
 .calc-buttons {
   display: grid;
-  grid-template-columns: repeat(4, 40px); /* Fixed width columns */
+  grid-template-columns: repeat(4, 40px); 
   gap: 8px;
   height: 200px;
-  justify-content: center; /* Center the grid */
+  justify-content: center; 
 }
 
 /* ==================== Generic Button ==================== */
@@ -89,6 +99,8 @@
   background: linear-gradient(145deg, #27ae60, #2ecc71);
   border-color: #2ecc71;
   color: white;
+  grid-row: span 2;
+  height: 88px; 
 }
 
 .calc-btn.equals:hover {
@@ -109,10 +121,5 @@
 /* ==================== Special Buttons ==================== */
 .calc-btn[onclick*="inputNumber('0')"] {
   grid-column: span 2;
-  width: 88px; /* Two button widths (40px * 2) + gap (8px) */
-}
-
-.calc-btn.equals {
-  grid-row: span 2;
-  height: 88px; /* Two button heights (40px * 2) + gap (8px) */
+  width: 88px; 
 }
