@@ -5,13 +5,13 @@
   align-self: start;
   justify-self: start;
   position: absolute;
-  top: 70px;
-  left: 20px;
+  top: 170px;
+  left: 25px;
   width: 100px;
   height: 150px;
   z-index: auto;
   pointer-events: none;
-  transform: scale(3.2) rotate(-10deg) translateX(15%);
+  transform: scale(3.5) rotate(-10deg) translateX(15%);
   transform-origin: center bottom;
 }
 

@@ -3,15 +3,16 @@ body {
   font-family: Arial, sans-serif;
   background-color: #e2dbc8;
   margin: 0;
-  padding: 2rem;
-  height: 100vh;
+  padding: 3rem 2rem 2rem 2rem;;
   box-sizing: border-box;
 }
 
-h1 {
-  text-align: center;
-  margin-bottom: 1rem;
-  opacity: 0;
+.visually-hidden {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }
 
 /* ===================== Layout ===================== */
@@ -48,7 +49,7 @@ h1 {
       #654321) 1;
   padding: 2rem;
   border-radius: 25px;
-  height: 90vh;
+   height: 650px;
   max-width: 1000px;
   margin: auto;
   position: relative;
@@ -63,6 +64,10 @@ h1 {
 }
 
 @media (max-aspect-ratio: 1/1) {
+  body {
+    padding: 6rem 1rem 1rem 1rem;
+  }
+
   .notepad {
     transform: translateX(-40px) translateY(30px)
   }
@@ -74,7 +79,6 @@ h1 {
   .table {
     gap: 0.8rem;
     height: 75vh;
-    /* Reduced height only for vertical screens */
   }
 
   .settings-trigger {

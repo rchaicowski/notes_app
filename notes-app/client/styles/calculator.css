@@ -3,6 +3,7 @@
   grid-column: 1 / 2;
   grid-row: 2 / 3;
   align-self: center;
+  margin-top: 170px;
   justify-self: start;
   width: 200px;
   height: 290px;
