@@ -4,7 +4,7 @@ export class NotesManager {
   constructor(soundManager, storageManager) {
     this.notes = [];
     this.currentPage = 1;
-    this.notesPerPage = 12;
+    this.notesPerPage = 15;
     this.isEditMode = false;
     this.isDeleteMode = false;
     this.apiBaseUrl = 'http://localhost:5000/api/notes';

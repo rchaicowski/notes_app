@@ -46,8 +46,10 @@
   padding: 20px;
   padding-top: 40px;
   overflow: visible;
-  max-height: 600px;
-  height: 444px;
+  /* FIXED: Calculate exact height for lines */
+  /* Formula: top padding (40px) + (number of lines × line height) + extra bottom padding */
+  /* For 15 lines: 40px + (15 × 24px) + 23px = 443px (custom spacing for pagination) */
+  height: 443px;
   position: relative;
   max-width: 500px;
   width: 310px;
@@ -72,36 +74,70 @@ form {
   gap: 10px;
   width: 100%;
   margin-bottom: 20px;
+  align-items: center;
 }
 
 form input#content {
   flex: 1;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.7);
   border: none;
-  border-bottom: 1px solid #aaa;
+  border-bottom: 2px solid #d3cfc7;
+  border-radius: 4px 4px 0 0;
   font-family: inherit;
   font-size: 16px;
-  padding: 5px;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 form input#content:focus {
   outline: none;
-  border-color: #333;
+  border-bottom-color: #d8580d;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-.add-btn {
-  background: none;
-  border: none;
-  color: #d8580d;
-  font-size: 30px;
-  cursor: pointer;
-  padding: 0 5px;
-  align-self: center;
-  transition: color 0.3s ease;
+form input#content::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+form .add-btn,
+button.add-btn {
+  background: linear-gradient(135deg, #d8580d, #ff6b1a) !important;
+  border: none !important;
+  color: white !important;
+  font-size: 20px !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 50% !important; /* Force circular */
+  align-self: center !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
 }
 
 .add-btn:hover {
-  color: #000;
+  background: linear-gradient(135deg, #ff6b1a, #d8580d);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.add-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* ==================== NOTES LIST - SINGLE LINE ==================== */
@@ -116,28 +152,28 @@ ul#notes-list li {
   white-space: nowrap;          /* Keep text on single line */
   overflow: hidden;             /* Hide overflow text */
   text-overflow: ellipsis;      /* Add "..." for truncated text */
-  height: 24px;                 /* Fixed height - single line */
-  line-height: 24px;
+  height: 24px;                 /* Fixed height - matches line height exactly */
+  line-height: 24px;            /* Matches background line spacing */
   background: transparent;
   box-shadow: none;
-  padding: 2px 0;
-  margin: 0 0 2px 0;            /* Small margin between notes */
+  padding: 0;                   /* FIXED: Removed padding to align with lines */
+  margin: 0;                    /* FIXED: Removed margin to align with lines */
   display: flex;
   justify-content: space-between;
-  align-items: center;          /* Center align for single line */
-  font-family: 'Courier New', Courier, monospace;  /* Keep original font */
-  font-size: 14px;              /* Keep original size */
+  align-items: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
 }
 
 ul#notes-list li .note-content {
   flex: 1;
-  font-family: 'Courier New', Courier, monospace;  /* Keep original font */
-  font-size: 14px;              /* Keep original size */
-  line-height: 24px;            /* Keep original line height */
-  white-space: nowrap;          /* Single line only */
-  overflow: hidden;             /* Hide overflow */
-  text-overflow: ellipsis;      /* Add "..." for long text */
-  max-width: 100%;              /* Ensure content doesn't exceed container */
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 24px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Character count and warning styling */
