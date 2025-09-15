@@ -46,9 +46,6 @@
   padding: 20px;
   padding-top: 40px;
   overflow: visible;
-  /* FIXED: Calculate exact height for lines */
-  /* Formula: top padding (40px) + (number of lines × line height) + extra bottom padding */
-  /* For 15 lines: 40px + (15 × 24px) + 23px = 443px (custom spacing for pagination) */
   height: 443px;
   position: relative;
   max-width: 500px;
@@ -105,28 +102,28 @@ form input#content::placeholder {
 form .add-btn,
 button.add-btn {
   background: linear-gradient(135deg, #d8580d, #ff6b1a) !important;
-  border: none !important;
-  color: white !important;
-  font-size: 20px !important;
-  font-weight: bold !important;
-  cursor: pointer !important;
-  padding: 0 !important;
-  margin: 0 !important;
+  border: none;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
   border-radius: 50% !important; /* Force circular */
-  align-self: center !important;
-  transition: all 0.3s ease !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
-  min-height: 32px !important;
-  max-width: 32px !important;
-  max-height: 32px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex-shrink: 0 !important;
-  box-sizing: border-box !important;
+  align-self: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  max-width: 32px;
+  max-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .add-btn:hover {
@@ -147,17 +144,16 @@ ul#notes-list {
   margin: 0;
 }
 
-/* Single line notes with fixed height */
 ul#notes-list li {
-  white-space: nowrap;          /* Keep text on single line */
-  overflow: hidden;             /* Hide overflow text */
-  text-overflow: ellipsis;      /* Add "..." for truncated text */
-  height: 24px;                 /* Fixed height - matches line height exactly */
-  line-height: 24px;            /* Matches background line spacing */
+  white-space: nowrap;          
+  overflow: hidden;             
+  text-overflow: ellipsis;      
+  height: 24px;                 
+  line-height: 24px;            
   background: transparent;
   box-shadow: none;
-  padding: 0;                   /* FIXED: Removed padding to align with lines */
-  margin: 0;                    /* FIXED: Removed margin to align with lines */
+  padding: 0;                   
+  margin: 0;                    
   display: flex;
   justify-content: space-between;
   align-items: center;
