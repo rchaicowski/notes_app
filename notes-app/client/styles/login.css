@@ -21,7 +21,7 @@
 
 .btn-offline {
     width: 100%;
-    padding: 18px; 
+    padding: 18px;
     background: linear-gradient(135deg, #ff9800, #f57c00);
     color: white;
     border: none;
@@ -30,16 +30,16 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 
+    box-shadow:
         0 4px 12px rgba(255, 152, 0, 0.3),
         inset 0 1px 2px rgba(255, 255, 255, 0.2);
-    min-height: 56px; 
+    min-height: 56px;
 }
 
 .btn-offline:hover {
     background: linear-gradient(135deg, #f57c00, #ef6c00);
     transform: translateY(-2px);
-    box-shadow: 
+    box-shadow:
         0 6px 16px rgba(255, 152, 0, 0.4),
         inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
@@ -79,7 +79,7 @@
     background: linear-gradient(145deg, #f5f3f0, #ebe7e0);
     padding: 2.5rem;
     border-radius: 20px;
-    box-shadow: 
+    box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.3),
         inset 0 1px 2px rgba(255, 255, 255, 0.3);
     width: 90%;
@@ -96,6 +96,7 @@
         transform: translateY(-30px) scale(0.95);
         opacity: 0;
     }
+
     to {
         transform: translateY(0) scale(1);
         opacity: 1;
@@ -114,7 +115,7 @@
 
 .auth-form .form-group {
     margin-bottom: 1.5rem;
-    width: 100%; 
+    width: 100%;
 }
 
 .auth-form .form-group:last-of-type {
@@ -127,25 +128,25 @@
     color: #8b4513;
     font-weight: 600;
     font-size: 0.95rem;
-    width: 100%; 
+    width: 100%;
 }
 
 .auth-form input {
     width: 100%;
-    padding: 20px 24px; 
+    padding: 20px 24px;
     border: 2px solid #d4bc9a;
     border-radius: 12px;
-    font-size: 1.1rem; 
+    font-size: 1.1rem;
     background: #ffffff;
     color: #5d4e37;
     transition: all 0.3s ease;
     box-sizing: border-box;
-    box-shadow: 
+    box-shadow:
         inset 0 2px 4px rgba(0, 0, 0, 0.06),
         0 1px 2px rgba(0, 0, 0, 0.1);
-    min-height: 56px; 
-    margin: 0; 
-    display: block; 
+    min-height: 56px;
+    margin: 0;
+    display: block;
 }
 
 .auth-form input::placeholder {
@@ -157,7 +158,7 @@
     border-color: #4CAF50;
     outline: none;
     transform: translateY(-1px);
-    box-shadow: 
+    box-shadow:
         inset 0 2px 4px rgba(0, 0, 0, 0.06),
         0 4px 12px rgba(76, 175, 80, 0.2);
 }
@@ -175,7 +176,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     box-sizing: border-box;
-    box-shadow: 
+    box-shadow:
         0 4px 12px rgba(76, 175, 80, 0.3),
         inset 0 1px 2px rgba(255, 255, 255, 0.2);
     min-height: 56px;
@@ -183,7 +184,7 @@
 
 .auth-form button.btn-offline {
     background: linear-gradient(135deg, #ff9800, #f57c00);
-    box-shadow: 
+    box-shadow:
         0 4px 12px rgba(255, 152, 0, 0.3),
         inset 0 1px 2px rgba(255, 255, 255, 0.2);
     margin-top: 10px;
@@ -192,14 +193,14 @@
 .auth-form button:hover {
     background: linear-gradient(135deg, #45a049, #3d8b40);
     transform: translateY(-2px);
-    box-shadow: 
+    box-shadow:
         0 6px 16px rgba(76, 175, 80, 0.4),
         inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 .auth-form button:active {
     transform: translateY(-1px);
-    box-shadow: 
+    box-shadow:
         0 3px 8px rgba(76, 175, 80, 0.3),
         inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
@@ -211,7 +212,7 @@
     font-size: 0.95rem;
 }
 
-.auth-toggle span {
+.auth-toggle .clickable {
     color: #4CAF50;
     cursor: pointer;
     text-decoration: none;
@@ -220,7 +221,7 @@
     border-bottom: 2px solid transparent;
 }
 
-.auth-toggle span:hover {
+.auth-toggle .clickable:hover {
     color: #45a049;
     border-bottom-color: #45a049;
 }
@@ -236,7 +237,7 @@
     background: linear-gradient(145deg, #f5f3f0, #ebe7e0);
     padding: 12px 20px;
     border-radius: 12px;
-    box-shadow: 
+    box-shadow:
         0 4px 16px rgba(0, 0, 0, 0.15),
         inset 0 1px 2px rgba(255, 255, 255, 0.3);
     z-index: 100;
@@ -304,15 +305,15 @@
         padding: 2rem 1.5rem;
         margin: 20px;
     }
-    
+
     .auth-form h2 {
         font-size: 1.7rem;
     }
-    
+
     .auth-form input,
     .auth-form button {
-        padding: 18px 20px; 
-        font-size: 1.1rem; 
-        min-height: 54px; 
+        padding: 18px 20px;
+        font-size: 1.1rem;
+        min-height: 54px;
     }
 }
