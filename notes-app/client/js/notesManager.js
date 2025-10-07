@@ -10,8 +10,12 @@ export class NotesManager {
     this.apiBaseUrl = 'http://localhost:5000/api/notes';
     this.soundManager = soundManager;
     this.storageManager = storageManager;
-    this.maxCharacters = 35;
+    this.maxCharacters = 35; // Keep original for backward compatibility
+    this.maxTitleCharacters = 35;
+    this.maxLinesPerNote = 15; // 15 lines max per note
     this.isOffline = localStorage.getItem('offlineMode') === 'true';
+    this.currentView = 'index'; // 'index' or 'note'
+    this.currentNoteId = null;
 
     window.addEventListener('offline-mode-changed', (event) => {
       this.isOffline = event.detail.isOffline;
@@ -68,7 +72,21 @@ export class NotesManager {
   }
 
   fallbackToLocalNotes() {
-    this.notes = this.storageManager.getFromLocalStorage();
+    const localNotes = this.storageManager.getFromLocalStorage();
+    // Migrate old single-line notes to new format
+    this.notes = localNotes.map(note => {
+      if (note.title === undefined) {
+        // Old format - migrate by taking first line as title, rest as content
+        const content = note.content || '';
+        const lines = content.split('\n');
+        return {
+          ...note,
+          title: lines[0]?.substring(0, 35) || 'Untitled',
+          content: lines.slice(1).join('\n') || ''
+        };
+      }
+      return note;
+    });
     this.renderNotes();
   }
 
@@ -76,22 +94,22 @@ export class NotesManager {
     if (this.isOffline) {
       const note = {
         id: isUpdate ? noteId : Date.now(),
-        content: noteData.content,
-        created_at: new Date().toISOString(),
+        title: noteData.title || 'Untitled',
+        content: noteData.content || '',
+        created_at: isUpdate ? (this.notes.find(n => n.id === noteId)?.created_at || new Date().toISOString()) : new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
+      const allNotes = this.storageManager.getFromLocalStorage();
       if (isUpdate) {
-        const notes = this.storageManager.getFromLocalStorage();
-        const index = notes.findIndex(n => n.id === noteId);
+        const index = allNotes.findIndex(n => n.id === noteId);
         if (index !== -1) {
-          notes[index] = { ...notes[index], ...note };
-          localStorage.setItem('notes', JSON.stringify(notes));
-          return notes[index];
+          allNotes[index] = note;
         }
+      } else {
+        allNotes.push(note);
       }
-
-      this.storageManager.saveToLocalStorage(note);
+      localStorage.setItem('notes', JSON.stringify(allNotes));
       return note;
     }
 
@@ -103,7 +121,10 @@ export class NotesManager {
       const options = {
         method: isUpdate ? 'PUT' : 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ content: noteData.content })
+        body: JSON.stringify({ 
+          title: noteData.title || 'Untitled',
+          content: noteData.content || ''
+        })
       };
       const url = isUpdate ? `${this.apiBaseUrl}/${noteId}` : this.apiBaseUrl;
       const response = await fetch(url, options);
@@ -124,7 +145,9 @@ export class NotesManager {
 
   async deleteNote(noteId) {
     if (this.isOffline) {
-      this.storageManager.deleteFromLocalStorage(noteId);
+      const allNotes = this.storageManager.getFromLocalStorage();
+      const filteredNotes = allNotes.filter(n => n.id !== noteId);
+      localStorage.setItem('notes', JSON.stringify(filteredNotes));
       return { success: true };
     }
 
@@ -152,12 +175,260 @@ export class NotesManager {
     }
   }
 
+  showNote(noteId) {
+    const note = this.notes.find(n => n.id === noteId);
+    if (!note) return;
+
+    this.currentView = 'note';
+    this.currentNoteId = noteId;
+    this.renderNoteView(note);
+  }
+
+  showIndex() {
+    this.currentView = 'index';
+    this.currentNoteId = null;
+    
+    // Show the form and pagination when returning to index
+    const form = document.getElementById('note-form');
+    const pagination = document.querySelector('.page-navigation');
+    if (form) form.style.display = 'flex';
+    if (pagination) pagination.style.display = 'flex';
+    
+    this.renderNotes();
+  }
+
+  createNewNote() {
+    // Get any existing input value
+    const contentInput = document.getElementById('content');
+    const inputValue = contentInput ? contentInput.value.trim() : '';
+    
+    const newNote = {
+      id: null,
+      title: inputValue || '',
+      content: '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    // Clear the original input
+    if (contentInput) {
+      contentInput.value = '';
+    }
+    
+    this.currentView = 'note';
+    this.currentNoteId = null;
+    this.renderNoteView(newNote, true);
+  }
+
+  renderNoteView(note, isNew = false) {
+    // Hide the form and pagination when in note view
+    const form = document.getElementById('note-form');
+    const pagination = document.querySelector('.page-navigation');
+    if (form) form.style.display = 'none';
+    if (pagination) pagination.style.display = 'none';
+    
+    const list = document.getElementById('notes-list');
+    
+    // Create the note editing interface that looks like the notepad
+    list.innerHTML = '';
+    
+    // Create container for the note
+    const noteContainer = document.createElement('div');
+    noteContainer.className = 'note-view';
+    
+    // Title input (looks like a line on the notepad)
+    const titleLine = document.createElement('div');
+    titleLine.className = 'note-line title-line';
+    titleLine.innerHTML = `
+      <input 
+        type="text" 
+        id="note-title" 
+        class="note-title-input" 
+        placeholder="Note Title" 
+        value="${note.title}" 
+        maxlength="${this.maxTitleCharacters}"
+      />
+    `;
+    noteContainer.appendChild(titleLine);
+
+    // Content lines (15 lines, each with 35 character limit)
+    const contentContainer = document.createElement('div');
+    contentContainer.className = 'note-content-container';
+    
+    const contentLines = note.content.split('\n');
+    for (let i = 0; i < this.maxLinesPerNote; i++) {
+      const line = document.createElement('div');
+      line.className = 'note-line content-line';
+      line.innerHTML = `
+        <input 
+          type="text" 
+          class="note-content-line" 
+          data-line="${i}"
+          placeholder="${i === 0 ? 'Start writing...' : ''}"
+          value="${contentLines[i] || ''}" 
+          maxlength="${this.maxCharacters}"
+        />
+      `;
+      contentContainer.appendChild(line);
+    }
+    
+    noteContainer.appendChild(contentContainer);
+    
+    // Action buttons (styled to fit with notepad)
+    const actionButtons = document.createElement('div');
+    actionButtons.className = 'note-actions';
+    actionButtons.innerHTML = `
+      <button id="back-to-index" class="note-action-btn">← Back to Index</button>
+      <button id="save-note" class="note-action-btn save-btn">Save Note</button>
+    `;
+    noteContainer.appendChild(actionButtons);
+    
+    list.appendChild(noteContainer);
+
+    // Add event listeners
+    document.getElementById('back-to-index').addEventListener('click', () => {
+      this.showIndex();
+    });
+
+    document.getElementById('save-note').addEventListener('click', () => {
+      this.saveCurrentNote(isNew);
+    });
+
+    // Auto-advance to next line on Enter or when reaching character limit
+    const contentInputs = document.querySelectorAll('.note-content-line');
+    contentInputs.forEach((input, index) => {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && index < contentInputs.length - 1) {
+          e.preventDefault();
+          contentInputs[index + 1].focus();
+        }
+        // Handle backspace at beginning of line - move to previous line
+        else if (e.key === 'Backspace' && input.selectionStart === 0 && input.selectionEnd === 0 && index > 0) {
+          e.preventDefault();
+          const prevInput = contentInputs[index - 1];
+          prevInput.focus();
+          // Move cursor to end of previous line
+          prevInput.setSelectionRange(prevInput.value.length, prevInput.value.length);
+        }
+      });
+      
+      input.addEventListener('input', (e) => {
+        // Auto-wrap to next line when reaching character limit
+        if (e.target.value.length >= this.maxCharacters && index < contentInputs.length - 1) {
+          contentInputs[index + 1].focus();
+        }
+        
+        // Auto-save on input
+        this.debouncedSave(isNew);
+      });
+    });
+
+    // Auto-save for title and Enter key navigation
+    document.getElementById('note-title').addEventListener('input', () => {
+      this.debouncedSave(isNew);
+    });
+
+    // Handle Enter key in title to move to first content line
+    document.getElementById('note-title').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const firstContentLine = document.querySelector('.note-content-line');
+        if (firstContentLine) {
+          firstContentLine.focus();
+        }
+      }
+    });
+
+    // Focus appropriate field
+    if (isNew) {
+      document.getElementById('note-title').focus();
+    } else {
+      // Focus on first empty content line or first line
+      const firstEmptyLine = Array.from(contentInputs).find(input => !input.value);
+      if (firstEmptyLine) {
+        firstEmptyLine.focus();
+      } else {
+        contentInputs[0].focus();
+      }
+    }
+  }
+
+  // Debounced auto-save
+  debouncedSave(isNew) {
+    clearTimeout(this.saveTimeout);
+    this.saveTimeout = setTimeout(() => {
+      const titleInput = document.getElementById('note-title');
+      if (titleInput && (titleInput.value.trim() || this.hasContentInLines())) {
+        // Create a reference to track if this is still a new note
+        const wasNew = isNew && this.currentNoteId === null;
+        this.saveCurrentNote(wasNew);
+        // After auto-save, it's no longer new
+        if (wasNew) {
+          isNew = false;
+        }
+      }
+    }, 2000);
+  }
+
+  hasContentInLines() {
+    const contentInputs = document.querySelectorAll('.note-content-line');
+    return Array.from(contentInputs).some(input => input.value.trim());
+  }
+
+  async saveCurrentNote(isNew) {
+    const titleInput = document.getElementById('note-title');
+    const contentInputs = document.querySelectorAll('.note-content-line');
+    
+    if (!titleInput) return;
+
+    const title = titleInput.value.trim() || 'Untitled';
+    const contentLines = Array.from(contentInputs).map(input => input.value);
+    const content = contentLines.join('\n').replace(/\n+$/, ''); // Remove trailing empty lines
+
+    try {
+      let savedNote;
+      if (isNew) {
+        savedNote = await this.saveNote({ title, content });
+        this.notes.push(savedNote);
+        this.currentNoteId = savedNote.id;
+        // After first save, it's no longer new
+        isNew = false;
+      } else {
+        savedNote = await this.saveNote({ title, content }, true, this.currentNoteId);
+        const index = this.notes.findIndex(n => n.id === this.currentNoteId);
+        if (index !== -1) {
+          this.notes[index] = savedNote;
+        }
+      }
+      
+      this.soundManager.play('pencil', 200);
+      
+      // Visual feedback
+      const saveBtn = document.getElementById('save-note');
+      if (saveBtn) {
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = 'Saved!';
+        saveBtn.style.opacity = '0.7';
+        setTimeout(() => {
+          saveBtn.textContent = originalText;
+          saveBtn.style.opacity = '1';
+        }, 1000);
+      }
+      
+    } catch (error) {
+      console.error('Failed to save note:', error);
+      alert(error.message || 'Failed to save note.');
+    }
+  }
+
   toggleEditMode() {
+    if (this.currentView === 'note') return; // Don't toggle modes in note view
     this.soundManager.play('pencil', 200);
     this.isEditMode ? this.exitModes() : this.enterEditMode();
   }
 
   toggleDeleteMode() {
+    if (this.currentView === 'note') return; // Don't toggle modes in note view
     this.soundManager.play('eraser', 200);
     this.isDeleteMode ? this.exitModes() : this.enterDeleteMode();
   }
@@ -204,6 +475,8 @@ export class NotesManager {
   }
 
   renderNotes() {
+    if (this.currentView === 'note') return; // Don't render index if in note view
+    
     const list = document.getElementById('notes-list');
     list.innerHTML = '';
 
@@ -211,11 +484,15 @@ export class NotesManager {
     pageDiv.className = 'notes-page active';
     pageDiv.id = `page-${this.currentPage}`;
 
+    // Render as index - just show titles as single lines (like your original design)
     this.getNotesForPage(this.currentPage).forEach((note, i) => {
       const li = document.createElement('li');
       li.dataset.id = (this.currentPage - 1) * this.notesPerPage + i;
       li.dataset.page = this.currentPage;
-      li.innerHTML = `<div class="note-content">${note.content}</div>`;
+      li.dataset.noteId = note.id;
+      
+      // Show just the title (keeping your original single-line design)
+      li.innerHTML = `<div class="note-content">${note.title}</div>`;
       pageDiv.appendChild(li);
     });
 
@@ -225,7 +502,19 @@ export class NotesManager {
     this.handleNoteClick = e => {
       const li = e.target.closest('li');
       if (!li) return;
-      this.selectNote(li);
+      
+      if (this.isEditMode) {
+        const noteId = parseInt(li.dataset.noteId);
+        this.showNote(noteId);
+        this.exitModes();
+      } else if (this.isDeleteMode) {
+        this.deleteNoteById(parseInt(li.dataset.id));
+        this.exitModes();
+      } else {
+        // Normal click - open note
+        const noteId = parseInt(li.dataset.noteId);
+        this.showNote(noteId);
+      }
     };
     list.addEventListener('click', this.handleNoteClick);
 
@@ -247,6 +536,8 @@ export class NotesManager {
     const pageInfo = document.getElementById('page-info');
     const prevBtn = document.getElementById('prev-page');
     const nextBtn = document.getElementById('next-page');
+
+    if (!pageInfo || !prevBtn || !nextBtn) return;
 
     if (totalPages === 0) {
       if (window.app?.languageController) {
@@ -279,43 +570,14 @@ export class NotesManager {
     this.totalPages = totalPages;
   }
 
-  selectNote(noteEl) {
-    const idx = parseInt(noteEl.dataset.id);
-    const note = this.notes[idx];
-    if (!note) return;
-    if (this.isEditMode) { this.editNote(idx, note.content); this.exitModes(); }
-    else if (this.isDeleteMode) { this.deleteNoteById(idx); this.exitModes(); }
-  }
-
-  editNote(id, content) {
-    try {
-      const contentInput = document.getElementById('content');
-      const form = document.getElementById('note-form');
-
-      if (!contentInput || !form) {
-        throw new Error('Required elements not found');
-      }
-
-      contentInput.value = content;
-      form.setAttribute('data-editing', id.toString());
-      contentInput.focus();
-
-      const charCount = document.getElementById('char-count');
-      if (charCount) {
-        this.updateCharacterCount(content, charCount);
-      }
-
-      this.soundManager.play('pencil', 200);
-    } catch (error) {
-      console.error('Error setting up edit:', error);
-      alert('Could not edit note');
-    }
-  }
-
   async deleteNoteById(index) {
     const note = this.notes[index];
     if (!note) {
       alert('Note not found');
+      return;
+    }
+
+    if (!confirm(`Delete "${note.title}"?`)) {
       return;
     }
 
@@ -339,6 +601,8 @@ export class NotesManager {
   }
 
   changePage(direction) {
+    if (this.currentView === 'note') return; // Don't change pages in note view
+    
     const total = this.getTotalPages();
     if ((direction === 'next' && this.currentPage < total) ||
       (direction === 'prev' && this.currentPage > 1)) {
@@ -352,90 +616,36 @@ export class NotesManager {
     setTimeout(() => { this.renderNotes(); notepad.classList.remove('page-flip-animation'); }, 200);
   }
 
+  // Legacy methods for backward compatibility
   setupCharacterLimit() {
-    const contentInput = document.getElementById('content');
-    const charCountDisplay = this.createCharacterCountDisplay();
-
-    contentInput.parentNode.insertBefore(charCountDisplay, contentInput.nextSibling);
-
-    contentInput.addEventListener('input', (e) => {
-      this.updateCharacterCount(e.target.value, charCountDisplay);
-    });
-
-    contentInput.addEventListener('keydown', (e) => {
-      if (e.target.value.length >= this.maxCharacters &&
-        !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.key)) {
-        e.preventDefault();
-      }
-    });
-  }
-
-  createCharacterCountDisplay() {
-    const charCount = document.createElement('div');
-    charCount.id = 'char-count';
-    charCount.textContent = `0/${this.maxCharacters}`;
-    return charCount;
-  }
-
-  updateCharacterCount(value, display) {
-    const currentLength = value.length;
-    display.textContent = `${currentLength}/${this.maxCharacters}`;
-
-    if (currentLength >= this.maxCharacters) {
-      display.style.color = '#d8580d';
-      display.style.fontWeight = 'bold';
-    } else if (currentLength >= this.maxCharacters - 5) {
-      display.style.color = '#d8580d';
-      display.style.fontWeight = 'normal';
-    } else {
-      display.style.color = '#666';
-      display.style.fontWeight = 'normal';
-    }
+    // Not needed in new design
   }
 
   initializeCharacterLimit() {
-    setTimeout(() => {
-      this.setupCharacterLimit();
-    }, 100);
+    // Not needed in new design
   }
 
   async handleAddOrUpdate() {
-    const content = document.getElementById('content').value.trim();
-    const form = document.getElementById('note-form');
-    const editingId = form.getAttribute('data-editing');
-
-    if (!content) return;
-
-    if (content.length > this.maxCharacters) {
-      return;
+    // Get the content from the original input field
+    const contentInput = document.getElementById('content');
+    const inputValue = contentInput ? contentInput.value.trim() : '';
+    
+    // Create new note with the input value as the title
+    const newNote = {
+      id: null,
+      title: inputValue || '',
+      content: '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    // Clear the original input
+    if (contentInput) {
+      contentInput.value = '';
     }
-
-    try {
-      if (editingId !== null && editingId !== undefined && editingId !== '' && editingId !== 'null') {
-        const idx = parseInt(editingId);
-        const note = this.notes[idx];
-        if (!note) {
-          throw new Error('Note not found');
-        }
-        const updatedNote = await this.saveNote({ content }, true, note.id);
-        this.notes[idx] = updatedNote;
-        form.removeAttribute('data-editing');
-      } else {
-        const newNote = await this.saveNote({ content });
-        this.notes.push(newNote);
-        this.currentPage = this.getTotalPages();
-      }
-
-      this.renderNotes();
-      form.reset();
-
-      const charCount = document.getElementById('char-count');
-      if (charCount) {
-        this.updateCharacterCount('', charCount);
-      }
-    } catch (error) {
-      console.error('Failed to save note:', error);
-      alert(error.message || 'Failed to save note.');
-    }
+    
+    this.currentView = 'note';
+    this.currentNoteId = null;
+    this.renderNoteView(newNote, true);
   }
 }

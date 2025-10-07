@@ -212,3 +212,120 @@ ul#notes-list li.highlight-delete {
   padding-left: 5px;
   cursor: pointer;
 }
+
+/* ==================== NOTE VIEW ADDITIONS ==================== */
+
+.note-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  padding-top: 0;
+  margin-top: 8px;
+}
+
+.note-line {
+  height: 24px;
+  line-height: 24px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.note-line input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.note-line input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.title-line input {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.note-content-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.note-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #d3cfc7;
+}
+
+.note-action-btn {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #d3cfc7;
+  color: #333;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: 'Courier New', Courier, monospace;
+  transition: all 0.2s ease;
+}
+
+.note-action-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+
+.note-action-btn.save-btn {
+  background: rgba(40, 167, 69, 0.1);
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.note-action-btn.save-btn:hover {
+  background: rgba(40, 167, 69, 0.2);
+}
+
+/* Dark mode support for new elements */
+.dark-mode .note-line input {
+  color: #fff;
+}
+
+.dark-mode .note-line input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.dark-mode .note-action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.dark-mode .note-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .note-action-btn.save-btn {
+  background: rgba(40, 167, 69, 0.2);
+  border-color: #28a745;
+  color: #4ade80;
+}
+
+.dark-mode .note-action-btn.save-btn:hover {
+  background: rgba(40, 167, 69, 0.3);
+}
