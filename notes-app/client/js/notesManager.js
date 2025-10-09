@@ -227,6 +227,9 @@ export class NotesManager {
     if (form) form.style.display = 'none';
     if (pagination) pagination.style.display = 'none';
     
+    // Store the isNew flag on the instance to track across auto-saves
+    this.isNewNote = isNew;
+    
     const list = document.getElementById('notes-list');
     
     // Create the note editing interface that looks like the notepad
@@ -291,7 +294,7 @@ export class NotesManager {
     });
 
     document.getElementById('save-note').addEventListener('click', () => {
-      this.saveCurrentNote(isNew);
+      this.saveCurrentNote();
     });
 
     // Auto-advance to next line on Enter or when reaching character limit
@@ -317,15 +320,7 @@ export class NotesManager {
         if (e.target.value.length >= this.maxCharacters && index < contentInputs.length - 1) {
           contentInputs[index + 1].focus();
         }
-        
-        // Auto-save on input
-        this.debouncedSave(isNew);
       });
-    });
-
-    // Auto-save for title and Enter key navigation
-    document.getElementById('note-title').addEventListener('input', () => {
-      this.debouncedSave(isNew);
     });
 
     // Handle Enter key in title to move to first content line
@@ -353,29 +348,12 @@ export class NotesManager {
     }
   }
 
-  // Debounced auto-save
-  debouncedSave(isNew) {
-    clearTimeout(this.saveTimeout);
-    this.saveTimeout = setTimeout(() => {
-      const titleInput = document.getElementById('note-title');
-      if (titleInput && (titleInput.value.trim() || this.hasContentInLines())) {
-        // Create a reference to track if this is still a new note
-        const wasNew = isNew && this.currentNoteId === null;
-        this.saveCurrentNote(wasNew);
-        // After auto-save, it's no longer new
-        if (wasNew) {
-          isNew = false;
-        }
-      }
-    }, 2000);
-  }
-
   hasContentInLines() {
     const contentInputs = document.querySelectorAll('.note-content-line');
     return Array.from(contentInputs).some(input => input.value.trim());
   }
 
-  async saveCurrentNote(isNew) {
+  async saveCurrentNote() {
     const titleInput = document.getElementById('note-title');
     const contentInputs = document.querySelectorAll('.note-content-line');
     
@@ -387,12 +365,13 @@ export class NotesManager {
 
     try {
       let savedNote;
-      if (isNew) {
+      // Check if this is a new note by checking if currentNoteId is null
+      if (this.isNewNote || this.currentNoteId === null) {
         savedNote = await this.saveNote({ title, content });
         this.notes.push(savedNote);
         this.currentNoteId = savedNote.id;
-        // After first save, it's no longer new
-        isNew = false;
+        // Mark as no longer new
+        this.isNewNote = false;
       } else {
         savedNote = await this.saveNote({ title, content }, true, this.currentNoteId);
         const index = this.notes.findIndex(n => n.id === this.currentNoteId);
@@ -626,26 +605,7 @@ export class NotesManager {
   }
 
   async handleAddOrUpdate() {
-    // Get the content from the original input field
-    const contentInput = document.getElementById('content');
-    const inputValue = contentInput ? contentInput.value.trim() : '';
-    
-    // Create new note with the input value as the title
-    const newNote = {
-      id: null,
-      title: inputValue || '',
-      content: '',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    // Clear the original input
-    if (contentInput) {
-      contentInput.value = '';
-    }
-    
-    this.currentView = 'note';
-    this.currentNoteId = null;
-    this.renderNoteView(newNote, true);
+    // Just redirect to createNewNote to avoid duplication
+    this.createNewNote();
   }
 }
