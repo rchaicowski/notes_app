@@ -10,11 +10,11 @@ export class NotesManager {
     this.apiBaseUrl = 'http://localhost:5000/api/notes';
     this.soundManager = soundManager;
     this.storageManager = storageManager;
-    this.maxCharacters = 35; // Keep original for backward compatibility
+    this.maxCharacters = 35; 
     this.maxTitleCharacters = 35;
-    this.maxLinesPerNote = 15; // 15 lines max per note
+    this.maxLinesPerNote = 15; 
     this.isOffline = localStorage.getItem('offlineMode') === 'true';
-    this.currentView = 'index'; // 'index' or 'note'
+    this.currentView = 'index'; 
     this.currentNoteId = null;
 
     window.addEventListener('offline-mode-changed', (event) => {
@@ -73,10 +73,8 @@ export class NotesManager {
 
   fallbackToLocalNotes() {
     const localNotes = this.storageManager.getFromLocalStorage();
-    // Migrate old single-line notes to new format
     this.notes = localNotes.map(note => {
       if (note.title === undefined) {
-        // Old format - migrate by taking first line as title, rest as content
         const content = note.content || '';
         const lines = content.split('\n');
         return {
@@ -121,7 +119,7 @@ export class NotesManager {
       const options = {
         method: isUpdate ? 'PUT' : 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           title: noteData.title || 'Untitled',
           content: noteData.content || ''
         })
@@ -187,13 +185,13 @@ export class NotesManager {
   showIndex() {
     this.currentView = 'index';
     this.currentNoteId = null;
-    
+
     // Show the form and pagination when returning to index
     const form = document.getElementById('note-form');
     const pagination = document.querySelector('.page-navigation');
     if (form) form.style.display = 'flex';
     if (pagination) pagination.style.display = 'flex';
-    
+
     this.renderNotes();
   }
 
@@ -201,7 +199,7 @@ export class NotesManager {
     // Get any existing input value
     const contentInput = document.getElementById('content');
     const inputValue = contentInput ? contentInput.value.trim() : '';
-    
+
     const newNote = {
       id: null,
       title: inputValue || '',
@@ -209,37 +207,35 @@ export class NotesManager {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
-    
+
     // Clear the original input
     if (contentInput) {
       contentInput.value = '';
     }
-    
+
     this.currentView = 'note';
     this.currentNoteId = null;
     this.renderNoteView(newNote, true);
   }
 
   renderNoteView(note, isNew = false) {
-    // Hide the form and pagination when in note view
     const form = document.getElementById('note-form');
     const pagination = document.querySelector('.page-navigation');
     if (form) form.style.display = 'none';
     if (pagination) pagination.style.display = 'none';
-    
-    // Store the isNew flag on the instance to track across auto-saves
+
     this.isNewNote = isNew;
-    
+
     const list = document.getElementById('notes-list');
-    
+
     // Create the note editing interface that looks like the notepad
     list.innerHTML = '';
-    
+
     // Create container for the note
     const noteContainer = document.createElement('div');
     noteContainer.className = 'note-view';
-    
-    // Title input (looks like a line on the notepad)
+
+    // Title input
     const titleLine = document.createElement('div');
     titleLine.className = 'note-line title-line';
     titleLine.innerHTML = `
@@ -257,7 +253,7 @@ export class NotesManager {
     // Content lines (15 lines, each with 35 character limit)
     const contentContainer = document.createElement('div');
     contentContainer.className = 'note-content-container';
-    
+
     const contentLines = note.content.split('\n');
     for (let i = 0; i < this.maxLinesPerNote; i++) {
       const line = document.createElement('div');
@@ -274,10 +270,9 @@ export class NotesManager {
       `;
       contentContainer.appendChild(line);
     }
-    
+
     noteContainer.appendChild(contentContainer);
-    
-    // Action buttons (styled to fit with notepad)
+
     const actionButtons = document.createElement('div');
     actionButtons.className = 'note-actions';
     actionButtons.innerHTML = `
@@ -285,10 +280,9 @@ export class NotesManager {
       <button id="save-note" class="note-action-btn save-btn">Save Note</button>
     `;
     noteContainer.appendChild(actionButtons);
-    
+
     list.appendChild(noteContainer);
 
-    // Add event listeners
     document.getElementById('back-to-index').addEventListener('click', () => {
       this.showIndex();
     });
@@ -297,7 +291,6 @@ export class NotesManager {
       this.saveCurrentNote();
     });
 
-    // Auto-advance to next line on Enter or when reaching character limit
     const contentInputs = document.querySelectorAll('.note-content-line');
     contentInputs.forEach((input, index) => {
       input.addEventListener('keydown', (e) => {
@@ -305,25 +298,21 @@ export class NotesManager {
           e.preventDefault();
           contentInputs[index + 1].focus();
         }
-        // Handle backspace at beginning of line - move to previous line
         else if (e.key === 'Backspace' && input.selectionStart === 0 && input.selectionEnd === 0 && index > 0) {
           e.preventDefault();
           const prevInput = contentInputs[index - 1];
           prevInput.focus();
-          // Move cursor to end of previous line
           prevInput.setSelectionRange(prevInput.value.length, prevInput.value.length);
         }
       });
-      
+
       input.addEventListener('input', (e) => {
-        // Auto-wrap to next line when reaching character limit
         if (e.target.value.length >= this.maxCharacters && index < contentInputs.length - 1) {
           contentInputs[index + 1].focus();
         }
       });
     });
 
-    // Handle Enter key in title to move to first content line
     document.getElementById('note-title').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -334,11 +323,9 @@ export class NotesManager {
       }
     });
 
-    // Focus appropriate field
     if (isNew) {
       document.getElementById('note-title').focus();
     } else {
-      // Focus on first empty content line or first line
       const firstEmptyLine = Array.from(contentInputs).find(input => !input.value);
       if (firstEmptyLine) {
         firstEmptyLine.focus();
@@ -356,21 +343,19 @@ export class NotesManager {
   async saveCurrentNote() {
     const titleInput = document.getElementById('note-title');
     const contentInputs = document.querySelectorAll('.note-content-line');
-    
+
     if (!titleInput) return;
 
     const title = titleInput.value.trim() || 'Untitled';
     const contentLines = Array.from(contentInputs).map(input => input.value);
-    const content = contentLines.join('\n').replace(/\n+$/, ''); // Remove trailing empty lines
+    const content = contentLines.join('\n').replace(/\n+$/, '');
 
     try {
       let savedNote;
-      // Check if this is a new note by checking if currentNoteId is null
       if (this.isNewNote || this.currentNoteId === null) {
         savedNote = await this.saveNote({ title, content });
         this.notes.push(savedNote);
         this.currentNoteId = savedNote.id;
-        // Mark as no longer new
         this.isNewNote = false;
       } else {
         savedNote = await this.saveNote({ title, content }, true, this.currentNoteId);
@@ -379,10 +364,9 @@ export class NotesManager {
           this.notes[index] = savedNote;
         }
       }
-      
+
       this.soundManager.play('pencil', 200);
-      
-      // Visual feedback
+
       const saveBtn = document.getElementById('save-note');
       if (saveBtn) {
         const originalText = saveBtn.textContent;
@@ -393,7 +377,7 @@ export class NotesManager {
           saveBtn.style.opacity = '1';
         }, 1000);
       }
-      
+
     } catch (error) {
       console.error('Failed to save note:', error);
       alert(error.message || 'Failed to save note.');
@@ -401,13 +385,13 @@ export class NotesManager {
   }
 
   toggleEditMode() {
-    if (this.currentView === 'note') return; // Don't toggle modes in note view
+    if (this.currentView === 'note') return;
     this.soundManager.play('pencil', 200);
     this.isEditMode ? this.exitModes() : this.enterEditMode();
   }
 
   toggleDeleteMode() {
-    if (this.currentView === 'note') return; // Don't toggle modes in note view
+    if (this.currentView === 'note') return;
     this.soundManager.play('eraser', 200);
     this.isDeleteMode ? this.exitModes() : this.enterDeleteMode();
   }
@@ -454,8 +438,8 @@ export class NotesManager {
   }
 
   renderNotes() {
-    if (this.currentView === 'note') return; // Don't render index if in note view
-    
+    if (this.currentView === 'note') return;
+
     const list = document.getElementById('notes-list');
     list.innerHTML = '';
 
@@ -463,14 +447,12 @@ export class NotesManager {
     pageDiv.className = 'notes-page active';
     pageDiv.id = `page-${this.currentPage}`;
 
-    // Render as index - just show titles as single lines (like your original design)
     this.getNotesForPage(this.currentPage).forEach((note, i) => {
       const li = document.createElement('li');
       li.dataset.id = (this.currentPage - 1) * this.notesPerPage + i;
       li.dataset.page = this.currentPage;
       li.dataset.noteId = note.id;
-      
-      // Show just the title (keeping your original single-line design)
+
       li.innerHTML = `<div class="note-content">${note.title}</div>`;
       pageDiv.appendChild(li);
     });
@@ -481,7 +463,7 @@ export class NotesManager {
     this.handleNoteClick = e => {
       const li = e.target.closest('li');
       if (!li) return;
-      
+
       if (this.isEditMode) {
         const noteId = parseInt(li.dataset.noteId);
         this.showNote(noteId);
@@ -490,7 +472,6 @@ export class NotesManager {
         this.deleteNoteById(parseInt(li.dataset.id));
         this.exitModes();
       } else {
-        // Normal click - open note
         const noteId = parseInt(li.dataset.noteId);
         this.showNote(noteId);
       }
@@ -502,12 +483,12 @@ export class NotesManager {
     else if (this.isDeleteMode) this.highlightNotes('delete');
   }
 
-  getTotalPages() { 
-    return Math.ceil(this.notes.length / this.notesPerPage); 
+  getTotalPages() {
+    return Math.ceil(this.notes.length / this.notesPerPage);
   }
-  
-  getNotesForPage(page) { 
-    return this.notes.slice((page - 1) * this.notesPerPage, page * this.notesPerPage); 
+
+  getNotesForPage(page) {
+    return this.notes.slice((page - 1) * this.notesPerPage, page * this.notesPerPage);
   }
 
   updatePageInfo() {
@@ -563,14 +544,14 @@ export class NotesManager {
     try {
       await this.deleteNote(note.id);
       this.notes.splice(index, 1);
-      
+
       const newTotalPages = this.getTotalPages();
       if (newTotalPages === 0) {
         this.currentPage = 1;
       } else if (this.currentPage > newTotalPages) {
         this.currentPage = newTotalPages;
       }
-      
+
       this.renderNotes();
       this.soundManager.play('eraser', 200);
     } catch (error) {
@@ -580,8 +561,8 @@ export class NotesManager {
   }
 
   changePage(direction) {
-    if (this.currentView === 'note') return; // Don't change pages in note view
-    
+    if (this.currentView === 'note') return;
+
     const total = this.getTotalPages();
     if ((direction === 'next' && this.currentPage < total) ||
       (direction === 'prev' && this.currentPage > 1)) {
@@ -597,15 +578,12 @@ export class NotesManager {
 
   // Legacy methods for backward compatibility
   setupCharacterLimit() {
-    // Not needed in new design
   }
 
   initializeCharacterLimit() {
-    // Not needed in new design
   }
 
   async handleAddOrUpdate() {
-    // Just redirect to createNewNote to avoid duplication
     this.createNewNote();
   }
 }
