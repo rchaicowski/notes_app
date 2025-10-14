@@ -1,4 +1,5 @@
 import { getAuthToken, isAuthenticated } from './auth.js';
+import { FormattingManager } from './formattingManager.js';
 
 export class NotesManager {
   constructor(soundManager, storageManager) {
@@ -16,6 +17,7 @@ export class NotesManager {
     this.isOffline = localStorage.getItem('offlineMode') === 'true';
     this.currentView = 'index'; 
     this.currentNoteId = null;
+    this.formattingManager = new FormattingManager(soundManager);
 
     window.addEventListener('offline-mode-changed', (event) => {
       this.isOffline = event.detail.isOffline;
@@ -94,6 +96,7 @@ export class NotesManager {
         id: isUpdate ? noteId : Date.now(),
         title: noteData.title || 'Untitled',
         content: noteData.content || '',
+        formatting: noteData.formatting || [],
         created_at: isUpdate ? (this.notes.find(n => n.id === noteId)?.created_at || new Date().toISOString()) : new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -121,7 +124,8 @@ export class NotesManager {
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
           title: noteData.title || 'Untitled',
-          content: noteData.content || ''
+          content: noteData.content || '',
+          formatting: noteData.formatting || []
         })
       };
       const url = isUpdate ? `${this.apiBaseUrl}/${noteId}` : this.apiBaseUrl;
@@ -186,6 +190,10 @@ export class NotesManager {
     this.currentView = 'index';
     this.currentNoteId = null;
 
+    // Close formatting toolbar and remove active state
+    this.formattingManager.toggleToolbar(false);
+    document.getElementById('edit-mode-btn').classList.remove('active');
+
     // Show the form and pagination when returning to index
     const form = document.getElementById('note-form');
     const pagination = document.querySelector('.page-navigation');
@@ -204,6 +212,7 @@ export class NotesManager {
       id: null,
       title: inputValue || '',
       content: '',
+      formatting: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -283,6 +292,16 @@ export class NotesManager {
 
     list.appendChild(noteContainer);
 
+    // Initialize formatting toolbar when entering note view
+    setTimeout(() => {
+      this.formattingManager.initializeToolbar();
+      
+      // Apply existing formatting if available
+      if (note.formatting) {
+        this.formattingManager.applyFormattingToNote(noteContainer, note.formatting);
+      }
+    }, 100);
+
     document.getElementById('back-to-index').addEventListener('click', () => {
       this.showIndex();
     });
@@ -349,16 +368,20 @@ export class NotesManager {
     const title = titleInput.value.trim() || 'Untitled';
     const contentLines = Array.from(contentInputs).map(input => input.value);
     const content = contentLines.join('\n').replace(/\n+$/, '');
+    
+    // Capture formatting data
+    const noteView = document.querySelector('.note-view');
+    const formatting = this.formattingManager.getFormattingForNote(noteView);
 
     try {
       let savedNote;
       if (this.isNewNote || this.currentNoteId === null) {
-        savedNote = await this.saveNote({ title, content });
+        savedNote = await this.saveNote({ title, content, formatting });
         this.notes.push(savedNote);
         this.currentNoteId = savedNote.id;
         this.isNewNote = false;
       } else {
-        savedNote = await this.saveNote({ title, content }, true, this.currentNoteId);
+        savedNote = await this.saveNote({ title, content, formatting }, true, this.currentNoteId);
         const index = this.notes.findIndex(n => n.id === this.currentNoteId);
         if (index !== -1) {
           this.notes[index] = savedNote;
@@ -385,7 +408,22 @@ export class NotesManager {
   }
 
   toggleEditMode() {
-    if (this.currentView === 'note') return;
+    // If we're in note view, toggle the formatting toolbar
+    if (this.currentView === 'note') {
+      this.soundManager.play('pencil', 200);
+      this.formattingManager.toggleToolbar(!this.formattingManager.isToolbarOpen);
+      
+      // Toggle active state on edit button
+      const editBtn = document.getElementById('edit-mode-btn');
+      if (this.formattingManager.isToolbarOpen) {
+        editBtn.classList.add('active');
+      } else {
+        editBtn.classList.remove('active');
+      }
+      return;
+    }
+    
+    // If we're in index view, use original edit mode behavior
     this.soundManager.play('pencil', 200);
     this.isEditMode ? this.exitModes() : this.enterEditMode();
   }
@@ -418,6 +456,11 @@ export class NotesManager {
     document.getElementById('delete-mode-btn').classList.remove('active');
     document.body.classList.remove('edit-mode', 'delete-mode');
     this.removeHighlights();
+    
+    // Close formatting toolbar if open
+    if (this.currentView === 'note') {
+      this.formattingManager.toggleToolbar(false);
+    }
   }
 
   highlightNotes(mode) {
@@ -453,7 +496,11 @@ export class NotesManager {
       li.dataset.page = this.currentPage;
       li.dataset.noteId = note.id;
 
-      li.innerHTML = `<div class="note-content">${note.title}</div>`;
+      // Render formatted title
+      const titleFormatting = note.formatting?.find(f => f.field === 'title')?.formats || [];
+      const formattedTitle = this.formattingManager.renderFormattedText(note.title, titleFormatting);
+      li.innerHTML = `<div class="note-content">${formattedTitle}</div>`;
+      
       pageDiv.appendChild(li);
     });
 
