@@ -188,6 +188,61 @@ ul#notes-list li .note-content u {
   text-decoration: underline;
 }
 
+/* ContentEditable Styles */
+.note-title-editable,
+.note-content-line {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  color: inherit;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.note-title-editable {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Placeholder styling for contenteditable */
+.note-title-editable:empty:before {
+  content: attr(data-placeholder);
+  color: #999;
+  font-style: italic;
+  pointer-events: none;
+}
+
+.note-content-line:empty:before {
+  content: attr(data-placeholder);
+  color: #999;
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* Formatting within contenteditable */
+.note-title-editable strong,
+.note-content-line strong {
+  font-weight: bold;
+}
+
+.note-title-editable em,
+.note-content-line em {
+  font-style: italic;
+}
+
+.note-title-editable u,
+.note-content-line u {
+  text-decoration: underline;
+}
+
 /* Dark mode support */
 .dark-mode .formatting-toolbar {
   background: #2a2a2a;

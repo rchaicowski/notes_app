@@ -2,7 +2,6 @@ export class FormattingManager {
   constructor(soundManager) {
     this.soundManager = soundManager;
     this.isToolbarOpen = false;
-    this.activeFormatting = new Set();
     this.highlightColors = ['yellow', 'green', 'pink', 'blue', 'orange'];
     this.currentHighlightColor = 'yellow';
   }
@@ -106,86 +105,98 @@ export class FormattingManager {
   }
 
   applyFormatting(type, color = null) {
-    const activeInput = document.activeElement;
+    const selection = window.getSelection();
     
-    // Check if we're in a note input field
-    if (!activeInput || (!activeInput.classList.contains('note-content-line') && 
-                         !activeInput.classList.contains('note-title-input'))) {
-      return;
+    if (!selection.rangeCount || selection.isCollapsed) {
+      return; // No text selected
     }
 
-    const start = activeInput.selectionStart;
-    const end = activeInput.selectionEnd;
-
-    // No text selected
-    if (start === end) {
-      return;
+    const range = selection.getRangeAt(0);
+    
+    // Check if we're in a contenteditable element
+    let container = range.commonAncestorContainer;
+    if (container.nodeType === Node.TEXT_NODE) {
+      container = container.parentElement;
+    }
+    
+    const editableDiv = container.closest('[contenteditable="true"]');
+    if (!editableDiv) {
+      return; // Not in an editable area
     }
 
-    // Get the input's current formatting data
-    if (!activeInput.formattingData) {
-      activeInput.formattingData = [];
+    // Create the formatted element
+    let formattedElement;
+    
+    switch (type) {
+      case 'bold':
+        formattedElement = document.createElement('strong');
+        break;
+      case 'italic':
+        formattedElement = document.createElement('em');
+        break;
+      case 'underline':
+        formattedElement = document.createElement('u');
+        break;
+      case 'highlight':
+        formattedElement = document.createElement('span');
+        formattedElement.className = `highlight-${color || this.currentHighlightColor}`;
+        break;
+      default:
+        return;
     }
 
-    // Create new formatting entry
-    const formatting = {
-      start: start,
-      end: end,
-      type: type
-    };
-
-    if (type === 'highlight') {
-      formatting.color = color || this.currentHighlightColor;
+    try {
+      // Extract the selected content
+      const contents = range.extractContents();
+      
+      // Wrap it in the formatting element
+      formattedElement.appendChild(contents);
+      
+      // Insert the formatted content back
+      range.insertNode(formattedElement);
+      
+      // Clear the selection
+      selection.removeAllRanges();
+      
+      // Place cursor after the formatted text
+      const newRange = document.createRange();
+      newRange.setStartAfter(formattedElement);
+      newRange.collapse(true);
+      selection.addRange(newRange);
+      
+    } catch (error) {
+      console.error('Error applying formatting:', error);
     }
-
-    // Add to formatting data
-    activeInput.formattingData.push(formatting);
-
-    // Apply visual formatting
-    this.updateInputFormatting(activeInput);
-  }
-
-  updateInputFormatting(input) {
-    if (!input.formattingData || input.formattingData.length === 0) {
-      return;
-    }
-
-    // Store original value and selection
-    const originalValue = input.value;
-    const originalStart = input.selectionStart;
-    const originalEnd = input.selectionEnd;
-
-    // Create a visual representation (this is simplified)
-    // In a real implementation, you'd need a more sophisticated approach
-    // possibly using contenteditable divs or a rich text editor
-
-    // For now, we'll store the formatting in a data attribute
-    input.dataset.formatting = JSON.stringify(input.formattingData);
-
-    // Restore selection
-    input.setSelectionRange(originalStart, originalEnd);
   }
 
   getFormattingForNote(noteElement) {
     const formatting = [];
     
-    // Get title formatting
-    const titleInput = noteElement.querySelector('#note-title');
-    if (titleInput && titleInput.formattingData) {
-      formatting.push({
-        field: 'title',
-        formats: titleInput.formattingData
-      });
+    // Get title with HTML
+    const titleDiv = noteElement.querySelector('#note-title');
+    if (titleDiv) {
+      const titleHtml = titleDiv.innerHTML;
+      if (titleHtml.trim()) {
+        formatting.push({
+          field: 'title',
+          html: titleHtml,
+          text: titleDiv.textContent
+        });
+      }
     }
 
-    // Get content formatting
-    const contentInputs = noteElement.querySelectorAll('.note-content-line');
-    contentInputs.forEach((input, lineIndex) => {
-      if (input.formattingData && input.formattingData.length > 0) {
+    // Get content lines with HTML
+    const contentDivs = noteElement.querySelectorAll('.note-content-line');
+    contentDivs.forEach((div, lineIndex) => {
+      const lineHtml = div.innerHTML;
+      const lineText = div.textContent;
+      
+      if (lineHtml.trim() || lineText.trim()) {
         formatting.push({
           field: 'content',
           line: lineIndex,
-          formats: input.formattingData
+          html: lineHtml,
+          text: lineText
         });
       }
     });
@@ -196,73 +207,46 @@ export class FormattingManager {
   applyFormattingToNote(noteElement, formattingData) {
     if (!formattingData || formattingData.length === 0) return;
 
-    formattingData.forEach(item => {
-      if (item.field === 'title') {
-        const titleInput = noteElement.querySelector('#note-title');
-        if (titleInput) {
-          titleInput.formattingData = item.formats;
-          this.updateInputFormatting(titleInput);
+    setTimeout(() => {
+      formattingData.forEach(item => {
+        if (item.field === 'title' && item.html) {
+          const titleDiv = noteElement.querySelector('#note-title');
+          if (titleDiv) {
+            titleDiv.innerHTML = item.html;
+          }
+        } else if (item.field === 'content' && item.html) {
+          const contentDivs = noteElement.querySelectorAll('.note-content-line');
+          const div = contentDivs[item.line];
+          if (div) {
+            div.innerHTML = item.html;
+          }
         }
-      } else if (item.field === 'content') {
-        const contentInputs = noteElement.querySelectorAll('.note-content-line');
-        const input = contentInputs[item.line];
-        if (input) {
-          input.formattingData = item.formats;
-          this.updateInputFormatting(input);
-        }
-      }
-    });
+      });
+    }, 50);
   }
 
-  // Helper to render formatted text for display in index
   renderFormattedText(text, formatting) {
-    if (!formatting || formatting.length === 0) {
-      return text;
-    }
-
-    // Sort formatting by start position
-    const sortedFormats = [...formatting].sort((a, b) => a.start - b.start);
-    
-    let result = '';
-    let lastIndex = 0;
-
-    sortedFormats.forEach(format => {
-      // Add unformatted text before this format
-      result += text.substring(lastIndex, format.start);
-
-      // Add formatted text
-      const formattedText = text.substring(format.start, format.end);
-      
-      switch (format.type) {
-        case 'bold':
-          result += `<strong>${formattedText}</strong>`;
-          break;
-        case 'italic':
-          result += `<em>${formattedText}</em>`;
-          break;
-        case 'underline':
-          result += `<u>${formattedText}</u>`;
-          break;
-        case 'highlight':
-          result += `<span class="highlight-${format.color}">${formattedText}</span>`;
-          break;
-        default:
-          result += formattedText;
+    // For displaying in the index list
+    // If we have HTML formatting saved, use it
+    if (formatting && formatting.length > 0) {
+      const titleFormat = formatting.find(f => f.field === 'title');
+      if (titleFormat && titleFormat.html) {
+        return titleFormat.html;
       }
-
-      lastIndex = format.end;
-    });
-
-    // Add remaining unformatted text
-    result += text.substring(lastIndex);
-
-    return result;
+    }
+    
+    // Otherwise just return plain text
+    return text;
   }
 
-  clearFormatting(input) {
-    if (input) {
-      input.formattingData = [];
-      delete input.dataset.formatting;
+  extractPlainText(element) {
+    if (!element) return '';
+    return element.textContent || '';
+  }
+
+  clearFormatting(element) {
+    if (element) {
+      element.innerHTML = element.textContent;
     }
   }
 }

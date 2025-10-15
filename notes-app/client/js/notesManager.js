@@ -236,47 +236,44 @@ export class NotesManager {
     this.isNewNote = isNew;
 
     const list = document.getElementById('notes-list');
-
-    // Create the note editing interface that looks like the notepad
     list.innerHTML = '';
 
-    // Create container for the note
     const noteContainer = document.createElement('div');
     noteContainer.className = 'note-view';
 
-    // Title input
+    // Title as contenteditable div
     const titleLine = document.createElement('div');
     titleLine.className = 'note-line title-line';
-    titleLine.innerHTML = `
-      <input 
-        type="text" 
-        id="note-title" 
-        class="note-title-input" 
-        placeholder="Note Title" 
-        value="${note.title}" 
-        maxlength="${this.maxTitleCharacters}"
-      />
-    `;
+    
+    const titleDiv = document.createElement('div');
+    titleDiv.id = 'note-title';
+    titleDiv.className = 'note-title-editable';
+    titleDiv.contentEditable = 'true';
+    titleDiv.setAttribute('data-placeholder', 'Note Title');
+    titleDiv.textContent = note.title || '';
+    
+    titleLine.appendChild(titleDiv);
     noteContainer.appendChild(titleLine);
 
-    // Content lines (15 lines, each with 35 character limit)
+    // Content lines as contenteditable divs
     const contentContainer = document.createElement('div');
     contentContainer.className = 'note-content-container';
 
-    const contentLines = note.content.split('\n');
+    const contentLines = note.content ? note.content.split('\n') : [];
     for (let i = 0; i < this.maxLinesPerNote; i++) {
       const line = document.createElement('div');
       line.className = 'note-line content-line';
-      line.innerHTML = `
-        <input 
-          type="text" 
-          class="note-content-line" 
-          data-line="${i}"
-          placeholder="${i === 0 ? 'Start writing...' : ''}"
-          value="${contentLines[i] || ''}" 
-          maxlength="${this.maxCharacters}"
-        />
-      `;
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'note-content-line';
+      contentDiv.contentEditable = 'true';
+      contentDiv.setAttribute('data-line', i);
+      if (i === 0) {
+        contentDiv.setAttribute('data-placeholder', 'Start writing...');
+      }
+      contentDiv.textContent = contentLines[i] || '';
+      
+      line.appendChild(contentDiv);
       contentContainer.appendChild(line);
     }
 
@@ -292,7 +289,7 @@ export class NotesManager {
 
     list.appendChild(noteContainer);
 
-    // Initialize formatting toolbar when entering note view
+    // Initialize formatting toolbar
     setTimeout(() => {
       this.formattingManager.initializeToolbar();
       
@@ -302,6 +299,7 @@ export class NotesManager {
       }
     }, 100);
 
+    // Event listeners
     document.getElementById('back-to-index').addEventListener('click', () => {
       this.showIndex();
     });
@@ -310,29 +308,84 @@ export class NotesManager {
       this.saveCurrentNote();
     });
 
-    const contentInputs = document.querySelectorAll('.note-content-line');
-    contentInputs.forEach((input, index) => {
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && index < contentInputs.length - 1) {
-          e.preventDefault();
-          contentInputs[index + 1].focus();
-        }
-        else if (e.key === 'Backspace' && input.selectionStart === 0 && input.selectionEnd === 0 && index > 0) {
-          e.preventDefault();
-          const prevInput = contentInputs[index - 1];
-          prevInput.focus();
-          prevInput.setSelectionRange(prevInput.value.length, prevInput.value.length);
+    // Setup contenteditable behavior
+    const contentDivs = document.querySelectorAll('.note-content-line');
+    const titleDivElement = document.getElementById('note-title');
+
+    // Character limit enforcement for content lines
+    contentDivs.forEach((div, index) => {
+      // Prevent exceeding character limit
+      div.addEventListener('input', (e) => {
+        const text = div.textContent;
+        if (text.length > this.maxCharacters) {
+          // Truncate to max length
+          const range = window.getSelection().getRangeAt(0);
+          const cursorPos = range.startOffset;
+          div.textContent = text.substring(0, this.maxCharacters);
+          
+          // Restore cursor position
+          const newRange = document.createRange();
+          const textNode = div.firstChild;
+          if (textNode) {
+            newRange.setStart(textNode, Math.min(cursorPos, this.maxCharacters));
+            newRange.collapse(true);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+          }
         }
       });
 
-      input.addEventListener('input', (e) => {
-        if (e.target.value.length >= this.maxCharacters && index < contentInputs.length - 1) {
-          contentInputs[index + 1].focus();
+      // Handle Enter key - move to next line
+      div.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (index < contentDivs.length - 1) {
+            contentDivs[index + 1].focus();
+          }
+        } else if (e.key === 'Backspace') {
+          const selection = window.getSelection();
+          const range = selection.getRangeAt(0);
+          
+          // If at the start of the line and it's empty, move to previous line
+          if (range.startOffset === 0 && div.textContent.length === 0 && index > 0) {
+            e.preventDefault();
+            const prevDiv = contentDivs[index - 1];
+            prevDiv.focus();
+            
+            // Move cursor to end of previous line
+            const newRange = document.createRange();
+            newRange.selectNodeContents(prevDiv);
+            newRange.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+          }
         }
       });
     });
 
-    document.getElementById('note-title').addEventListener('keydown', (e) => {
+    // Title character limit
+    titleDivElement.addEventListener('input', (e) => {
+      const text = titleDivElement.textContent;
+      if (text.length > this.maxTitleCharacters) {
+        const range = window.getSelection().getRangeAt(0);
+        const cursorPos = range.startOffset;
+        titleDivElement.textContent = text.substring(0, this.maxTitleCharacters);
+        
+        const newRange = document.createRange();
+        const textNode = titleDivElement.firstChild;
+        if (textNode) {
+          newRange.setStart(textNode, Math.min(cursorPos, this.maxTitleCharacters));
+          newRange.collapse(true);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+        }
+      }
+    });
+
+    // Title Enter key - move to first content line
+    titleDivElement.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         const firstContentLine = document.querySelector('.note-content-line');
@@ -342,14 +395,15 @@ export class NotesManager {
       }
     });
 
+    // Focus handling
     if (isNew) {
-      document.getElementById('note-title').focus();
+      titleDivElement.focus();
     } else {
-      const firstEmptyLine = Array.from(contentInputs).find(input => !input.value);
+      const firstEmptyLine = Array.from(contentDivs).find(div => !div.textContent.trim());
       if (firstEmptyLine) {
         firstEmptyLine.focus();
       } else {
-        contentInputs[0].focus();
+        contentDivs[0].focus();
       }
     }
   }
@@ -360,16 +414,16 @@ export class NotesManager {
   }
 
   async saveCurrentNote() {
-    const titleInput = document.getElementById('note-title');
-    const contentInputs = document.querySelectorAll('.note-content-line');
+    const titleDiv = document.getElementById('note-title');
+    const contentDivs = document.querySelectorAll('.note-content-line');
 
-    if (!titleInput) return;
+    if (!titleDiv) return;
 
-    const title = titleInput.value.trim() || 'Untitled';
-    const contentLines = Array.from(contentInputs).map(input => input.value);
+    const title = titleDiv.textContent.trim() || 'Untitled';
+    const contentLines = Array.from(contentDivs).map(div => div.textContent);
     const content = contentLines.join('\n').replace(/\n+$/, '');
     
-    // Capture formatting data
+    // Capture formatting data (HTML)
     const noteView = document.querySelector('.note-view');
     const formatting = this.formattingManager.getFormattingForNote(noteView);
 
