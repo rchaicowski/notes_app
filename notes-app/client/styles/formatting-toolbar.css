@@ -1,8 +1,8 @@
 /* ==================== FORMATTING TOOLBAR ==================== */
 .formatting-toolbar {
   position: absolute;
-  right: 50px;
-  top: 290px;
+  right: -150px;
+  top: -120px;
   width: 140px;
   background: #fdf6e3;
   border: 2px solid #555;
@@ -70,7 +70,6 @@
   background: rgba(255, 255, 255, 0.7);
   border: 2px solid #d3cfc7;
   color: #333;
-  width: 140px;
   padding: 6px;
   border-radius: 4px;
   cursor: pointer;
@@ -241,6 +240,20 @@ ul#notes-list li .note-content u {
 .note-title-editable u,
 .note-content-line u {
   text-decoration: underline;
+}
+
+/* Clickable notes in index - minimalist hover effect */
+ul#notes-list li {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+ul#notes-list li:hover {
+  transform: translateX(3px);
+}
+
+ul#notes-list li .note-content {
+  transition: inherit;
 }
 
 /* Dark mode support */
