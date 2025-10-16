@@ -14,7 +14,6 @@ export class FormattingManager {
     toolbar.innerHTML = `
       <div class="toolbar-header">
         <span class="toolbar-title">Format</span>
-        <button class="toolbar-close" id="toolbar-close">×</button>
       </div>
       <div class="toolbar-content">
         <div class="format-buttons-row">
@@ -71,17 +70,17 @@ export class FormattingManager {
       notepad.parentElement.appendChild(toolbar);
     }
 
-    // Close button
-    const closeBtn = toolbar.querySelector('#toolbar-close');
-    closeBtn.addEventListener('click', () => {
-      this.toggleToolbar(false);
-    });
+    // Remove old event listeners by cloning and replacing
+    const newToolbar = toolbar.cloneNode(true);
+    toolbar.parentNode.replaceChild(newToolbar, toolbar);
+    toolbar = newToolbar;
 
     // Format buttons
     const formatBtns = toolbar.querySelectorAll('.format-btn');
     formatBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         const format = btn.dataset.format;
         this.applyFormatting(format);
         this.soundManager.play('pencil', 100);
@@ -93,6 +92,7 @@ export class FormattingManager {
     highlightBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         // Update active state
         highlightBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
