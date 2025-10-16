@@ -314,7 +314,7 @@ export class NotesManager {
 
     // Character limit enforcement for content lines
     contentDivs.forEach((div, index) => {
-      // Prevent exceeding character limit
+      // Prevent exceeding character limit AND auto-move to next line when full
       div.addEventListener('input', (e) => {
         const text = div.textContent;
         if (text.length > this.maxCharacters) {
@@ -333,6 +333,11 @@ export class NotesManager {
             selection.removeAllRanges();
             selection.addRange(newRange);
           }
+        } else if (text.length === this.maxCharacters && index < contentDivs.length - 1) {
+          // Auto-move to next line when this line is full
+          setTimeout(() => {
+            contentDivs[index + 1].focus();
+          }, 10);
         }
       });
 
