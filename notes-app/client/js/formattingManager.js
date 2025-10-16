@@ -124,6 +124,72 @@ export class FormattingManager {
       return; // Not in an editable area
     }
 
+    // Check if the selection is entirely within a formatting element
+    const formatElement = this.findFormattingElement(container, type, color);
+    
+    if (formatElement) {
+      // Remove formatting
+      this.removeFormatting(formatElement, range);
+    } else {
+      // Apply formatting
+      this.addFormatting(type, color, range, selection);
+    }
+  }
+
+  findFormattingElement(element, type, color = null) {
+    // Walk up the tree to find if we're inside a formatting element
+    let current = element;
+    
+    while (current && current.getAttribute('contenteditable') !== 'true') {
+      const tagName = current.tagName;
+      
+      if (type === 'bold' && tagName === 'STRONG') {
+        return current;
+      }
+      if (type === 'italic' && tagName === 'EM') {
+        return current;
+      }
+      if (type === 'underline' && tagName === 'U') {
+        return current;
+      }
+      if (type === 'highlight' && tagName === 'SPAN') {
+        const expectedClass = `highlight-${color || this.currentHighlightColor}`;
+        if (current.className === expectedClass) {
+          return current;
+        }
+      }
+      
+      current = current.parentElement;
+    }
+    
+    return null;
+  }
+
+  removeFormatting(formatElement, range) {
+    try {
+      // Get the text content
+      const textContent = formatElement.textContent;
+      
+      // Create a text node with the content
+      const textNode = document.createTextNode(textContent);
+      
+      // Replace the formatting element with plain text
+      formatElement.parentNode.replaceChild(textNode, formatElement);
+      
+      // Restore selection on the new text node
+      const newRange = document.createRange();
+      newRange.selectNodeContents(textNode);
+      
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+      
+    } catch (error) {
+      console.error('Error removing formatting:', error);
+    }
+  }
+
+  addFormatting(type, color, range, selection) {
     // Create the formatted element
     let formattedElement;
     
@@ -167,6 +233,20 @@ export class FormattingManager {
     } catch (error) {
       console.error('Error applying formatting:', error);
     }
+  }
+
+  checkIfFormatted(type, color = null) {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return false;
+    
+    const range = selection.getRangeAt(0);
+    let container = range.commonAncestorContainer;
+    
+    if (container.nodeType === Node.TEXT_NODE) {
+      container = container.parentElement;
+    }
+    
+    return this.findFormattingElement(container, type, color) !== null;
   }
 
   getFormattingForNote(noteElement) {
