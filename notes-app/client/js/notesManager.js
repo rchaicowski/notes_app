@@ -12,12 +12,20 @@ export class NotesManager {
     this.soundManager = soundManager;
     this.storageManager = storageManager;
     this.maxCharacters = 35; 
-    this.maxTitleCharacters = 35;
+    this.maxTitleCharacters = 30;
     this.maxLinesPerNote = 15; 
     this.isOffline = localStorage.getItem('offlineMode') === 'true';
     this.currentView = 'index'; 
     this.currentNoteId = null;
     this.formattingManager = new FormattingManager(soundManager);
+
+    // Add character limit to the index page input
+    setTimeout(() => {
+      const indexInput = document.getElementById('content');
+      if (indexInput) {
+        indexInput.setAttribute('maxlength', this.maxTitleCharacters);
+      }
+    }, 100);
 
     window.addEventListener('offline-mode-changed', (event) => {
       this.isOffline = event.detail.isOffline;
@@ -373,29 +381,38 @@ export class NotesManager {
     titleDivElement.addEventListener('input', (e) => {
       const text = titleDivElement.textContent;
       if (text.length > this.maxTitleCharacters) {
-        const range = window.getSelection().getRangeAt(0);
-        const cursorPos = range.startOffset;
+        e.preventDefault();
+        // Truncate to max length
         titleDivElement.textContent = text.substring(0, this.maxTitleCharacters);
         
-        const newRange = document.createRange();
-        const textNode = titleDivElement.firstChild;
-        if (textNode) {
-          newRange.setStart(textNode, Math.min(cursorPos, this.maxTitleCharacters));
-          newRange.collapse(true);
-          const selection = window.getSelection();
-          selection.removeAllRanges();
-          selection.addRange(newRange);
-        }
+        // Move cursor to end
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(titleDivElement);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
       }
     });
 
-    // Title Enter key - move to first content line
+    // Also prevent typing when at limit
     titleDivElement.addEventListener('keydown', (e) => {
+      const text = titleDivElement.textContent;
+      
       if (e.key === 'Enter') {
         e.preventDefault();
         const firstContentLine = document.querySelector('.note-content-line');
         if (firstContentLine) {
           firstContentLine.focus();
+        }
+      } else if (text.length >= this.maxTitleCharacters && 
+                 e.key.length === 1 && 
+                 !e.ctrlKey && 
+                 !e.metaKey) {
+        // Prevent adding more characters when at limit (unless it's a control key)
+        const selection = window.getSelection();
+        if (selection.isCollapsed) {
+          e.preventDefault();
         }
       }
     });
