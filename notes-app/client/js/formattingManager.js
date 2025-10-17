@@ -221,12 +221,14 @@ export class FormattingManager {
       // Insert the formatted content back
       range.insertNode(formattedElement);
       
-      // Clear the selection
-      selection.removeAllRanges();
+      // Add a zero-width space after the formatted element to break out of formatting
+      const spaceNode = document.createTextNode('\u200B');
+      formattedElement.parentNode.insertBefore(spaceNode, formattedElement.nextSibling);
       
-      // Place cursor after the formatted text
+      // Clear the selection and place cursor after the formatted text (outside the formatting)
+      selection.removeAllRanges();
       const newRange = document.createRange();
-      newRange.setStartAfter(formattedElement);
+      newRange.setStartAfter(spaceNode);
       newRange.collapse(true);
       selection.addRange(newRange);
       
