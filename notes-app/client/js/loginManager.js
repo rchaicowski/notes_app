@@ -44,8 +44,28 @@ export class LoginManager {
 
     async handleLogin(e) {
         e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
+        
+        const emailInput = document.getElementById('loginEmail');
+        const passwordInput = document.getElementById('loginPassword');
+        
+        // Reset validation states
+        emailInput.classList.remove('is-invalid');
+        passwordInput.classList.remove('is-invalid');
+        
+        // Validate email
+        if (!emailInput.validity.valid) {
+            emailInput.classList.add('is-invalid');
+            return;
+        }
+        
+        // Validate password
+        if (!passwordInput.validity.valid) {
+            passwordInput.classList.add('is-invalid');
+            return;
+        }
+
+        const email = emailInput.value;
+        const password = passwordInput.value;
 
         try {
             const response = await fetch('http://localhost:5000/api/users/login', {
@@ -67,6 +87,11 @@ export class LoginManager {
 
     async handleRegister(e) {
         e.preventDefault();
+        
+        // Disable the submit button to prevent double submission
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
         const name = document.getElementById('registerName').value;
@@ -86,6 +111,9 @@ export class LoginManager {
         } catch (error) {
             console.error('Registration failed:', error);
             this.showError('Registration failed. Please try again.');
+        } finally {
+            // Re-enable the submit button
+            submitButton.disabled = false;
         }
     }
 

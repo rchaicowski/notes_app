@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Notes App</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="stylesheet" href="styles/global.css">
   <link rel="stylesheet" href="styles/calculator.css">
   <link rel="stylesheet" href="styles/plant.css">
@@ -217,17 +218,35 @@
   </div>
 
   <div id="authContainer" class="auth-container">
-    <form id="loginForm" class="auth-form">
+    <form id="loginForm" class="auth-form" novalidate>
       <h2 data-i18n="auth.login">Login</h2>
       <div class="form-group">
         <label for="loginEmail" data-i18n="auth.email">Email</label>
-        <input type="email" id="loginEmail" name="email" data-i18n="auth.emailPlaceholder"
-          placeholder="Enter your email" autocomplete="username" required>
+        <input type="email" 
+               id="loginEmail" 
+               name="email" 
+               data-i18n="auth.emailPlaceholder"
+               placeholder="Enter your email" 
+               autocomplete="username" 
+               required
+               pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}">
+        <div class="invalid-feedback" data-i18n="auth.invalidEmail">
+            Please enter a valid email address.
+        </div>
       </div>
       <div class="form-group">
         <label for="loginPassword" data-i18n="auth.password">Password</label>
-        <input type="password" id="loginPassword" name="password" data-i18n="auth.passwordPlaceholder"
-          placeholder="Enter your password" autocomplete="current-password" required>
+        <input type="password" 
+               id="loginPassword" 
+               name="password" 
+               data-i18n="auth.passwordPlaceholder"
+               placeholder="Enter your password" 
+               autocomplete="current-password" 
+               required
+               minlength="6">
+        <div class="invalid-feedback" data-i18n="auth.invalidPassword">
+            Password must be at least 6 characters.
+        </div>
       </div>
       <button type="submit" data-i18n="auth.login">Login</button>
       <div class="auth-toggle">
