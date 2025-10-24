@@ -12,7 +12,7 @@ const { auth } = require('../middleware/auth');
 router.get('/', auth, limiter, validateQueryParams, async (req, res, next) => {
     try {
         const result = await pool.query(
-            'SELECT id, content, created_at, updated_at, user_id FROM notes WHERE user_id = $1 ORDER BY created_at DESC',
+            'SELECT id, title, content, formatting, created_at, updated_at, user_id FROM notes WHERE user_id = $1 ORDER BY created_at DESC',
             [req.user.id]
         );
         res.json(result.rows);
@@ -24,9 +24,12 @@ router.get('/', auth, limiter, validateQueryParams, async (req, res, next) => {
 // POST a new note
 router.post('/', auth, strictLimiter, validateHeaders, validateNote, async (req, res, next) => {
     try {
+        const title = (req.body.title && typeof req.body.title === 'string') ? req.body.title.trim() : 'Untitled';
+        const formatting = req.body.formatting || [];
+
         const result = await pool.query(
-            'INSERT INTO notes (content, created_at, updated_at, user_id) VALUES ($1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $2) RETURNING *',
-            [req.body.content, req.user.id]
+            'INSERT INTO notes (title, content, formatting, created_at, updated_at, user_id) VALUES ($1, $2, $3::jsonb, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $4) RETURNING *',
+            [title, req.body.content, JSON.stringify(formatting), req.user.id]
         );
         res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -38,10 +41,56 @@ router.post('/', auth, strictLimiter, validateHeaders, validateNote, async (req,
 router.put('/:id', auth, strictLimiter, validateHeaders, validateId, validateNote, async (req, res, next) => {
     const { id } = req.params;
     try {
-        const result = await pool.query(
-            'UPDATE notes SET content = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3 RETURNING *',
-            [req.body.content, id, req.user.id]
-        );
+        const title = (req.body.title && typeof req.body.title === 'string') ? req.body.title.trim() : undefined;
+        const formatting = req.body.formatting;
+
+        // Build query dynamically to allow partial updates
+        const fields = [];
+        const values = [];
+        let idx = 1;
+
+        if (typeof title !== 'undefined') {
+            fields.push(`title = $${idx++}`);
+            values.push(title);
+        }
+
+        if (typeof req.body.content !== 'undefined') {
+            fields.push(`content = $${idx++}`);
+            values.push(req.body.content);
+        }
+
+        if (typeof formatting !== 'undefined') {
+            fields.push(`formatting = $${idx++}::jsonb`);
+            values.push(JSON.stringify(formatting));
+        }
+
+        // Always update updated_at
+        fields.push(`updated_at = CURRENT_TIMESTAMP`);
+
+        if (fields.length === 0) {
+            throw new AppError('No valid fields provided for update', 400);
+        }
+
+        const query = `UPDATE notes SET ${fields.join(', ')} WHERE id = $${idx++} AND user_id = $${idx} RETURNING *`;
+        values.push(id, req.user.id);
+
+        const result = await pool.query(query, values);
+
+        if (result.rowCount === 0) {
+            throw new AppError('Note not found', 404);
+        }
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// GET single note detail (includes formatting)
+router.get('/:id', auth, validateId, async (req, res, next) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query('SELECT * FROM notes WHERE id = $1 AND user_id = $2', [id, req.user.id]);
 
         if (result.rowCount === 0) {
             throw new AppError('Note not found', 404);

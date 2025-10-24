@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS notes (
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     content TEXT,
+    formatting JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -33,6 +34,8 @@ CREATE TABLE IF NOT EXISTS deleted_emails (
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_notes_user_id ON notes(user_id);
 CREATE INDEX IF NOT EXISTS idx_deleted_emails_date ON deleted_emails(deleted_at);
+-- GIN index for formatting JSONB to speed up JSONB queries
+CREATE INDEX IF NOT EXISTS idx_notes_formatting_gin ON notes USING GIN (formatting);
 
 -- Cleanup function
 CREATE OR REPLACE FUNCTION cleanup_deleted_emails()

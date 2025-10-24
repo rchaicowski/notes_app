@@ -222,14 +222,14 @@
       <h2 data-i18n="auth.login">Login</h2>
       <div class="form-group">
         <label for="loginEmail" data-i18n="auth.email">Email</label>
-        <input type="email" 
-               id="loginEmail" 
-               name="email" 
-               data-i18n="auth.emailPlaceholder"
-               placeholder="Enter your email" 
-               autocomplete="username" 
-               required
-               pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}">
+   <input type="email" 
+     id="loginEmail" 
+     name="email" 
+     data-i18n="auth.emailPlaceholder"
+     placeholder="Enter your email" 
+     autocomplete="username" 
+     required
+     pattern="[^\s@]+@[^\s@]+\.[^\s@]+">
         <div class="invalid-feedback" data-i18n="auth.invalidEmail">
             Please enter a valid email address.
         </div>
@@ -269,7 +269,7 @@
       <div class="form-group">
         <label for="registerEmail" data-i18n="auth.email">Email</label>
         <input type="email" id="registerEmail" name="email" data-i18n="auth.emailPlaceholder"
-          placeholder="Enter your email" autocomplete="email" required>
+          placeholder="Enter your email" autocomplete="email" required pattern="[^\s@]+@[^\s@]+\.[^\s@]+">
       </div>
       <div class="form-group">
         <label for="registerPassword" data-i18n="auth.password">Password</label>
