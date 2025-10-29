@@ -18,9 +18,13 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Less restrictive Helmet Configuration for development
-app.use(helmet({
-    contentSecurityPolicy: false, // Disable CSP for development
+// Configure Helmet: enable stricter defaults in production, relaxed in development
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet()); // use default, secure settings in production
+} else {
+  // Less restrictive Helmet Configuration for development to avoid blocking inline scripts/styles
+  app.use(helmet({
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: false,
     crossOriginResourcePolicy: false,
@@ -32,7 +36,8 @@ app.use(helmet({
     noSniff: false,
     referrerPolicy: false,
     xssFilter: true
-}));
+  }));
+}
 
 app.use(express.json());
 app.use(requestLogger); // Add logging middleware

@@ -1,0 +1,330 @@
+/* ==================== FORMATTING TOOLBAR ==================== */
+.formatting-toolbar {
+  position: absolute;
+  right: 50px;
+  top: 290px;
+  width: 140px;
+  background: #fdf6e3;
+  border: 2px solid #555;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+
+.formatting-toolbar.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(20px);
+}
+
+/* Toolbar Header */
+.toolbar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #d3cfc7;
+}
+
+.toolbar-title {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  font-weight: bold;
+  color: #333;
+}
+
+.toolbar-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.toolbar-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #d8580d;
+}
+
+/* Toolbar Content */
+.toolbar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Format Buttons */
+.format-btn {
+  background: rgba(255, 255, 255, 0.7);
+  border: 2px solid #d3cfc7;
+  color: #333;
+  width: 140px;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  text-align: center;
+  font-family: 'Courier New', Courier, monospace;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.format-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #d8580d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.format-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.format-btn strong {
+  font-family: 'Arial', sans-serif;
+}
+
+.format-btn em {
+  font-family: 'Georgia', serif;
+  font-style: italic;
+}
+
+.format-btn u {
+  text-decoration: underline;
+  font-family: 'Arial', sans-serif;
+}
+
+/* Highlight Section */
+.highlight-section {
+  background: rgba(255, 255, 255, 0.5);
+  border: 2px solid #d3cfc7;
+  border-radius: 4px;
+  padding: 6px;
+}
+
+.highlight-label {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 10px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.highlight-colors {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.highlight-btn {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #555;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.highlight-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.highlight-btn.active {
+  border-width: 3px;
+  border-color: #d8580d;
+  box-shadow: 0 0 0 2px #fdf6e3, 0 0 10px rgba(216, 88, 13, 0.5);
+}
+
+.highlight-btn.active::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #333;
+  font-weight: bold;
+  font-size: 14px;
+  text-shadow: 0 0 2px white;
+}
+
+/* Highlight color styles */
+.highlight-yellow { background-color: rgba(255, 255, 0, 0.4); }
+.highlight-green { background-color: rgba(144, 238, 144, 0.4); }
+.highlight-pink { background-color: rgba(255, 192, 203, 0.4); }
+.highlight-blue { background-color: rgba(173, 216, 230, 0.4); }
+.highlight-orange { background-color: rgba(255, 165, 0, 0.4); }
+
+/* Formatted text in notes list */
+ul#notes-list li .note-content strong {
+  font-weight: bold;
+}
+
+ul#notes-list li .note-content em {
+  font-style: italic;
+}
+
+ul#notes-list li .note-content u {
+  text-decoration: underline;
+}
+
+/* ContentEditable Styles */
+.note-title-editable,
+.note-content-line {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  color: inherit;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.note-title-editable {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Placeholder styling for contenteditable */
+.note-title-editable:empty:before {
+  content: attr(data-placeholder);
+  color: #999;
+  font-style: italic;
+  pointer-events: none;
+}
+
+.note-content-line:empty:before {
+  content: attr(data-placeholder);
+  color: #999;
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* Formatting within contenteditable */
+.note-title-editable strong,
+.note-content-line strong {
+  font-weight: bold;
+}
+
+.note-title-editable em,
+.note-content-line em {
+  font-style: italic;
+}
+
+.note-title-editable u,
+.note-content-line u {
+  text-decoration: underline;
+}
+
+/* Clickable notes in index - minimalist hover effect */
+ul#notes-list li {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+ul#notes-list li:hover {
+  transform: translateX(3px);
+}
+
+ul#notes-list li .note-content {
+  transition: inherit;
+}
+
+/* Dark mode support */
+.dark-mode .formatting-toolbar {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+.dark-mode .toolbar-title {
+  color: #fff;
+}
+
+.dark-mode .toolbar-header {
+  border-bottom-color: #444;
+}
+
+.dark-mode .toolbar-close {
+  color: #aaa;
+}
+
+.dark-mode .toolbar-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ff6b1a;
+}
+
+.dark-mode .format-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #444;
+  color: #fff;
+}
+
+.dark-mode .format-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #ff6b1a;
+}
+
+.dark-mode .highlight-section {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: #444;
+}
+
+.dark-mode .highlight-label {
+  color: #aaa;
+}
+
+.dark-mode .highlight-btn {
+  border-color: #666;
+}
+
+.dark-mode .highlight-btn.active {
+  border-color: #ff6b1a;
+}
+
+.dark-mode .highlight-btn.active::after {
+  color: #fff;
+  text-shadow: 0 0 2px black;
+}
+
+/* Animation for toolbar appearance */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.formatting-toolbar:not(.hidden) {
+  animation: slideInFromRight 0.3s ease;
+}
