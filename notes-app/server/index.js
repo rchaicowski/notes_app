@@ -39,15 +39,18 @@ if (process.env.NODE_ENV === 'production') {
   }));
 }
 
-app.use(express.json());
-app.use(requestLogger); // Add logging middleware
+// NOTE: apply body-parsing with sensible limits per-route so we can keep a
+// small global/default limit and allow larger payloads only where needed.
+// Defaults can be overridden via environment variables.
+const NOTES_BODY_LIMIT = process.env.NOTES_BODY_LIMIT || '1mb';
+const USER_BODY_LIMIT = process.env.USER_BODY_LIMIT || '100kb';
 
-// Routes
+// Routes (apply per-route body parsers so requestLogger runs after parsing)
 const notesRoutes = require('./routes/notes');
 const userRoutes = require('./routes/users');
 
-app.use('/api/notes', notesRoutes);  // Notes routes
-app.use('/api/users', userRoutes);   // User routes
+app.use('/api/notes', express.json({ limit: NOTES_BODY_LIMIT }), requestLogger, notesRoutes);
+app.use('/api/users', express.json({ limit: USER_BODY_LIMIT }), requestLogger, userRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

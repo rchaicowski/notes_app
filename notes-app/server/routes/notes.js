@@ -8,8 +8,24 @@ const { AppError } = require('../middleware/errorHandler');
 const { limiter, strictLimiter } = require('../middleware/rateLimiter');
 const { auth } = require('../middleware/auth');
 
+// Ensure the authenticated user still exists in the database. This prevents
+// inserting notes with a user_id that doesn't exist and gives a clearer error
+// message than a raw foreign-key violation.
+const ensureUserExists = async (req, res, next) => {
+    try {
+        if (!req.user || !req.user.id) return res.status(401).json({ error: 'Authentication required' });
+        const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [req.user.id]);
+        if (userCheck.rowCount === 0) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        next();
+    } catch (error) {
+        next(error);
+    }
+};
+
 // GET all notes with pagination
-router.get('/', auth, limiter, validateQueryParams, async (req, res, next) => {
+router.get('/', auth, ensureUserExists, limiter, validateQueryParams, async (req, res, next) => {
     try {
         const result = await pool.query(
             'SELECT id, title, content, formatting, created_at, updated_at, user_id FROM notes WHERE user_id = $1 ORDER BY created_at DESC',
@@ -22,7 +38,7 @@ router.get('/', auth, limiter, validateQueryParams, async (req, res, next) => {
 });
 
 // POST a new note
-router.post('/', auth, strictLimiter, validateHeaders, validateNote, async (req, res, next) => {
+router.post('/', auth, ensureUserExists, strictLimiter, validateHeaders, validateNote, async (req, res, next) => {
     try {
         const title = (req.body.title && typeof req.body.title === 'string') ? req.body.title.trim() : 'Untitled';
         const formatting = req.body.formatting || [];
@@ -38,7 +54,7 @@ router.post('/', auth, strictLimiter, validateHeaders, validateNote, async (req,
 });
 
 // PUT (update) a note
-router.put('/:id', auth, strictLimiter, validateHeaders, validateId, validateNote, async (req, res, next) => {
+router.put('/:id', auth, ensureUserExists, strictLimiter, validateHeaders, validateId, validateNote, async (req, res, next) => {
     const { id } = req.params;
     try {
         const title = (req.body.title && typeof req.body.title === 'string') ? req.body.title.trim() : undefined;
@@ -87,7 +103,7 @@ router.put('/:id', auth, strictLimiter, validateHeaders, validateId, validateNot
 });
 
 // GET single note detail (includes formatting)
-router.get('/:id', auth, validateId, async (req, res, next) => {
+router.get('/:id', auth, ensureUserExists, validateId, async (req, res, next) => {
     const { id } = req.params;
     try {
         const result = await pool.query('SELECT * FROM notes WHERE id = $1 AND user_id = $2', [id, req.user.id]);
@@ -103,7 +119,7 @@ router.get('/:id', auth, validateId, async (req, res, next) => {
 });
 
 // DELETE a note
-router.delete('/:id', auth, strictLimiter, validateId, async (req, res, next) => {
+router.delete('/:id', auth, ensureUserExists, strictLimiter, validateId, async (req, res, next) => {
     const { id } = req.params;
     try {
         const result = await pool.query('DELETE FROM notes WHERE id = $1 AND user_id = $2 RETURNING *', [id, req.user.id]);
