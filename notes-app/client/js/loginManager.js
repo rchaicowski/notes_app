@@ -78,7 +78,6 @@ export class LoginManager {
 
             const data = await response.json();
             this.setAuthData(data);
-            window.location.reload();
         } catch (error) {
             console.error('Login failed:', error);
             this.showError('Login failed. Please check your credentials.');
@@ -107,7 +106,6 @@ export class LoginManager {
 
             const data = await response.json();
             this.setAuthData(data);
-            window.location.reload();
         } catch (error) {
             console.error('Registration failed:', error);
             this.showError('Registration failed. Please try again.');
@@ -118,9 +116,15 @@ export class LoginManager {
     }
 
     handleLogout() {
+        // Clear both token keys and notify app
         localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
         localStorage.removeItem('user');
-        window.location.reload();
+        this.token = null;
+        this.user = null;
+        // Inform other modules that auth changed
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { isAuthenticated: false } }));
+        this.initializeUI();
     }
 
     async handleDeleteAccount() {
@@ -156,8 +160,19 @@ export class LoginManager {
     }
 
     setAuthData(data) {
+        // Persist token under both keys for compatibility and update in-memory state
         localStorage.setItem('token', data.token);
+        localStorage.setItem('authToken', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        this.token = data.token;
+        this.user = data.user;
+
+        // Update UI and notify listeners
+        this.updateUserInfo();
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { isAuthenticated: true, user: this.user } }));
+
+        // Recompute UI visibility now that we have a token
+        this.initializeUI();
     }
 
     updateUserInfo() {

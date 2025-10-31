@@ -1,3 +1,20 @@
+const SENSITIVE_KEYS_RE = /password|token|authToken|ssn|card|cvv|secret/i;
+
+function maskSensitive(key, value) {
+    if (key && SENSITIVE_KEYS_RE.test(key)) return '[REDACTED]';
+    return value;
+}
+
+function safeStringify(obj, maxLen = 1000) {
+    try {
+        const str = JSON.stringify(obj, maskSensitive, 2);
+        if (str.length > maxLen) return str.slice(0, maxLen) + '... [truncated]';
+        return str;
+    } catch (err) {
+        return '[unserializable]';
+    }
+}
+
 const requestLogger = (req, res, next) => {
     // Get timestamp when request starts
     const start = Date.now();
@@ -5,10 +22,19 @@ const requestLogger = (req, res, next) => {
 
     // Log the incoming request with timestamp
     console.log(`\n📝 ${timestamp} - ${req.method} ${req.url}`);
-    
-    // Log request body if present (useful for POST/PUT requests)
+
+    // Avoid logging sensitive payloads in full. For auth routes only show keys and mask values.
+    const sensitivePaths = ['/api/users/login', '/api/users/register', '/api/users/account'];
+    const isSensitivePath = sensitivePaths.some(p => req.url.startsWith(p));
+
     if (req.body && Object.keys(req.body).length > 0) {
-        console.log('📦 Request Body:', JSON.stringify(req.body, null, 2));
+        if (isSensitivePath) {
+            // Log only keys and masked values
+            console.log('📦 Request Body (masked):', safeStringify(req.body, 500));
+        } else {
+            // Log body but mask known sensitive keys and truncate long payloads
+            console.log('📦 Request Body:', safeStringify(req.body, 2000));
+        }
     }
 
     // Log when response is finished
