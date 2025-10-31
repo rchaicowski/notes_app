@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const { validateHeaders, validateUser } = require('../middleware/validateCommon');
-const { limiter } = require('../middleware/rateLimiter');
+const { limiter, authLimiter } = require('../middleware/rateLimiter');
 const { auth } = require('../middleware/auth');
 
 // Delete account
@@ -54,7 +54,7 @@ router.delete('/account', auth, async (req, res, next) => {
 });
 
 // Register new user
-router.post('/register', limiter, validateHeaders, validateUser, async (req, res, next) => {
+router.post('/register', authLimiter, validateHeaders, validateUser, async (req, res, next) => {
     try {
         const { email, password, name } = req.body;
 
@@ -118,7 +118,7 @@ router.post('/register', limiter, validateHeaders, validateUser, async (req, res
 });
 
 // Login user
-router.post('/login', limiter, validateHeaders, async (req, res, next) => {
+router.post('/login', authLimiter, validateHeaders, async (req, res, next) => {
     try {
         const { email, password } = req.body;
 

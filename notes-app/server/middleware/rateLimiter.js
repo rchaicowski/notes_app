@@ -25,4 +25,17 @@ const strictLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-module.exports = { limiter, strictLimiter };
+// Very strict limiter for authentication endpoints to mitigate brute-force attacks
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 6, // allow only a few attempts per IP per window
+    message: {
+        status: 'error',
+        message: 'Too many authentication attempts. Please try again after 15 minutes.',
+        details: 'Rate limit exceeded for authentication'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+module.exports = { limiter, strictLimiter, authLimiter };
