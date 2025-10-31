@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 const { requestLogger } = require('./middleware/requestLogger');
+const db = require('./db');
 
 // Parse allowed origins from env (comma separated). Fallback to localhost dev origins.
 const rawOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5500,http://127.0.0.1:5500,http://localhost:3000').split(',').map(s => s.trim()).filter(Boolean);
@@ -77,10 +78,41 @@ const userRoutes = require('./routes/users');
 app.use('/api/notes', express.json({ limit: NOTES_BODY_LIMIT }), requestLogger, notesRoutes);
 app.use('/api/users', express.json({ limit: USER_BODY_LIMIT }), requestLogger, userRoutes);
 
+// Validate critical secrets: JWT_SECRET should be set in environment for auth to work.
+if (!process.env.JWT_SECRET) {
+  console.error('❌ Missing JWT_SECRET environment variable. Set JWT_SECRET in your .env or environment.');
+  process.exit(1);
+}
+
+// Optionally run init SQL if explicitly requested via env var (RUN_DB_INIT=true). This avoids
+// destructive initialization during normal server start.
+// If the helper exists on the db module, call it. It will be a no-op unless
+// RUN_DB_INIT=true is set.
+if (typeof db.runInitSqlIfRequested === 'function') {
+  db.runInitSqlIfRequested().catch(err => {
+    console.error('❌ Error during optional DB init:', err);
+    process.exit(1);
+  });
+}
+
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
   console.log(`✅ Server is running on port ${PORT}`);
+  // Perform a non-destructive DB connectivity check and log the timestamp if possible.
+  // This does not run any init SQL; it just verifies the pool can talk to the DB.
+  (async () => {
+    try {
+      if (db && typeof db.query === 'function') {
+        const res = await db.query('SELECT NOW()');
+        if (res && res.rows && res.rows[0] && res.rows[0].now) {
+          console.log('✅ Connected to DB at:', res.rows[0].now);
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️ Could not verify DB connectivity at startup:', err.message || err);
+    }
+  })();
 });
