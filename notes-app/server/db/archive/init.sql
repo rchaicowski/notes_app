@@ -1,5 +1,10 @@
--- Non-destructive init SQL intended for local/dev convenience. This file will NOT
--- drop existing tables. Prefer using migrations for schema management.
+-- Original (destructive) init.sql archived here for reference.
+-- WARNING: This file drops tables and recreates schema. Do NOT run in production.
+
+-- Drop tables if they exist
+DROP TABLE IF EXISTS notes;
+DROP TABLE IF EXISTS deleted_emails;
+DROP TABLE IF EXISTS users;
 
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (

@@ -1,5 +1,4 @@
--- Non-destructive init SQL intended for local/dev convenience. This file will NOT
--- drop existing tables. Prefer using migrations for schema management.
+-- Initial migration: create users, notes, deleted_emails and indexes
 
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (

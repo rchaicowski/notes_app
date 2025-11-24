@@ -5,7 +5,11 @@
   "main": "server/index.js",
   "scripts": {
     "dev": "nodemon server/index.js",
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "migrate": "node-pg-migrate up --migrations-dir server/db/migrations",
+    "migrate:down": "node-pg-migrate down --migrations-dir server/db/migrations",
+    "migrate:create": "node-pg-migrate create --migrations-dir server/db/migrations",
+    "admin:delete-user": "node server/scripts/deleteUser.js"
   },
   "author": "",
   "license": "ISC",
@@ -18,10 +22,11 @@
     "express-rate-limit": "^8.0.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.15.6",
+    "pg": "^8.10.0",
     "sanitize-html": "^2.11.0"
   },
   "devDependencies": {
+    "node-pg-migrate": "^6.2.0",
     "nodemon": "^3.1.10"
   }
 }

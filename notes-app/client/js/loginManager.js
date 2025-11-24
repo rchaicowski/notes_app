@@ -74,7 +74,16 @@ export class LoginManager {
                 body: JSON.stringify({ email, password })
             });
 
-            if (!response.ok) throw new Error('Login failed');
+            if (!response.ok) {
+                let errText = 'Login failed. Please check your credentials.';
+                try {
+                    const errBody = await response.json();
+                    if (errBody && (errBody.error || errBody.message)) {
+                        errText = errBody.error || errBody.message;
+                    }
+                } catch (e) {}
+                throw new Error(errText);
+            }
 
             const data = await response.json();
             this.setAuthData(data);
@@ -102,7 +111,19 @@ export class LoginManager {
                 body: JSON.stringify({ email, password, name })
             });
 
-            if (!response.ok) throw new Error('Registration failed');
+            // If server returned an error, try to show its message to the user
+            if (!response.ok) {
+                let errText = 'Registration failed. Please try again.';
+                try {
+                    const errBody = await response.json();
+                    if (errBody && (errBody.error || errBody.message)) {
+                        errText = errBody.error || errBody.message;
+                    }
+                } catch (e) {
+                    // ignore JSON parse errors
+                }
+                throw new Error(errText);
+            }
 
             const data = await response.json();
             this.setAuthData(data);
