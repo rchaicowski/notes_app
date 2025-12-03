@@ -8,6 +8,50 @@ export class Calculator {
     this.soundManager = soundManager;
   }
 
+  /**
+   * Initialize calculator and attach event listeners to buttons
+   */
+  init() {
+    // Get all calculator buttons
+    const calcButtons = document.querySelectorAll('.calc-btn');
+    
+    calcButtons.forEach(button => {
+      button.addEventListener('click', (e) => this.handleButtonClick(e.target));
+    });
+
+    // Initial display update
+    this.updateDisplay();
+  }
+
+  /**
+   * Handle calculator button clicks
+   * @param {HTMLElement} button - The clicked button element
+   */
+  handleButtonClick(button) {
+    const text = button.textContent.trim();
+    
+    // Check button classes to determine action
+    if (button.classList.contains('clear')) {
+      this.clear();
+    } else if (button.classList.contains('equals')) {
+      this.calculate();
+    } else if (button.classList.contains('operator')) {
+      // Handle operators and backspace
+      if (text === '⌫') {
+        this.deleteLast();
+      } else if (text === '×') {
+        this.inputOperator('*');
+      } else {
+        this.inputOperator(text);
+      }
+    } else if (text === '.') {
+      this.inputDecimal();
+    } else {
+      // It's a number
+      this.inputNumber(text);
+    }
+  }
+
   updateDisplay() {
     const displayEl = document.getElementById('calc-display');
     let displayText = '';
@@ -154,5 +198,15 @@ export class Calculator {
     this.soundManager.play('calculator');
     this.display = this.display.length > 1 ? this.display.slice(0, -1) : '0';
     this.updateDisplay();
+  }
+
+  /**
+   * Clean up event listeners when needed
+   */
+  destroy() {
+    const calcButtons = document.querySelectorAll('.calc-btn');
+    calcButtons.forEach(button => {
+      button.removeEventListener('click', this.handleButtonClick);
+    });
   }
 }

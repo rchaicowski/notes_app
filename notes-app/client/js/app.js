@@ -25,7 +25,11 @@ class NotesApp {
   }
 
   init() {
-    this.calculator.updateDisplay();
+    // Initialize all controllers with event listeners
+    this.calculator.init();
+    this.lamp.init();
+    
+    // Initialize other components
     this.notesManager.loadNotes();
     this.notesManager.initializeCharacterLimit();
     this.setupEventListeners();
@@ -44,7 +48,7 @@ class NotesApp {
     });
   }
 
-   updatePageInfo() {
+  updatePageInfo() {
     const pageInfo = document.getElementById('page-info');
     if (pageInfo && this.notesManager) {
       const totalPages = this.notesManager.getTotalPages();
@@ -120,14 +124,5 @@ class NotesApp {
   }
 }
 
-// Global for inline HTML functions
+// Initialize the app
 window.app = new NotesApp();
-
-// Expose calculator functions globally if needed
-window.inputNumber = num => app.calculator.inputNumber(num);
-window.inputOperator = op => app.calculator.inputOperator(op);
-window.inputDecimal = () => app.calculator.inputDecimal();
-window.calculate = () => app.calculator.calculate();
-window.clearCalculator = () => app.calculator.clear();
-window.deleteLast = () => app.calculator.deleteLast();
-window.toggleLamp = () => app.lamp.toggle();

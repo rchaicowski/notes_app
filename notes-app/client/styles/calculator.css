@@ -120,7 +120,7 @@
 }
 
 /* ==================== Special Buttons ==================== */
-.calc-btn[onclick*="inputNumber('0')"] {
+.calc-btn.zero-btn {
   grid-column: span 2;
-  width: 88px; 
+  width: 91px; 
 }
