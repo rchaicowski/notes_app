@@ -287,7 +287,7 @@
       </div>
       
       <!-- Note creation form -->
-      <form id="note-form">
+      <form id="note-form" action="#" method="post">
         <!-- Note content input -->
         <input type="text" id="content" data-i18n="note.placeholder" placeholder="Note" required />
         
@@ -328,7 +328,7 @@
        ============================================ -->
   <div id="authContainer" class="auth-container">
     <!-- Login form -->
-    <form id="loginForm" class="auth-form" novalidate>
+    <form id="loginForm" class="auth-form" action="#" method="post" novalidate>
       <h2 data-i18n="auth.login">Login</h2>
       
       <!-- Email input with validation -->
@@ -386,7 +386,7 @@
     </form>
 
     <!-- Registration form (initially hidden) -->
-    <form id="registerForm" class="auth-form hidden">
+    <form id="registerForm" class="auth-form hidden" action="#" method="post" novalidate>
       <h2 data-i18n="auth.register">Register</h2>
       
       <!-- Name input -->
