@@ -64,7 +64,11 @@
          SETTINGS PANEL - Matchbox Trigger
          ============================================ -->
     <!-- Settings trigger styled as a matchbox with paperclips -->
-    <div class="settings-trigger" id="settingsTrigger">
+    <div class="settings-trigger" 
+         id="settingsTrigger"
+         role="button"
+         aria-label="Open settings"
+         tabindex="0">
       <div class="matchbox-cover"></div>
       <div class="matchbox-inner">
         <!-- Decorative paperclips -->
@@ -77,7 +81,9 @@
     </div>
     
     <!-- Settings overlay (backdrop) -->
-    <div class="settings-overlay" id="settingsOverlay"></div>
+    <div class="settings-overlay" 
+         id="settingsOverlay"
+         aria-hidden="true"></div>
     
     <!-- ============================================
          SETTINGS PANEL - Main Content
@@ -86,7 +92,9 @@
       <!-- Panel header with close button -->
       <div class="settings-header">
         <h2 class="settings-title" data-i18n="settings.title">Settings</h2>
-        <button class="settings-close" id="settingsClose">×</button>
+        <button class="settings-close" 
+                id="settingsClose"
+                aria-label="Close settings">×</button>
       </div>
       
       <div class="settings-content">
@@ -269,7 +277,14 @@
       <!-- Global mode controls (Edit/Delete) -->
       <div id="global-controls">
         <!-- Edit mode toggle -->
-        <div class="icon-wrapper" id="edit-mode-btn" data-i18n-attr="title:pencil.edit" title="Edit Mode">
+        <div class="icon-wrapper" 
+             id="edit-mode-btn"
+             role="button"
+             aria-label="Toggle edit mode"
+             aria-pressed="false"
+             tabindex="0"
+             data-i18n-attr="title:pencil.edit" 
+             title="Edit Mode">
           <div class="icon pencil">
             <div class="vertical-lines"></div>
             <div class="pencil-text" data-i18n="pencil.edit">EDIT</div>
@@ -279,7 +294,14 @@
         </div>
         
         <!-- Delete mode toggle -->
-        <div class="icon-wrapper" id="delete-mode-btn" data-i18n-attr="title:eraser.delete" title="Delete Mode">
+        <div class="icon-wrapper" 
+             id="delete-mode-btn"
+             role="button"
+             aria-label="Toggle delete mode"
+             aria-pressed="false"
+             tabindex="0"
+             data-i18n-attr="title:eraser.delete" 
+             title="Delete Mode">
           <div class="icon eraser">
             <div class="eraser-text" data-i18n="eraser.delete">DELETE</div>
           </div>
@@ -300,9 +322,17 @@
       
       <!-- Pagination controls -->
       <div class="page-navigation">
-        <button class="page-corner" id="prev-page" data-i18n-attr="title:page.previous" title="Previous Page">‹</button>
+        <button class="page-corner" 
+                id="prev-page"
+                aria-label="Previous page"
+                data-i18n-attr="title:page.previous" 
+                title="Previous Page">‹</button>
         <div class="page-info" id="page-info">Page 1 of 1</div>
-        <button class="page-corner" id="next-page" data-i18n-attr="title:page.next" title="Next Page">›</button>
+        <button class="page-corner" 
+                id="next-page"
+                aria-label="Next page"
+                data-i18n-attr="title:page.next" 
+                title="Next Page">›</button>
       </div>
     </div>
   </div>

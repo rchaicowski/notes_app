@@ -40,6 +40,33 @@ export class NotesManager {
         this.renderNotes();
       }
     });
+
+    // Initialize keyboard support for edit/delete buttons
+    this.initializeKeyboardSupport();
+  }
+
+  /**
+   * Initialize keyboard support for edit/delete mode buttons
+   */
+  initializeKeyboardSupport() {
+    const editBtn = document.getElementById('edit-mode-btn');
+    const deleteBtn = document.getElementById('delete-mode-btn');
+
+    // Add keyboard support to edit button
+    editBtn?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.toggleEditMode();
+      }
+    });
+
+    // Add keyboard support to delete button
+    deleteBtn?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.toggleDeleteMode();
+      }
+    });
   }
 
   getAuthHeaders() {
@@ -513,7 +540,12 @@ export class NotesManager {
   enterEditMode() {
     this.exitModes();
     this.isEditMode = true;
-    document.getElementById('edit-mode-btn').classList.add('active');
+    
+    // Update ARIA state
+    const editBtn = document.getElementById('edit-mode-btn');
+    editBtn?.setAttribute('aria-pressed', 'true');
+    
+    editBtn?.classList.add('active');
     document.body.classList.add('edit-mode');
     this.highlightNotes('edit');
   }
@@ -521,15 +553,27 @@ export class NotesManager {
   enterDeleteMode() {
     this.exitModes();
     this.isDeleteMode = true;
-    document.getElementById('delete-mode-btn').classList.add('active');
+    
+    // Update ARIA state
+    const deleteBtn = document.getElementById('delete-mode-btn');
+    deleteBtn?.setAttribute('aria-pressed', 'true');
+    
+    deleteBtn?.classList.add('active');
     document.body.classList.add('delete-mode');
     this.highlightNotes('delete');
   }
 
   exitModes() {
     this.isEditMode = this.isDeleteMode = false;
-    document.getElementById('edit-mode-btn').classList.remove('active');
-    document.getElementById('delete-mode-btn').classList.remove('active');
+    
+    // Update ARIA states
+    const editBtn = document.getElementById('edit-mode-btn');
+    const deleteBtn = document.getElementById('delete-mode-btn');
+    editBtn?.setAttribute('aria-pressed', 'false');
+    deleteBtn?.setAttribute('aria-pressed', 'false');
+    
+    editBtn?.classList.remove('active');
+    deleteBtn?.classList.remove('active');
     document.body.classList.remove('edit-mode', 'delete-mode');
     this.removeHighlights();
     

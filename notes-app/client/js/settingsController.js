@@ -92,12 +92,23 @@ export class SettingsController {
       }));
     });
 
+    // Click event for settings trigger
     this.trigger.addEventListener('click', () => {
-
       if (window.app?.soundManager) {
         window.app.soundManager.play('box');
       }
       this.open();
+    });
+
+    // Keyboard support for settings trigger
+    this.trigger.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (window.app?.soundManager) {
+          window.app.soundManager.play('box');
+        }
+        this.open();
+      }
     });
     
     this.closeBtn.addEventListener('click', () => this.close());
@@ -108,17 +119,25 @@ export class SettingsController {
     this.setupControls();
   }
 
-  open() { 
+  open() {
     this.trigger.classList.add('open');
     this.panel.classList.add('open'); 
-    this.overlay.classList.add('open'); 
+    this.overlay.classList.add('open');
+    
+    // Update ARIA state for overlay
+    this.overlay?.setAttribute('aria-hidden', 'false');
+    
     document.body.style.overflow = 'hidden'; 
   }
   
   close() { 
     this.trigger.classList.remove('open');
     this.panel.classList.remove('open'); 
-    this.overlay.classList.remove('open'); 
+    this.overlay.classList.remove('open');
+    
+    // Update ARIA state for overlay
+    this.overlay?.setAttribute('aria-hidden', 'true');
+    
     document.body.style.overflow = 'auto'; 
   }
 
@@ -146,6 +165,5 @@ export class SettingsController {
         Object.values(window.app.soundManager.sounds).forEach(s => s.volume = actualVolume);
       }
     });
-
   }
 }
