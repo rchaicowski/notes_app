@@ -1,64 +1,122 @@
+/**
+ * @fileoverview Login and registration UI management
+ * Handles user authentication flows, offline mode, and account management
+ * @module loginManager
+ */
+
+import { API_URL, setAuthToken, setCurrentUser, logout as authLogout } from './auth.js';
+
+/**
+ * Manages authentication UI and user session lifecycle
+ * Coordinates login, registration, logout, and offline mode functionality
+ */
 export class LoginManager {
+    /**
+     * Initializes the login manager
+     * Loads auth state from localStorage and sets up UI accordingly
+     */
     constructor() {
-        // Clear any previous offline mode setting on fresh load
+        // Clear offline mode if no valid session exists (fresh start)
         if (!localStorage.getItem('token')) {
             localStorage.removeItem('offlineMode');
         }
+        
+        // Load persisted auth state
         this.token = localStorage.getItem('token');
         this.user = JSON.parse(localStorage.getItem('user'));
         this.offlineMode = localStorage.getItem('offlineMode') === 'true';
+        
         this.initializeUI();
         this.setupEventListeners();
     }
 
+    /**
+     * Initializes UI visibility based on authentication state
+     * Shows/hides auth container and user info panel
+     */
     initializeUI() {
         const authContainer = document.getElementById('authContainer');
         const userInfo = document.getElementById('userInfo');
         
         if (this.token) {
-            // User is logged in
+            // User is authenticated - show user info
             authContainer?.classList.add('hidden');
             userInfo?.classList.remove('hidden');
             this.updateUserInfo();
         } else {
-            // No token, show auth container by default
+            // No token - show auth forms by default
             authContainer?.classList.remove('hidden');
             userInfo?.classList.add('hidden');
             
-            // Only hide auth container if explicitly in offline mode
+            // Hide auth forms only if explicitly in offline mode
             if (this.offlineMode) {
                 authContainer?.classList.add('hidden');
             }
         }
     }
 
+    /**
+     * Sets up all DOM event listeners for authentication UI
+     * Handles form submissions, mode toggles, and account actions
+     */
     setupEventListeners() {
-        document.getElementById('loginForm')?.addEventListener('submit', (e) => this.handleLogin(e));
-        document.getElementById('registerForm')?.addEventListener('submit', (e) => this.handleRegister(e));
-        document.getElementById('logoutBtn')?.addEventListener('click', () => this.handleLogout());
-        document.getElementById('showRegister')?.addEventListener('click', () => this.toggleForms('register'));
-        document.getElementById('showLogin')?.addEventListener('click', () => this.toggleForms('login'));
-        document.getElementById('deleteAccountBtn')?.addEventListener('click', () => this.handleDeleteAccount());
-        document.getElementById('useOfflineMode')?.addEventListener('click', () => this.enableOfflineMode());
+        // Form submissions
+        document.getElementById('loginForm')?.addEventListener('submit', (e) => {
+            this.handleLogin(e);
+        });
+        
+        document.getElementById('registerForm')?.addEventListener('submit', (e) => {
+            this.handleRegister(e);
+        });
+        
+        // Auth actions
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            this.handleLogout();
+        });
+        
+        // Form toggles
+        document.getElementById('showRegister')?.addEventListener('click', () => {
+            this.toggleForms('register');
+        });
+        
+        document.getElementById('showLogin')?.addEventListener('click', () => {
+            this.toggleForms('login');
+        });
+        
+        // Account management
+        document.getElementById('deleteAccountBtn')?.addEventListener('click', () => {
+            this.handleDeleteAccount();
+        });
+        
+        // Offline mode
+        document.getElementById('useOfflineMode')?.addEventListener('click', () => {
+            this.enableOfflineMode();
+        });
     }
 
+    /**
+     * Handles user login form submission
+     * Validates inputs, sends login request, and updates auth state
+     * 
+     * @param {Event} e - Form submit event
+     */
     async handleLogin(e) {
         e.preventDefault();
         
         const emailInput = document.getElementById('loginEmail');
         const passwordInput = document.getElementById('loginPassword');
         
-        // Reset validation states
+        // Reset previous validation states
         emailInput.classList.remove('is-invalid');
         passwordInput.classList.remove('is-invalid');
         
-        // Validate email
+        // Validate email format
         if (!emailInput.validity.valid) {
             emailInput.classList.add('is-invalid');
             return;
         }
         
-        // Validate password
+        // Validate password requirements
         if (!passwordInput.validity.valid) {
             passwordInput.classList.add('is-invalid');
             return;
@@ -68,20 +126,23 @@ export class LoginManager {
         const password = passwordInput.value;
 
         try {
-            const response = await fetch('http://localhost:5000/api/users/login', {
+            const response = await fetch(`${API_URL}/users/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
 
             if (!response.ok) {
+                // Try to extract error message from response body
                 let errText = 'Login failed. Please check your credentials.';
                 try {
                     const errBody = await response.json();
                     if (errBody && (errBody.error || errBody.message)) {
                         errText = errBody.error || errBody.message;
                     }
-                } catch (e) {}
+                } catch (e) {
+                    // Ignore JSON parse errors, use default message
+                }
                 throw new Error(errText);
             }
 
@@ -93,10 +154,16 @@ export class LoginManager {
         }
     }
 
+    /**
+     * Handles user registration form submission
+     * Validates inputs, sends registration request, and auto-logs in user
+     * 
+     * @param {Event} e - Form submit event
+     */
     async handleRegister(e) {
         e.preventDefault();
         
-        // Disable the submit button to prevent double submission
+        // Prevent double submission
         const submitButton = e.target.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         
@@ -105,14 +172,14 @@ export class LoginManager {
         const name = document.getElementById('registerName').value;
 
         try {
-            const response = await fetch('http://localhost:5000/api/users/register', {
+            const response = await fetch(`${API_URL}/users/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password, name })
             });
 
-            // If server returned an error, try to show its message to the user
             if (!response.ok) {
+                // Try to extract error message from response body
                 let errText = 'Registration failed. Please try again.';
                 try {
                     const errBody = await response.json();
@@ -120,7 +187,7 @@ export class LoginManager {
                         errText = errBody.error || errBody.message;
                     }
                 } catch (e) {
-                    // ignore JSON parse errors
+                    // Ignore JSON parse errors, use default message
                 }
                 throw new Error(errText);
             }
@@ -131,39 +198,48 @@ export class LoginManager {
             console.error('Registration failed:', error);
             this.showError('Registration failed. Please try again.');
         } finally {
-            // Re-enable the submit button
+            // Re-enable submit button after request completes
             submitButton.disabled = false;
         }
     }
 
+    /**
+     * Handles user logout
+     * Clears auth state and resets UI to login screen
+     */
     handleLogout() {
-        // Clear both token keys and notify app
-        localStorage.removeItem('token');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
+        authLogout(); // Clear auth state via centralized function
         this.token = null;
         this.user = null;
-        // Inform other modules that auth changed
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { isAuthenticated: false } }));
         this.initializeUI();
     }
 
+    /**
+     * Handles account deletion
+     * Prompts for confirmation, deletes account via API, and clears all data
+     */
     async handleDeleteAccount() {
-        if (!confirm('Are you sure you want to delete your account? This action cannot be undone and all your notes will be deleted.')) {
-            return;
-        }
+        const confirmed = confirm(
+            'Are you sure you want to delete your account? ' +
+            'This action cannot be undone and all your notes will be deleted.'
+        );
+        
+        if (!confirmed) return;
 
         try {
-            const response = await fetch('http://localhost:5000/api/users/account', {
+            const response = await fetch(`${API_URL}/users/account`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${this.token}`
                 }
             });
 
-            if (!response.ok) throw new Error('Failed to delete account');
+            if (!response.ok) {
+                throw new Error('Failed to delete account');
+            }
 
-            localStorage.clear(); // Clear all local storage
+            // Clear all local data and reload app
+            localStorage.clear();
             window.location.reload();
         } catch (error) {
             console.error('Delete account failed:', error);
@@ -171,31 +247,64 @@ export class LoginManager {
         }
     }
 
+    /**
+     * Enables offline mode
+     * Hides auth UI and allows app usage without authentication
+     * Dispatches 'offline-mode-changed' event to notify other components
+     * 
+     * @fires CustomEvent#offline-mode-changed
+     */
     enableOfflineMode() {
         localStorage.setItem('offlineMode', 'true');
+        
+        // Hide both auth and user info panels
         document.getElementById('authContainer')?.classList.add('hidden');
         document.getElementById('userInfo')?.classList.add('hidden');
+        
+        // Notify application of offline mode activation
         window.dispatchEvent(new CustomEvent('offline-mode-changed', { 
             detail: { isOffline: true } 
         }));
     }
 
+    /**
+     * Sets authentication data after successful login/registration
+     * Updates both centralized auth module and local instance state
+     * Dispatches 'auth-changed' event to notify other components
+     * 
+     * @param {Object} data - Response data containing token and user
+     * @param {string} data.token - Authentication token
+     * @param {Object} data.user - User object with profile data
+     * @fires CustomEvent#auth-changed
+     */
     setAuthData(data) {
-        // Persist token under both keys for compatibility and update in-memory state
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        // Update centralized auth state
+        setAuthToken(data.token);
+        setCurrentUser(data.user);
+        
+        // Update local instance state
         this.token = data.token;
         this.user = data.user;
 
-        // Update UI and notify listeners
+        // Update UI
         this.updateUserInfo();
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { isAuthenticated: true, user: this.user } }));
+        
+        // Notify application of authentication
+        window.dispatchEvent(new CustomEvent('auth-changed', { 
+            detail: { 
+                isAuthenticated: true, 
+                user: this.user 
+            } 
+        }));
 
-        // Recompute UI visibility now that we have a token
+        // Refresh UI visibility
         this.initializeUI();
     }
 
+    /**
+     * Updates the user info display with current user data
+     * Shows user name or email in the UI
+     */
     updateUserInfo() {
         const userName = document.getElementById('userName');
         if (userName && this.user) {
@@ -203,6 +312,11 @@ export class LoginManager {
         }
     }
 
+    /**
+     * Toggles between login and registration forms
+     * 
+     * @param {string} form - Which form to show ('login' or 'register')
+     */
     toggleForms(form) {
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
@@ -216,7 +330,14 @@ export class LoginManager {
         }
     }
 
+    /**
+     * Displays an error message to the user
+     * Currently uses browser alert - can be enhanced with custom UI
+     * 
+     * @param {string} message - Error message to display
+     * @todo Replace alert() with custom modal or toast notification
+     */
     showError(message) {
-        alert(message); // For now, using alert. Can be enhanced with a better UI later
+        alert(message);
     }
 }
