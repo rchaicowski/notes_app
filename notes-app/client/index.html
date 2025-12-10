@@ -42,7 +42,7 @@
     <div class="lamp">
       <!-- Lamp base with power button (now uses event listeners, not inline onclick) -->
       <div class="lamp-base">
-        <div class="lamp-power-button on" id="power-button"></div>
+        <div class="lamp-power-button on" id="powerButton"></div>
       </div>
       
       <!-- Decorative lamp stems -->
@@ -57,7 +57,7 @@
       <div class="lamp-head-back"></div>
       
       <!-- Lamp bulb - toggles on/off with theme -->
-      <div class="lamp-bulb on" id="lamp-bulb"></div>
+      <div class="lamp-bulb on" id="lampBulb"></div>
     </div>
 
     <!-- ============================================
@@ -228,7 +228,7 @@
          ============================================ -->
     <div class="calculator">
       <!-- Calculator display showing current value -->
-      <div class="calc-display" id="calc-display" aria-label="Calculator display" aria-live="polite">0</div>
+      <div class="calc-display" id="calcDisplay" aria-label="Calculator display" aria-live="polite">0</div>
       
       <!-- Calculator button grid (now uses event listeners, not inline onclick) -->
       <div class="calc-buttons">
@@ -275,10 +275,10 @@
       </div>
       
       <!-- Global mode controls (Edit/Delete) -->
-      <div id="global-controls">
+      <div id="globalControls">
         <!-- Edit mode toggle -->
         <div class="icon-wrapper" 
-             id="edit-mode-btn"
+             id="editModeBtn"
              role="button"
              aria-label="Toggle edit mode"
              aria-pressed="false"
@@ -295,7 +295,7 @@
         
         <!-- Delete mode toggle -->
         <div class="icon-wrapper" 
-             id="delete-mode-btn"
+             id="deleteModeBtn"
              role="button"
              aria-label="Toggle delete mode"
              aria-pressed="false"
@@ -309,27 +309,27 @@
       </div>
       
       <!-- Note creation form -->
-      <form id="note-form" action="#" method="post">
+      <form id="noteForm" action="#" method="post">
         <!-- Note content input -->
         <input type="text" id="content" data-i18n="note.placeholder" placeholder="Note" required />
         
         <!-- Add note button -->
-        <button type="button" id="add-btn" class="add-btn" data-i18n="note.add">+</button>
+        <button type="button" id="addBtn" class="add-btn" data-i18n="note.add">+</button>
       </form>
       
       <!-- Notes list container (populated dynamically) -->
-      <ul id="notes-list"></ul>
+      <ul id="notesList"></ul>
       
       <!-- Pagination controls -->
       <div class="page-navigation">
         <button class="page-corner" 
-                id="prev-page"
+          id="prevPage"
                 aria-label="Previous page"
                 data-i18n-attr="title:page.previous" 
                 title="Previous Page">‹</button>
-        <div class="page-info" id="page-info">Page 1 of 1</div>
+        <div class="page-info" id="pageInfo">Page 1 of 1</div>
         <button class="page-corner" 
-                id="next-page"
+          id="nextPage"
                 aria-label="Next page"
                 data-i18n-attr="title:page.next" 
                 title="Next Page">›</button>

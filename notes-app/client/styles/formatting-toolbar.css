@@ -176,15 +176,15 @@
 .highlight-orange { background-color: rgba(255, 165, 0, 0.4); }
 
 /* Formatted text in notes list */
-ul#notes-list li .note-content strong {
+ul#notesList li .note-content strong {
   font-weight: bold;
 }
 
-ul#notes-list li .note-content em {
+ul#notesList li .note-content em {
   font-style: italic;
 }
 
-ul#notes-list li .note-content u {
+ul#notesList li .note-content u {
   text-decoration: underline;
 }
 
@@ -244,16 +244,16 @@ ul#notes-list li .note-content u {
 }
 
 /* Clickable notes in index - minimalist hover effect */
-ul#notes-list li {
+ul#notesList li {
   cursor: pointer;
   transition: transform 0.2s ease;
 }
 
-ul#notes-list li:hover {
+ul#notesList li:hover {
   transform: translateX(3px);
 }
 
-ul#notes-list li .note-content {
+ul#notesList li .note-content {
   transition: inherit;
 }
 

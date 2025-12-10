@@ -49,8 +49,8 @@ export class NotesManager {
    * Initialize keyboard support for edit/delete mode buttons
    */
   initializeKeyboardSupport() {
-    const editBtn = document.getElementById('edit-mode-btn');
-    const deleteBtn = document.getElementById('delete-mode-btn');
+    const editBtn = document.getElementById('editModeBtn');
+    const deleteBtn = document.getElementById('deleteModeBtn');
 
     // Add keyboard support to edit button
     editBtn?.addEventListener('keydown', (e) => {
@@ -227,10 +227,10 @@ export class NotesManager {
 
     // Close formatting toolbar and remove active state
     this.formattingManager.toggleToolbar(false);
-    document.getElementById('edit-mode-btn').classList.remove('active');
+    document.getElementById('editModeBtn').classList.remove('active');
 
     // Show the form and pagination when returning to index
-    const form = document.getElementById('note-form');
+    const form = document.getElementById('noteForm');
     const pagination = document.querySelector('.page-navigation');
     if (form) form.style.display = 'flex';
     if (pagination) pagination.style.display = 'flex';
@@ -263,14 +263,14 @@ export class NotesManager {
   }
 
   renderNoteView(note, isNew = false) {
-    const form = document.getElementById('note-form');
+    const form = document.getElementById('noteForm');
     const pagination = document.querySelector('.page-navigation');
     if (form) form.style.display = 'none';
     if (pagination) pagination.style.display = 'none';
 
     this.isNewNote = isNew;
 
-    const list = document.getElementById('notes-list');
+    const list = document.getElementById('notesList');
     list.innerHTML = '';
 
     const noteContainer = document.createElement('div');
@@ -517,7 +517,7 @@ export class NotesManager {
       this.formattingManager.toggleToolbar(!this.formattingManager.isToolbarOpen);
       
       // Toggle active state on edit button
-      const editBtn = document.getElementById('edit-mode-btn');
+      const editBtn = document.getElementById('editModeBtn');
       if (this.formattingManager.isToolbarOpen) {
         editBtn.classList.add('active');
       } else {
@@ -542,7 +542,7 @@ export class NotesManager {
     this.isEditMode = true;
     
     // Update ARIA state
-    const editBtn = document.getElementById('edit-mode-btn');
+    const editBtn = document.getElementById('editModeBtn');
     editBtn?.setAttribute('aria-pressed', 'true');
     
     editBtn?.classList.add('active');
@@ -555,7 +555,7 @@ export class NotesManager {
     this.isDeleteMode = true;
     
     // Update ARIA state
-    const deleteBtn = document.getElementById('delete-mode-btn');
+    const deleteBtn = document.getElementById('deleteModeBtn');
     deleteBtn?.setAttribute('aria-pressed', 'true');
     
     deleteBtn?.classList.add('active');
@@ -567,8 +567,8 @@ export class NotesManager {
     this.isEditMode = this.isDeleteMode = false;
     
     // Update ARIA states
-    const editBtn = document.getElementById('edit-mode-btn');
-    const deleteBtn = document.getElementById('delete-mode-btn');
+    const editBtn = document.getElementById('editModeBtn');
+    const deleteBtn = document.getElementById('deleteModeBtn');
     editBtn?.setAttribute('aria-pressed', 'false');
     deleteBtn?.setAttribute('aria-pressed', 'false');
     
@@ -594,7 +594,7 @@ export class NotesManager {
   }
 
   removeHighlights() {
-    document.querySelectorAll('#notes-list li').forEach(note => {
+    document.querySelectorAll('#notesList li').forEach(note => {
       note.classList.remove('highlight-edit', 'highlight-delete');
       note.style.cursor = 'default';
     });
@@ -603,7 +603,7 @@ export class NotesManager {
   renderNotes() {
     if (this.currentView === 'note') return;
 
-    const list = document.getElementById('notes-list');
+    const list = document.getElementById('notesList');
     list.innerHTML = '';
 
     const pageDiv = document.createElement('div');
@@ -660,9 +660,9 @@ export class NotesManager {
 
   updatePageInfo() {
     const totalPages = this.getTotalPages();
-    const pageInfo = document.getElementById('page-info');
-    const prevBtn = document.getElementById('prev-page');
-    const nextBtn = document.getElementById('next-page');
+    const pageInfo = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
 
     if (!pageInfo || !prevBtn || !nextBtn) return;
 

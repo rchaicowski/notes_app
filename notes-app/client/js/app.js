@@ -49,7 +49,7 @@ class NotesApp {
   }
 
   updatePageInfo() {
-    const pageInfo = document.getElementById('page-info');
+    const pageInfo = document.getElementById('pageInfo');
     if (pageInfo && this.notesManager) {
       const totalPages = this.notesManager.getTotalPages();
       
@@ -81,14 +81,14 @@ class NotesApp {
   }
 
   setupEventListeners() {
-    document.getElementById('edit-mode-btn')?.addEventListener('click', () => this.notesManager.toggleEditMode());
-    document.getElementById('delete-mode-btn')?.addEventListener('click', () => this.notesManager.toggleDeleteMode());
-    document.getElementById('add-btn')?.addEventListener('click', () => this.notesManager.handleAddOrUpdate());
-    document.getElementById('prev-page')?.addEventListener('click', () => {
+    document.getElementById('editModeBtn')?.addEventListener('click', () => this.notesManager.toggleEditMode());
+    document.getElementById('deleteModeBtn')?.addEventListener('click', () => this.notesManager.toggleDeleteMode());
+    document.getElementById('addBtn')?.addEventListener('click', () => this.notesManager.handleAddOrUpdate());
+    document.getElementById('prevPage')?.addEventListener('click', () => {
       this.notesManager.changePage('prev');
       this.updatePageInfo(); // Update page info after page change
     });
-    document.getElementById('next-page')?.addEventListener('click', () => {
+    document.getElementById('nextPage')?.addEventListener('click', () => {
       this.notesManager.changePage('next');
       this.updatePageInfo(); // Update page info after page change
     });
@@ -104,7 +104,7 @@ class NotesApp {
   }
 
   handleGlobalKeydown(e) {
-    const form = document.getElementById('note-form');
+    const form = document.getElementById('noteForm');
     if (e.key === 'Escape') {
       if (form?.dataset.editing) { 
         form.reset(); 

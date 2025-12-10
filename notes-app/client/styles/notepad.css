@@ -138,13 +138,13 @@ button.add-btn {
 }
 
 /* ==================== NOTES LIST - SINGLE LINE ==================== */
-ul#notes-list {
+ul#notesList {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-ul#notes-list li {
+ul#notesList li {
   white-space: nowrap;          
   overflow: hidden;             
   text-overflow: ellipsis;      
@@ -161,7 +161,7 @@ ul#notes-list li {
   font-size: 14px;
 }
 
-ul#notes-list li .note-content {
+ul#notesList li .note-content {
   flex: 1;
   font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
@@ -199,14 +199,14 @@ ul#notes-list li .note-content {
 }
 
 /* Edit and delete mode highlights */
-ul#notes-list li.highlight-edit {
+ul#notesList li.highlight-edit {
   background-color: rgba(0, 123, 255, 0.1);
   border-left: 3px solid #007bff;
   padding-left: 5px;
   cursor: pointer;
 }
 
-ul#notes-list li.highlight-delete {
+ul#notesList li.highlight-delete {
   background-color: rgba(220, 53, 69, 0.1);
   border-left: 3px solid #dc3545;
   padding-left: 5px;

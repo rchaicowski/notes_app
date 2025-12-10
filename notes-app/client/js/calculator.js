@@ -53,7 +53,7 @@ export class Calculator {
   }
 
   updateDisplay() {
-    const displayEl = document.getElementById('calc-display');
+    const displayEl = document.getElementById('calcDisplay');
     let displayText = '';
 
     if (this.expression && this.operator && !this.waitingForOperand) {
@@ -135,7 +135,7 @@ export class Calculator {
       const newValue = this.performCalculation(this.previous, inputValue, this.operator);
 
       this.display = this.formatNumber(newValue);
-      document.getElementById('calc-display').textContent = this.expression + ' = ' + this.display;
+      document.getElementById('calcDisplay').textContent = this.expression + ' = ' + this.display;
 
       this.previous = '';
       this.operator = '';

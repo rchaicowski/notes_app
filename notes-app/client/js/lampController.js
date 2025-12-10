@@ -34,8 +34,8 @@ export class LampController {
 
   toggle() {
     this.soundManager.play('lamp', 500);
-    const powerButton = document.getElementById('power-button');
-    const lampBulb = document.getElementById('lamp-bulb');
+    const powerButton = document.getElementById('powerButton');
+    const lampBulb = document.getElementById('lampBulb');
     const tableContainer = document.getElementById('table-container');
 
     this.timeouts.forEach(t => clearTimeout(t));
