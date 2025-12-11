@@ -4,7 +4,14 @@
  * @module loginManager
  */
 
-import { API_URL, setAuthToken, setCurrentUser, logout as authLogout } from './auth.js';
+import { 
+    API_URL, 
+    setAuthToken, 
+    setCurrentUser, 
+    logout as authLogout,
+    getAuthToken,
+    getCurrentUser
+} from './auth.js';
 
 /**
  * Manages authentication UI and user session lifecycle
@@ -13,17 +20,17 @@ import { API_URL, setAuthToken, setCurrentUser, logout as authLogout } from './a
 export class LoginManager {
     /**
      * Initializes the login manager
-     * Loads auth state from localStorage and sets up UI accordingly
+     * Loads auth state from centralized auth module and sets up UI accordingly
      */
     constructor() {
         // Clear offline mode if no valid session exists (fresh start)
-        if (!localStorage.getItem('token')) {
+        if (!getAuthToken()) {
             localStorage.removeItem('offlineMode');
         }
         
-        // Load persisted auth state
-        this.token = localStorage.getItem('token');
-        this.user = JSON.parse(localStorage.getItem('user'));
+        // Load persisted auth state from centralized auth module
+        this.token = getAuthToken();
+        this.user = getCurrentUser();
         this.offlineMode = localStorage.getItem('offlineMode') === 'true';
         
         this.initializeUI();
@@ -150,7 +157,7 @@ export class LoginManager {
             this.setAuthData(data);
         } catch (error) {
             console.error('Login failed:', error);
-            this.showError('Login failed. Please check your credentials.');
+            this.showError(error.message, 'loginForm');
         }
     }
 
@@ -196,7 +203,7 @@ export class LoginManager {
             this.setAuthData(data);
         } catch (error) {
             console.error('Registration failed:', error);
-            this.showError('Registration failed. Please try again.');
+            this.showError(error.message, 'registerForm');
         } finally {
             // Re-enable submit button after request completes
             submitButton.disabled = false;
@@ -331,13 +338,48 @@ export class LoginManager {
     }
 
     /**
-     * Displays an error message to the user
-     * Currently uses browser alert - can be enhanced with custom UI
+     * Displays an error message in the form
      * 
      * @param {string} message - Error message to display
-     * @todo Replace alert() with custom modal or toast notification
+     * @param {string} [formId] - ID of the form to show error in (defaults to active form)
      */
-    showError(message) {
-        alert(message);
+    showError(message, formId = null) {
+        // Determine which form is visible
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        
+        let activeForm;
+        if (formId) {
+            activeForm = document.getElementById(formId);
+        } else {
+            activeForm = !loginForm?.classList.contains('hidden') ? loginForm : registerForm;
+        }
+        
+        if (!activeForm) return;
+
+        // Remove any existing error messages
+        const existingError = activeForm.querySelector('.form-error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+
+        // Create error message element
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'form-error-message';
+        errorDiv.textContent = message;
+        
+        // Insert after the form header (h2)
+        const formHeader = activeForm.querySelector('h2');
+        if (formHeader && formHeader.nextSibling) {
+            formHeader.parentNode.insertBefore(errorDiv, formHeader.nextSibling);
+        } else {
+            activeForm.insertBefore(errorDiv, activeForm.firstChild);
+        }
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            errorDiv.classList.add('fade-out');
+            setTimeout(() => errorDiv.remove(), 300);
+        }, 5000);
     }
 }
