@@ -1,7 +1,40 @@
+/**
+ * @fileoverview Internationalization (i18n) controller for multi-language support
+ * Manages language selection, translation loading, and dynamic content updates
+ * Supports English, Portuguese, Spanish, and French with automatic DOM updates
+ * @module languageController
+ */
+
+/**
+ * Manages application internationalization (i18n)
+ * Handles language switching, translation storage, and automatic UI updates
+ * Uses data-i18n attributes in HTML for declarative translation bindings
+ */
 export class LanguageController {
+  /**
+   * Creates a new LanguageController instance
+   * Initializes with saved language preference or defaults to English
+   * Loads translations and sets up language selector
+   */
   constructor() {
+    /**
+     * Currently active language code
+     * @type {string}
+     */
     this.currentLanguage = localStorage.getItem('selectedLanguage') || 'en';
+    
+    /**
+     * Current language translations object
+     * Maps translation keys to localized strings
+     * @type {Object<string, string>}
+     */
     this.translations = {};
+    
+    /**
+     * Supported languages configuration
+     * Maps language codes to display names and flag emojis
+     * @type {Object<string, {name: string, flag: string}>}
+     */
     this.supportedLanguages = {
       'en': { name: 'English', flag: '🇺🇸' },
       'pt': { name: 'Português', flag: '🇧🇷' },
@@ -12,32 +45,72 @@ export class LanguageController {
     this.init();
   }
 
+  /**
+   * Initializes the language controller
+   * Loads saved or default language and sets up the language selector
+   * 
+   * @async
+   */
   async init() {
     await this.loadLanguage(this.currentLanguage);
     this.setupLanguageSelector();
   }
 
+  /**
+   * Loads and activates a language
+   * Updates translations, persists selection, and updates all UI text
+   * Dispatches 'language-changed' event for other components to react
+   * Falls back to English if requested language fails to load
+   * 
+   * @async
+   * @param {string} langCode - Language code to load ('en', 'pt', 'es', 'fr')
+   * 
+   * @fires CustomEvent#language-changed - Emitted when language changes
+   */
   async loadLanguage(langCode) {
     try {
+      // Load translation data
       this.translations = this.getTranslations(langCode);
       this.currentLanguage = langCode;
+      
+      // Persist language preference
       localStorage.setItem('selectedLanguage', langCode);
+      
+      // Update all translatable content in DOM
       this.updateContent();
       
+      // Set HTML lang attribute for accessibility and SEO
       document.documentElement.lang = langCode;
       
+      // Notify other components of language change
       window.dispatchEvent(new CustomEvent('language-changed', { 
         detail: { language: langCode } 
       }));
       
     } catch (error) {
       console.error('Failed to load language:', error);
+      // Fallback to English if non-English language fails
       if (langCode !== 'en') {
         await this.loadLanguage('en');
       }
     }
   }
 
+  /**
+   * Retrieves translation object for a specific language
+   * Returns English translations as fallback if language not found
+   * 
+   * @param {string} langCode - Language code to get translations for
+   * @returns {Object<string, string>} Translation key-value pairs
+   * 
+   * Translation key format:
+   * - 'category.item' - Hierarchical structure for organization
+   * - '{placeholder}' - Dynamic values replaced at runtime
+   * 
+   * Example keys:
+   * - 'app.title' → 'My Notes'
+   * - 'page.info' → 'Page {current} of {total}'
+   */
   getTranslations(langCode) {
     const translations = {
       'en': {
@@ -83,7 +156,9 @@ export class LanguageController {
         'auth.or': 'or',
         'auth.offlineMode': 'Continue in Offline Mode',
         'auth.welcome': 'Welcome',
-        'auth.logout': 'Logout'
+        'auth.logout': 'Logout',
+        'auth.invalidEmail': 'Please enter a valid email address.',
+        'auth.invalidPassword': 'Password must be at least 6 characters.'
       },
       
       'pt': {
@@ -129,7 +204,9 @@ export class LanguageController {
         'auth.or': 'ou',
         'auth.offlineMode': 'Continuar no Modo Offline',
         'auth.welcome': 'Bem-vindo',
-        'auth.logout': 'Sair'
+        'auth.logout': 'Sair',
+        'auth.invalidEmail': 'Por favor, insira um endereço de email válido.',
+        'auth.invalidPassword': 'A senha deve ser pelo menos 6 caracteres.'
       },
       
       'es': {
@@ -175,7 +252,9 @@ export class LanguageController {
         'auth.or': 'o',
         'auth.offlineMode': 'Continuar en Modo Sin Conexión',
         'auth.welcome': 'Bienvenido',
-        'auth.logout': 'Cerrar Sesión'
+        'auth.logout': 'Cerrar Sesión',
+        'auth.invalidEmail': 'Por favor, ingresa un correo electrónico válido.',
+        'auth.invalidPassword': 'La contraseña debe tener al menos 6 caracteres.'
       },
       
       'fr': {
@@ -221,17 +300,27 @@ export class LanguageController {
         'auth.or': 'ou',
         'auth.offlineMode': 'Continuer en Mode Hors ligne',
         'auth.welcome': 'Bienvenue',
-        'auth.logout': 'Déconnexion'
+        'auth.logout': 'Déconnexion',
+        'auth.invalidEmail': "Veuillez entrer une adresse e-mail valide.",
+        'auth.invalidPassword': 'Le mot de passe doit contenir au moins 6 caractères.'
       }
     };
     
     return translations[langCode] || translations['en'];
   }
 
+  /**
+   * Sets up the language selector dropdown
+   * Populates options with supported languages and current selection
+   * Attaches change event listener for language switching
+   */
   setupLanguageSelector() {
     const languageSelect = document.getElementById('languageSelect');
     if (languageSelect) {
+      // Clear existing options
       languageSelect.innerHTML = '';
+      
+      // Add option for each supported language
       Object.entries(this.supportedLanguages).forEach(([code, info]) => {
         const option = document.createElement('option');
         option.value = code;
@@ -240,17 +329,39 @@ export class LanguageController {
         languageSelect.appendChild(option);
       });
       
+      // Handle language selection changes
       languageSelect.addEventListener('change', (e) => {
         this.loadLanguage(e.target.value);
       });
     }
   }
 
+  /**
+   * Updates all translatable content in the DOM
+   * Searches for elements with data-i18n and data-i18n-attr attributes
+   * 
+   * Translation strategies:
+   * - data-i18n: Updates element content (text or placeholder)
+   * - data-i18n-attr: Updates specified attributes (e.g., title, aria-label)
+   * 
+   * Supported element types:
+   * - Text inputs: Updates placeholder
+   * - Email inputs: Updates placeholder
+   * - Password inputs: Updates placeholder
+   * - Other elements: Updates textContent
+   * 
+   * @example HTML usage:
+   * <button data-i18n="auth.login">Login</button>
+   * <input data-i18n="auth.emailPlaceholder" placeholder="Enter email">
+   * <button data-i18n-attr="title:auth.login" title="Login">...</button>
+   */
   updateContent() {
+    // Update elements with data-i18n attribute
     document.querySelectorAll('[data-i18n]').forEach(element => {
       const key = element.getAttribute('data-i18n');
       const translation = this.getTranslation(key);
       
+      // Update placeholder for input fields
       if (element.tagName === 'INPUT' && element.type === 'text') {
         element.placeholder = translation;
       } else if (element.tagName === 'INPUT' && element.type === 'email') {
@@ -258,10 +369,13 @@ export class LanguageController {
       } else if (element.tagName === 'INPUT' && element.type === 'password') {
         element.placeholder = translation;
       } else {
+        // Update text content for other elements
         element.textContent = translation;
       }
     });
     
+    // Update elements with data-i18n-attr attribute
+    // Format: "attribute:translationKey"
     document.querySelectorAll('[data-i18n-attr]').forEach(element => {
       const data = element.getAttribute('data-i18n-attr').split(':');
       const attr = data[0];
@@ -270,14 +384,31 @@ export class LanguageController {
     });
   }
 
+  /**
+   * Retrieves a translation for a given key
+   * Returns the key itself if translation not found (graceful fallback)
+   * 
+   * @param {string} key - Translation key (e.g., 'app.title')
+   * @returns {string} Translated string or original key if not found
+   */
   getTranslation(key) {
     return this.translations[key] || key;
   }
 
+  /**
+   * Gets the current active language code
+   * 
+   * @returns {string} Current language code ('en', 'pt', 'es', or 'fr')
+   */
   getCurrentLanguage() {
     return this.currentLanguage;
   }
 
+  /**
+   * Gets the list of supported languages
+   * 
+   * @returns {Object<string, {name: string, flag: string}>} Supported languages with metadata
+   */
   getSupportedLanguages() {
     return this.supportedLanguages;
   }
