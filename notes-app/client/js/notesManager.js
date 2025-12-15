@@ -79,17 +79,31 @@ export class NotesManager {
     this.handleOfflineModeChange = this.handleOfflineModeChange.bind(this);
     this.handleAuthChange = this.handleAuthChange.bind(this);
 
-    setTimeout(() => {
-      const indexInput = document.getElementById('content');
-      if (indexInput) {
-        indexInput.setAttribute('maxlength', this.maxTitleCharacters);
-      }
-    }, 100);
+    // Initialize character limit after DOM is ready
+    this.initializeCharacterLimitWhenReady();
 
     window.addEventListener('offline-mode-changed', this.handleOfflineModeChange);
     window.addEventListener('auth-changed', this.handleAuthChange);
 
     this.initializeKeyboardSupport();
+  }
+
+  /**
+   * Initializes character limit on index input when DOM is ready
+   * Uses requestAnimationFrame to ensure DOM is available
+   * @returns {void}
+   */
+  initializeCharacterLimitWhenReady() {
+    const tryInitialize = () => {
+      const indexInput = document.getElementById('content');
+      if (indexInput) {
+        indexInput.setAttribute('maxlength', this.maxTitleCharacters);
+      } else {
+        // If element not found, try again on next frame
+        requestAnimationFrame(tryInitialize);
+      }
+    };
+    requestAnimationFrame(tryInitialize);
   }
 
   /**
@@ -254,16 +268,20 @@ export class NotesManager {
    */
   async saveNote(noteData, isUpdate = false, noteId = null) {
     if (this.isOffline) {
+      const allNotes = this.storageManager.getFromLocalStorage();
+      
+      // Find existing note in storage for updates
+      const existingNote = isUpdate ? allNotes.find(n => n.id === noteId) : null;
+      
       const note = {
         id: isUpdate ? noteId : Date.now(),
         title: noteData.title || 'Untitled',
         content: noteData.content || '',
         formatting: noteData.formatting || [],
-        created_at: isUpdate ? (this.notes.find(n => n.id === noteId)?.created_at || new Date().toISOString()) : new Date().toISOString(),
+        created_at: existingNote?.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
-      const allNotes = this.storageManager.getFromLocalStorage();
       if (isUpdate) {
         const index = allNotes.findIndex(n => n.id === noteId);
         if (index !== -1) {
@@ -489,12 +507,13 @@ export class NotesManager {
 
     list.appendChild(noteContainer);
 
-    setTimeout(() => {
+    // Initialize formatting after DOM is updated
+    requestAnimationFrame(() => {
       this.formattingManager.initializeToolbar();
       if (note.formatting) {
         this.formattingManager.applyFormattingToNote(noteContainer, note.formatting);
       }
-    }, 100);
+    });
 
     document.getElementById('back-to-index').addEventListener('click', () => {
       this.showIndex();
@@ -507,9 +526,14 @@ export class NotesManager {
     const contentDivs = document.querySelectorAll('.note-content-line');
     const titleDivElement = document.getElementById('note-title');
 
+    // Debounce helper for performance optimization
+    let inputDebounceTimer = null;
+
     contentDivs.forEach((div, index) => {
       div.addEventListener('input', (e) => {
         const text = div.textContent;
+        
+        // Handle character limit immediately for better UX
         if (text.length > this.maxCharacters) {
           const selection = window.getSelection();
           if (selection && selection.rangeCount > 0) {
@@ -529,10 +553,14 @@ export class NotesManager {
             // Fallback if no selection
             div.textContent = text.substring(0, this.maxCharacters);
           }
-        } else if (text.length === this.maxCharacters && index < contentDivs.length - 1) {
-          setTimeout(() => {
+        }
+        
+        // Auto-advance to next line when limit reached (debounced for performance)
+        if (text.length === this.maxCharacters && index < contentDivs.length - 1) {
+          clearTimeout(inputDebounceTimer);
+          inputDebounceTimer = setTimeout(() => {
             contentDivs[index + 1].focus();
-          }, 10);
+          }, 50);
         }
       });
 
