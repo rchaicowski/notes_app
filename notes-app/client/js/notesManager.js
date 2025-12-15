@@ -1,25 +1,84 @@
+/**
+ * @fileoverview Notes management system for the application
+ * Handles CRUD operations, pagination, formatting, offline/online sync
+ * Supports edit/delete modes, character limits, and multi-line note editing
+ * @module notesManager
+ */
+
 import { getAuthToken, isAuthenticated } from './auth.js';
 import { FormattingManager } from './formattingManager.js';
 
+/**
+ * Manages note creation, retrieval, update, and deletion
+ * Supports both online (API) and offline (localStorage) modes
+ * Handles note display with pagination, formatting, and user interactions
+ * Manages edit/delete mode state and keyboard accessibility
+ */
 export class NotesManager {
+  /**
+   * Creates a new NotesManager instance
+   * Initializes API configuration, storage, and event listeners
+   * Sets up offline mode detection and auth state synchronization
+   * 
+   * @param {SoundManager} soundManager - Sound manager for audio feedback
+   * @param {StorageManager} storageManager - Local storage manager for offline data
+   */
   constructor(soundManager, storageManager) {
+    /** @type {Array<Object>} Array of note objects loaded from API or storage */
     this.notes = [];
+    
+    /** @type {number} Current page number for pagination (1-indexed) */
     this.currentPage = 1;
+    
+    /** @type {number} Number of notes displayed per page */
     this.notesPerPage = 15;
+    
+    /** @type {boolean} Whether edit mode is currently active */
     this.isEditMode = false;
+    
+    /** @type {boolean} Whether delete mode is currently active */
     this.isDeleteMode = false;
+    
+    /** @type {string} Base URL for API endpoints */
     this.apiBaseUrl = 'http://localhost:5000/api/notes';
+    
+    /** @type {SoundManager} Sound manager for audio feedback */
     this.soundManager = soundManager;
+    
+    /** @type {StorageManager} Local storage manager for offline data */
     this.storageManager = storageManager;
-    this.maxCharacters = 35; 
+    
+    /** @type {number} Maximum characters per note line (character limit) */
+    this.maxCharacters = 35;
+    
+    /** @type {number} Maximum characters for note title */
     this.maxTitleCharacters = 30;
-    this.maxLinesPerNote = 15; 
+    
+    /** @type {number} Maximum lines per note in detail view */
+    this.maxLinesPerNote = 15;
+    
+    /** @type {boolean} Whether app is in offline mode */
     this.isOffline = localStorage.getItem('offlineMode') === 'true';
-    this.currentView = 'index'; 
+    
+    /** @type {string} Current view mode: 'index' (list) or 'note' (detail) */
+    this.currentView = 'index';
+    
+    /** @type {number|null} Currently open note ID in detail view, null if none */
     this.currentNoteId = null;
+    
+    /** @type {FormattingManager} Formatting manager for rich text support */
     this.formattingManager = new FormattingManager(soundManager);
 
-    // Add character limit to the index page input
+    /** @type {boolean} Whether currently editing a new unsaved note */
+    this.isNewNote = false;
+
+    // Bind click handler once for proper event listener cleanup
+    this.boundHandleNoteClick = this.handleNoteClickEvent.bind(this);
+
+    // Bind event handlers to preserve 'this' context and enable cleanup
+    this.handleOfflineModeChange = this.handleOfflineModeChange.bind(this);
+    this.handleAuthChange = this.handleAuthChange.bind(this);
+
     setTimeout(() => {
       const indexInput = document.getElementById('content');
       if (indexInput) {
@@ -27,32 +86,22 @@ export class NotesManager {
       }
     }, 100);
 
-    window.addEventListener('offline-mode-changed', (event) => {
-      this.isOffline = event.detail.isOffline;
-      this.loadNotes();
-    });
+    window.addEventListener('offline-mode-changed', this.handleOfflineModeChange);
+    window.addEventListener('auth-changed', this.handleAuthChange);
 
-    window.addEventListener('auth-changed', (event) => {
-      if (event.detail.isAuthenticated) {
-        this.loadNotes();
-      } else {
-        this.notes = [];
-        this.renderNotes();
-      }
-    });
-
-    // Initialize keyboard support for edit/delete buttons
     this.initializeKeyboardSupport();
   }
 
   /**
    * Initialize keyboard support for edit/delete mode buttons
+   * Allows Enter/Space to activate edit and delete mode buttons
+   * Sets up keydown event listeners for accessibility
+   * @returns {void}
    */
   initializeKeyboardSupport() {
     const editBtn = document.getElementById('editModeBtn');
     const deleteBtn = document.getElementById('deleteModeBtn');
 
-    // Add keyboard support to edit button
     editBtn?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -60,7 +109,6 @@ export class NotesManager {
       }
     });
 
-    // Add keyboard support to delete button
     deleteBtn?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -69,6 +117,55 @@ export class NotesManager {
     });
   }
 
+  /**
+   * Handles offline mode change events
+   * Updates offline state and reloads notes
+   * @param {CustomEvent} event - Event with isOffline detail
+   * @returns {void}
+   */
+  handleOfflineModeChange(event) {
+    this.isOffline = event.detail.isOffline;
+    this.loadNotes();
+  }
+
+  /**
+   * Handles authentication state change events
+   * Reloads notes if authenticated, clears notes if logged out
+   * @param {CustomEvent} event - Event with isAuthenticated detail
+   * @returns {void}
+   */
+  handleAuthChange(event) {
+    if (event.detail.isAuthenticated) {
+      this.loadNotes();
+    } else {
+      this.notes = [];
+      this.renderNotes();
+    }
+  }
+
+  /**
+   * Cleans up event listeners and resources
+   * Should be called when NotesManager instance is no longer needed
+   * Prevents memory leaks from window event listeners
+   * @returns {void}
+   */
+  destroy() {
+    window.removeEventListener('offline-mode-changed', this.handleOfflineModeChange);
+    window.removeEventListener('auth-changed', this.handleAuthChange);
+    
+    // Remove note list click handler if it exists
+    const list = document.getElementById('notesList');
+    if (list && this.boundHandleNoteClick) {
+      list.removeEventListener('click', this.boundHandleNoteClick);
+    }
+  }
+
+  /**
+   * Constructs HTTP headers for authenticated API requests
+   * Includes Content-Type and Bearer token authorization
+   * 
+   * @returns {Object<string, string>} Headers object with auth token
+   */
   getAuthHeaders() {
     return {
       'Content-Type': 'application/json',
@@ -76,6 +173,14 @@ export class NotesManager {
     };
   }
 
+  /**
+   * Loads notes from API or fallback to local storage
+   * Checks authentication and offline mode before fetching
+   * Falls back to localStorage if API fails or user is offline
+   * 
+   * @async
+   * @returns {Promise<void>}
+   */
   async loadNotes() {
     if (this.isOffline) {
       this.fallbackToLocalNotes();
@@ -108,6 +213,13 @@ export class NotesManager {
     }
   }
 
+  /**
+   * Falls back to loading notes from localStorage
+   * Transforms legacy note format (single content field) to new format (separate title/content)
+   * Used when API is unavailable or user is in offline mode
+   * Updates notes array and renders the list
+   * @returns {void}
+   */
   fallbackToLocalNotes() {
     const localNotes = this.storageManager.getFromLocalStorage();
     this.notes = localNotes.map(note => {
@@ -125,6 +237,21 @@ export class NotesManager {
     this.renderNotes();
   }
 
+  /**
+   * Saves a note to API or localStorage
+   * Persists title, content, and formatting information
+   * Creates new note or updates existing based on isUpdate flag
+   * 
+   * @async
+   * @param {Object} noteData - Note content object
+   * @param {string} noteData.title - Note title (max 30 chars)
+   * @param {string} noteData.content - Note content
+   * @param {Array<Object>} noteData.formatting - Formatting metadata
+   * @param {boolean} [isUpdate=false] - Whether this is an update vs create
+   * @param {number|null} [noteId=null] - Note ID for updates
+   * @returns {Promise<Object>} Saved note object with ID and timestamps
+   * @throws {Error} If save fails and user is authenticated online
+   */
   async saveNote(noteData, isUpdate = false, noteId = null) {
     if (this.isOffline) {
       const note = {
@@ -180,6 +307,15 @@ export class NotesManager {
     }
   }
 
+  /**
+   * Deletes a note from API or localStorage
+   * Removes note by ID from current notes array
+   * 
+   * @async
+   * @param {number} noteId - ID of note to delete
+   * @returns {Promise<Object>} Response object with success status
+   * @throws {Error} If deletion fails while authenticated
+   */
   async deleteNote(noteId) {
     if (this.isOffline) {
       const allNotes = this.storageManager.getFromLocalStorage();
@@ -212,6 +348,14 @@ export class NotesManager {
     }
   }
 
+  /**
+   * Opens and displays a single note in detail view
+   * Finds note by ID and renders its full content with formatting
+   * Switches current view to 'note' and sets currentNoteId
+   * 
+   * @param {number} noteId - ID of note to display
+   * @returns {void}
+   */
   showNote(noteId) {
     const note = this.notes.find(n => n.id === noteId);
     if (!note) return;
@@ -221,15 +365,19 @@ export class NotesManager {
     this.renderNoteView(note);
   }
 
+  /**
+   * Returns to index (list) view from note detail view
+   * Closes formatting toolbar, clears current note, and rerenders list
+   * Resets view state and shows form/pagination elements
+   * @returns {void}
+   */
   showIndex() {
     this.currentView = 'index';
     this.currentNoteId = null;
 
-    // Close formatting toolbar and remove active state
     this.formattingManager.toggleToolbar(false);
     document.getElementById('editModeBtn').classList.remove('active');
 
-    // Show the form and pagination when returning to index
     const form = document.getElementById('noteForm');
     const pagination = document.querySelector('.page-navigation');
     if (form) form.style.display = 'flex';
@@ -238,8 +386,14 @@ export class NotesManager {
     this.renderNotes();
   }
 
+  /**
+   * Creates a new blank note and opens it in detail view
+   * Pre-fills title from index input if available
+   * Switches to note edit view for user to enter content
+   * Clears the index input field after reading its value
+   * @returns {void}
+   */
   createNewNote() {
-    // Get any existing input value
     const contentInput = document.getElementById('content');
     const inputValue = contentInput ? contentInput.value.trim() : '';
 
@@ -252,7 +406,6 @@ export class NotesManager {
       updated_at: new Date().toISOString()
     };
 
-    // Clear the original input
     if (contentInput) {
       contentInput.value = '';
     }
@@ -262,6 +415,20 @@ export class NotesManager {
     this.renderNoteView(newNote, true);
   }
 
+  /**
+   * Renders a single note in detail view with editable title and content lines
+   * Creates contentEditable elements for title and content with character limits
+   * Sets up event listeners for input validation, navigation, and formatting
+   * Shows action buttons (Back to Index, Save Note) and initializes formatting toolbar
+   * 
+   * @param {Object} note - Note object to render
+   * @param {number|null} note.id - Note ID (null for new notes)
+   * @param {string} note.title - Note title
+   * @param {string} note.content - Note content (multi-line)
+   * @param {Array<Object>} [note.formatting] - Formatting metadata
+   * @param {boolean} [isNew=false] - Whether this is a new unsaved note
+   * @returns {void}
+   */
   renderNoteView(note, isNew = false) {
     const form = document.getElementById('noteForm');
     const pagination = document.querySelector('.page-navigation');
@@ -276,7 +443,6 @@ export class NotesManager {
     const noteContainer = document.createElement('div');
     noteContainer.className = 'note-view';
 
-    // Title as contenteditable div
     const titleLine = document.createElement('div');
     titleLine.className = 'note-line title-line';
     
@@ -290,7 +456,6 @@ export class NotesManager {
     titleLine.appendChild(titleDiv);
     noteContainer.appendChild(titleLine);
 
-    // Content lines as contenteditable divs
     const contentContainer = document.createElement('div');
     contentContainer.className = 'note-content-container';
 
@@ -324,17 +489,13 @@ export class NotesManager {
 
     list.appendChild(noteContainer);
 
-    // Initialize formatting toolbar
     setTimeout(() => {
       this.formattingManager.initializeToolbar();
-      
-      // Apply existing formatting if available
       if (note.formatting) {
         this.formattingManager.applyFormattingToNote(noteContainer, note.formatting);
       }
     }, 100);
 
-    // Event listeners
     document.getElementById('back-to-index').addEventListener('click', () => {
       this.showIndex();
     });
@@ -343,40 +504,38 @@ export class NotesManager {
       this.saveCurrentNote();
     });
 
-    // Setup contenteditable behavior
     const contentDivs = document.querySelectorAll('.note-content-line');
     const titleDivElement = document.getElementById('note-title');
 
-    // Character limit enforcement for content lines
     contentDivs.forEach((div, index) => {
-      // Prevent exceeding character limit AND auto-move to next line when full
       div.addEventListener('input', (e) => {
         const text = div.textContent;
         if (text.length > this.maxCharacters) {
-          // Truncate to max length
-          const range = window.getSelection().getRangeAt(0);
-          const cursorPos = range.startOffset;
-          div.textContent = text.substring(0, this.maxCharacters);
-          
-          // Restore cursor position
-          const newRange = document.createRange();
-          const textNode = div.firstChild;
-          if (textNode) {
-            newRange.setStart(textNode, Math.min(cursorPos, this.maxCharacters));
-            newRange.collapse(true);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(newRange);
+          const selection = window.getSelection();
+          if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const cursorPos = range.startOffset;
+            div.textContent = text.substring(0, this.maxCharacters);
+            
+            const newRange = document.createRange();
+            const textNode = div.firstChild;
+            if (textNode) {
+              newRange.setStart(textNode, Math.min(cursorPos, this.maxCharacters));
+              newRange.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(newRange);
+            }
+          } else {
+            // Fallback if no selection
+            div.textContent = text.substring(0, this.maxCharacters);
           }
         } else if (text.length === this.maxCharacters && index < contentDivs.length - 1) {
-          // Auto-move to next line when this line is full
           setTimeout(() => {
             contentDivs[index + 1].focus();
           }, 10);
         }
       });
 
-      // Handle Enter key - move to next line
       div.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -385,34 +544,28 @@ export class NotesManager {
           }
         } else if (e.key === 'Backspace') {
           const selection = window.getSelection();
-          const range = selection.getRangeAt(0);
-          
-          // If at the start of the line and it's empty, move to previous line
-          if (range.startOffset === 0 && div.textContent.length === 0 && index > 0) {
-            e.preventDefault();
-            const prevDiv = contentDivs[index - 1];
-            prevDiv.focus();
-            
-            // Move cursor to end of previous line
-            const newRange = document.createRange();
-            newRange.selectNodeContents(prevDiv);
-            newRange.collapse(false);
-            selection.removeAllRanges();
-            selection.addRange(newRange);
+          if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            if (range.startOffset === 0 && div.textContent.length === 0 && index > 0) {
+              e.preventDefault();
+              const prevDiv = contentDivs[index - 1];
+              prevDiv.focus();
+              const newRange = document.createRange();
+              newRange.selectNodeContents(prevDiv);
+              newRange.collapse(false);
+              selection.removeAllRanges();
+              selection.addRange(newRange);
+            }
           }
         }
       });
     });
 
-    // Title character limit
     titleDivElement.addEventListener('input', (e) => {
       const text = titleDivElement.textContent;
       if (text.length > this.maxTitleCharacters) {
         e.preventDefault();
-        // Truncate to max length
         titleDivElement.textContent = text.substring(0, this.maxTitleCharacters);
-        
-        // Move cursor to end
         const range = document.createRange();
         const selection = window.getSelection();
         range.selectNodeContents(titleDivElement);
@@ -422,7 +575,6 @@ export class NotesManager {
       }
     });
 
-    // Also prevent typing when at limit
     titleDivElement.addEventListener('keydown', (e) => {
       const text = titleDivElement.textContent;
       
@@ -436,15 +588,12 @@ export class NotesManager {
                  e.key.length === 1 && 
                  !e.ctrlKey && 
                  !e.metaKey) {
-        // Prevent adding more characters when at limit (unless it's a control key)
         const selection = window.getSelection();
-        if (selection.isCollapsed) {
+        if (selection && selection.isCollapsed) {
           e.preventDefault();
         }
       }
     });
-
-    // Focus handling
     if (isNew) {
       titleDivElement.focus();
     } else {
@@ -457,11 +606,28 @@ export class NotesManager {
     }
   }
 
+  /**
+   * Checks if any content lines have text
+   * Used to determine if note has content before saving
+   * 
+   * @returns {boolean} True if any content line has non-whitespace text
+   * @deprecated This method appears unused in current implementation
+   */
   hasContentInLines() {
     const contentInputs = document.querySelectorAll('.note-content-line');
     return Array.from(contentInputs).some(input => input.value.trim());
   }
 
+  /**
+   * Saves the currently open note in detail view
+   * Extracts title and content from editable elements
+   * Collects formatting metadata and persists to API or localStorage
+   * Creates new note or updates existing based on isNewNote flag
+   * Provides visual feedback on successful save
+   * 
+   * @async
+   * @returns {Promise<void>}
+   */
   async saveCurrentNote() {
     const titleDiv = document.getElementById('note-title');
     const contentDivs = document.querySelectorAll('.note-content-line');
@@ -471,8 +637,6 @@ export class NotesManager {
     const title = titleDiv.textContent.trim() || 'Untitled';
     const contentLines = Array.from(contentDivs).map(div => div.textContent);
     const content = contentLines.join('\n').replace(/\n+$/, '');
-    
-    // Capture formatting data (HTML)
     const noteView = document.querySelector('.note-view');
     const formatting = this.formattingManager.getFormattingForNote(noteView);
 
@@ -510,13 +674,17 @@ export class NotesManager {
     }
   }
 
+  /**
+   * Toggles edit mode on/off
+   * In note view: shows/hides formatting toolbar
+   * In index view: highlights notes for editing (click to open)
+   * Updates button states and plays audio feedback
+   * @returns {void}
+   */
   toggleEditMode() {
-    // If we're in note view, toggle the formatting toolbar
     if (this.currentView === 'note') {
       this.soundManager.play('pencil', 200);
       this.formattingManager.toggleToolbar(!this.formattingManager.isToolbarOpen);
-      
-      // Toggle active state on edit button
       const editBtn = document.getElementById('editModeBtn');
       if (this.formattingManager.isToolbarOpen) {
         editBtn.classList.add('active');
@@ -525,23 +693,33 @@ export class NotesManager {
       }
       return;
     }
-    
-    // If we're in index view, use original edit mode behavior
     this.soundManager.play('pencil', 200);
     this.isEditMode ? this.exitModes() : this.enterEditMode();
   }
 
+  /**
+   * Toggles delete mode on/off
+   * Highlights notes for deletion (click to delete)
+   * Only works in index view
+   * Updates button states and plays audio feedback
+   * @returns {void}
+   */
   toggleDeleteMode() {
     if (this.currentView === 'note') return;
     this.soundManager.play('eraser', 200);
     this.isDeleteMode ? this.exitModes() : this.enterDeleteMode();
   }
 
+  /**
+   * Activates edit mode
+   * Highlights all notes with edit styling
+   * Updates button ARIA state and visual indicators
+   * Exits any other active modes first
+   * @returns {void}
+   */
   enterEditMode() {
     this.exitModes();
     this.isEditMode = true;
-    
-    // Update ARIA state
     const editBtn = document.getElementById('editModeBtn');
     editBtn?.setAttribute('aria-pressed', 'true');
     
@@ -550,11 +728,16 @@ export class NotesManager {
     this.highlightNotes('edit');
   }
 
+  /**
+   * Activates delete mode
+   * Highlights all notes with delete styling
+   * Updates button ARIA state and visual indicators
+   * Exits any other active modes first
+   * @returns {void}
+   */
   enterDeleteMode() {
     this.exitModes();
     this.isDeleteMode = true;
-    
-    // Update ARIA state
     const deleteBtn = document.getElementById('deleteModeBtn');
     deleteBtn?.setAttribute('aria-pressed', 'true');
     
@@ -563,10 +746,15 @@ export class NotesManager {
     this.highlightNotes('delete');
   }
 
+  /**
+   * Deactivates edit and delete modes
+   * Removes highlighting and button active states
+   * Closes formatting toolbar if open in note view
+   * Resets ARIA attributes for accessibility
+   * @returns {void}
+   */
   exitModes() {
     this.isEditMode = this.isDeleteMode = false;
-    
-    // Update ARIA states
     const editBtn = document.getElementById('editModeBtn');
     const deleteBtn = document.getElementById('deleteModeBtn');
     editBtn?.setAttribute('aria-pressed', 'false');
@@ -576,13 +764,18 @@ export class NotesManager {
     deleteBtn?.classList.remove('active');
     document.body.classList.remove('edit-mode', 'delete-mode');
     this.removeHighlights();
-    
-    // Close formatting toolbar if open
     if (this.currentView === 'note') {
       this.formattingManager.toggleToolbar(false);
     }
   }
 
+  /**
+   * Adds visual highlighting to all notes for a specific mode
+   * Applies CSS classes for visual feedback and changes cursor style
+   * 
+   * @param {string} mode - Mode type: 'edit' or 'delete'
+   * @returns {void}
+   */
   highlightNotes(mode) {
     const currentPageElement = document.getElementById(`page-${this.currentPage}`);
     if (currentPageElement) {
@@ -593,6 +786,12 @@ export class NotesManager {
     }
   }
 
+  /**
+   * Removes edit/delete highlighting from all notes
+   * Restores default cursor style
+   * Cleans up visual indicators from mode operations
+   * @returns {void}
+   */
   removeHighlights() {
     document.querySelectorAll('#notesList li').forEach(note => {
       note.classList.remove('highlight-edit', 'highlight-delete');
@@ -600,6 +799,39 @@ export class NotesManager {
     });
   }
 
+  /**
+   * Handles click events on note list items
+   * Routes to appropriate action based on current mode (edit/delete/view)
+   * Bound in constructor to enable proper event listener cleanup
+   * 
+   * @param {MouseEvent} e - Click event
+   * @returns {void}
+   */
+  handleNoteClickEvent(e) {
+    const li = e.target.closest('li');
+    if (!li) return;
+
+    if (this.isEditMode) {
+      const noteId = parseInt(li.dataset.noteId);
+      this.showNote(noteId);
+      this.exitModes();
+    } else if (this.isDeleteMode) {
+      this.deleteNoteById(parseInt(li.dataset.id));
+      this.exitModes();
+    } else {
+      const noteId = parseInt(li.dataset.noteId);
+      this.showNote(noteId);
+    }
+  }
+
+  /**
+   * Renders the list of notes for the current page
+   * Handles note item creation, click handlers, and formatting application
+   * Supports formatted text rendering in note list
+   * Sets up event delegation for note interactions based on current mode
+   * Updates pagination info after rendering
+   * @returns {void}
+   */
   renderNotes() {
     if (this.currentView === 'note') return;
 
@@ -615,8 +847,6 @@ export class NotesManager {
       li.dataset.id = (this.currentPage - 1) * this.notesPerPage + i;
       li.dataset.page = this.currentPage;
       li.dataset.noteId = note.id;
-
-      // Render formatted title
       const titleFormatting = note.formatting?.find(f => f.field === 'title')?.formats || [];
       const formattedTitle = this.formattingManager.renderFormattedText(note.title, titleFormatting);
       li.innerHTML = `<div class="note-content">${formattedTitle}</div>`;
@@ -626,38 +856,43 @@ export class NotesManager {
 
     list.appendChild(pageDiv);
 
-    list.removeEventListener('click', this.handleNoteClick);
-    this.handleNoteClick = e => {
-      const li = e.target.closest('li');
-      if (!li) return;
-
-      if (this.isEditMode) {
-        const noteId = parseInt(li.dataset.noteId);
-        this.showNote(noteId);
-        this.exitModes();
-      } else if (this.isDeleteMode) {
-        this.deleteNoteById(parseInt(li.dataset.id));
-        this.exitModes();
-      } else {
-        const noteId = parseInt(li.dataset.noteId);
-        this.showNote(noteId);
-      }
-    };
-    list.addEventListener('click', this.handleNoteClick);
+    // Use the bound handler stored in constructor
+    list.removeEventListener('click', this.boundHandleNoteClick);
+    list.addEventListener('click', this.boundHandleNoteClick);
 
     this.updatePageInfo();
     if (this.isEditMode) this.highlightNotes('edit');
     else if (this.isDeleteMode) this.highlightNotes('delete');
   }
 
+  /**
+   * Calculates total number of pages based on note count
+   * 
+   * @returns {number} Total page count (minimum 0)
+   */
   getTotalPages() {
     return Math.ceil(this.notes.length / this.notesPerPage);
   }
 
+  /**
+   * Gets array of notes for a specific page
+   * Slices notes array based on pagination settings
+   * 
+   * @param {number} page - Page number (1-indexed)
+   * @returns {Array<Object>} Notes for the specified page
+   */
   getNotesForPage(page) {
     return this.notes.slice((page - 1) * this.notesPerPage, page * this.notesPerPage);
   }
 
+  /**
+   * Updates pagination info display and button states
+   * Shows current page number and total pages
+   * Disables prev/next buttons at boundaries
+   * Handles internationalization if language controller is available
+   * Adjusts current page if it exceeds total pages
+   * @returns {void}
+   */
   updatePageInfo() {
     const totalPages = this.getTotalPages();
     const pageInfo = document.getElementById('pageInfo');
@@ -693,10 +928,19 @@ export class NotesManager {
 
     prevBtn.disabled = this.currentPage === 1;
     nextBtn.disabled = this.currentPage === totalPages;
-
     this.totalPages = totalPages;
   }
 
+  /**
+   * Deletes a note by array index with user confirmation
+   * Updates pagination if needed, rerenders list, and plays feedback sound
+   * Prompts user for confirmation before deletion
+   * Adjusts current page if last note on page is deleted
+   * 
+   * @async
+   * @param {number} index - Index of note in current notes array
+   * @returns {Promise<void>}
+   */
   async deleteNoteById(index) {
     const note = this.notes[index];
     if (!note) {
@@ -727,6 +971,14 @@ export class NotesManager {
     }
   }
 
+  /**
+   * Changes to next or previous page with animation
+   * Plays page turn sound and triggers flip animation
+   * Does nothing if already at first/last page or in note view
+   * 
+   * @param {string} direction - Direction to navigate: 'next' or 'prev'
+   * @returns {void}
+   */
   changePage(direction) {
     if (this.currentView === 'note') return;
 
@@ -743,13 +995,34 @@ export class NotesManager {
     setTimeout(() => { this.renderNotes(); notepad.classList.remove('page-flip-animation'); }, 200);
   }
 
-  // Legacy methods for backward compatibility
+  /**
+   * Legacy method for backward compatibility
+   * Character limit is now set on the input element directly
+   * 
+   * @deprecated Use input element maxlength attribute instead
+   * @returns {void}
+   */
   setupCharacterLimit() {
   }
 
+  /**
+   * Legacy method for backward compatibility
+   * Character limit initialization is now handled in constructor
+   * 
+   * @deprecated Character limit is now set automatically in constructor
+   * @returns {void}
+   */
   initializeCharacterLimit() {
   }
 
+  /**
+   * Handles add button click
+   * Creates new note or updates existing based on context
+   * Legacy method for form submission compatibility
+   * 
+   * @async
+   * @returns {Promise<void>}
+   */
   async handleAddOrUpdate() {
     this.createNewNote();
   }
