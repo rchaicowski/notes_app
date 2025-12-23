@@ -34,6 +34,22 @@ export class StorageManager {
     /** @type {Array<Object>} Notes pending update on server (edited offline) */
     this.pendingUpdates = JSON.parse(localStorage.getItem('pendingUpdates') || '[]');
 
+    // Sync status tracking
+    /** @type {boolean} Whether sync is currently in progress */
+    this.isSyncing = false;
+    
+    /** @type {Date|null} Timestamp of last successful sync */
+    this.lastSyncTime = null;
+    
+    /** @type {Object|null} Last sync error if any */
+    this.lastSyncError = null;
+    
+    /** @type {number} Number of failed sync attempts for retry logic */
+    this.syncFailureCount = 0;
+    
+    /** @type {number|null} Timer ID for scheduled retry */
+    this.retryTimeoutId = null;
+
     // Bind event handlers to preserve 'this' context and enable cleanup
     this.boundHandleOnline = this.handleOnline.bind(this);
     this.boundHandleOffline = this.handleOffline.bind(this);
@@ -50,13 +66,19 @@ export class StorageManager {
   /**
    * Cleans up event listeners and resources
    * Should be called when StorageManager instance is no longer needed
-   * Prevents memory leaks from window event listeners
+   * Prevents memory leaks from window event listeners and timers
    * @returns {void}
    */
   destroy() {
     window.removeEventListener('online', this.boundHandleOnline);
     window.removeEventListener('offline', this.boundHandleOffline);
     window.removeEventListener('offline-mode-changed', this.boundHandleOfflineModeChanged);
+    
+    // Clear any pending retry timers
+    if (this.retryTimeoutId) {
+      clearTimeout(this.retryTimeoutId);
+      this.retryTimeoutId = null;
+    }
   }
 
   /**
@@ -74,15 +96,60 @@ export class StorageManager {
 
   /**
    * Handles network coming back online
-   * Attempts to sync all pending operations in order: create, update, delete
+   * Attempts to sync all pending operations with retry logic
    * @async
    * @returns {Promise<void>}
    */
   async handleOnline() {
-    if (this.isOnline) {
+    if (this.isOnline && !this.isSyncing) {
+      await this.syncWithRetry();
+    }
+  }
+
+  /**
+   * Syncs pending operations with exponential backoff retry
+   * Retries up to 3 times with increasing delays: 2s, 4s, 8s
+   * @async
+   * @returns {Promise<void>}
+   */
+  async syncWithRetry() {
+    // Prevent concurrent syncs
+    if (this.isSyncing) {
+      console.log('[StorageManager] Sync already in progress, skipping');
+      return;
+    }
+    
+    this.isSyncing = true;
+    this.lastSyncError = null;
+    
+    try {
       await this.syncPendingNotes();
       await this.syncPendingUpdates();
       await this.syncPendingDeletes();
+      
+      // Sync successful - reset failure count
+      this.syncFailureCount = 0;
+      this.lastSyncTime = new Date();
+      console.log('[StorageManager] Sync completed successfully');
+      
+    } catch (error) {
+      console.error('[StorageManager] Sync failed:', error);
+      this.lastSyncError = error;
+      this.syncFailureCount++;
+      
+      // Schedule retry with exponential backoff (max 3 attempts)
+      if (this.syncFailureCount < 3) {
+        const delay = Math.pow(2, this.syncFailureCount) * 1000; // 2s, 4s, 8s
+        console.log(`[StorageManager] Scheduling retry ${this.syncFailureCount + 1}/3 in ${delay}ms`);
+        
+        this.retryTimeoutId = setTimeout(() => {
+          this.syncWithRetry();
+        }, delay);
+      } else {
+        console.error('[StorageManager] Max retry attempts reached, giving up');
+      }
+    } finally {
+      this.isSyncing = false;
     }
   }
 
@@ -280,7 +347,7 @@ export class StorageManager {
       } catch (error) {
         console.error('Failed to save note online:', error);
         // Generate temporary ID and save locally
-        const tempNote = { ...note, id: Date.now() };
+        const tempNote = { ...note, id: this.generateTemporaryId() };
         this.saveToLocalStorage(tempNote);
         this.addToPendingSync(tempNote);
         this.fallbackToOffline();
@@ -288,7 +355,7 @@ export class StorageManager {
       }
     } else {
       // Offline mode - generate temporary ID
-      const tempNote = { ...note, id: Date.now() };
+      const tempNote = { ...note, id: this.generateTemporaryId() };
       this.saveToLocalStorage(tempNote);
       this.addToPendingSync(tempNote);
       return tempNote;
@@ -401,7 +468,7 @@ export class StorageManager {
    * Replaces a temporary note ID with server-assigned ID in local storage
    * Used after successfully syncing a note created offline
    * 
-   * @param {number} oldId - Temporary ID to replace
+   * @param {number|string} oldId - Temporary ID to replace
    * @param {Object} newNote - Note object with server-assigned ID
    * @returns {void}
    */
@@ -418,7 +485,7 @@ export class StorageManager {
    * Updates a note in pending sync queue
    * Used when editing a note that hasn't been synced yet
    * 
-   * @param {number} noteId - ID of note to update
+   * @param {number|string} noteId - ID of note to update
    * @param {Object} noteData - Updated note data
    * @returns {void}
    */
@@ -436,22 +503,41 @@ export class StorageManager {
 
   /**
    * Checks if an ID is temporary (generated locally, not from server)
-   * Temporary IDs are timestamps, which are 13 digits long
+   * Temporary IDs use a special prefix format: 'temp_' + timestamp
+   * Server-assigned IDs are always positive integers
    * 
-   * ISSUE: Fragile detection - assumes timestamp format, breaks in year 2286
-   * 
-   * @param {number} id - ID to check
-   * @returns {boolean} True if ID is temporary (timestamp-based)
+   * @param {number|string} id - ID to check
+   * @returns {boolean} True if ID is temporary (client-generated)
    */
-  isTemporaryId(id) { 
-    return typeof id === 'number' && id.toString().length === 13; 
+  isTemporaryId(id) {
+    // String IDs starting with 'temp_' are always temporary
+    if (typeof id === 'string' && id.startsWith('temp_')) {
+      return true;
+    }
+    
+    // For backward compatibility: 13-digit numbers are temporary
+    if (typeof id === 'number' && id.toString().length === 13) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Generates a new temporary ID for offline note creation
+   * Uses 'temp_' prefix + timestamp for reliable identification
+   * 
+   * @returns {string} Temporary ID in format 'temp_TIMESTAMP'
+   */
+  generateTemporaryId() {
+    return `temp_${Date.now()}`;
   }
 
   /**
    * Removes a note from local storage
    * Also removes from pending sync, update, and delete queues
    * 
-   * @param {number} noteId - ID of note to remove
+   * @param {number|string} noteId - ID of note to remove
    * @returns {void}
    */
   deleteFromLocalStorage(noteId) {
@@ -506,7 +592,7 @@ export class StorageManager {
    * Adds a note ID to pending delete queue
    * Prevents duplicates
    * 
-   * @param {number} noteId - ID of note to queue for deletion
+   * @param {number|string} noteId - ID of note to queue for deletion
    * @returns {void}
    */
   addToPendingDelete(noteId) {
@@ -521,7 +607,7 @@ export class StorageManager {
    * Creates new entry or updates existing based on ID
    * 
    * @param {Object} note - Note object to save
-   * @param {number} note.id - Note ID
+   * @param {number|string} note.id - Note ID
    * @param {string} [note.title] - Note title
    * @param {string} [note.content] - Note content
    * @param {Array<Object>} [note.formatting] - Formatting metadata
@@ -599,8 +685,6 @@ export class StorageManager {
    * Updates storage mode indicator in the UI
    * Shows current status and optionally resets after delay
    * 
-   * ISSUE: Tightly coupled to DOM structure - not reusable
-   * 
    * @param {string} message - Status message to display
    * @param {string} status - Status type: 'online', 'offline', or 'syncing'
    * @param {number} [resetDelay=0] - Milliseconds to wait before resetting to default message
@@ -625,18 +709,26 @@ export class StorageManager {
    * Returns current sync status and pending operation counts
    * Useful for debugging and displaying sync state in UI
    * 
-   * @returns {Object} Status object with pending counts and online state
+   * @returns {Object} Status object with pending counts and sync state
    * @returns {number} return.pendingSync - Number of notes pending creation sync
    * @returns {number} return.pendingUpdates - Number of notes pending update sync
    * @returns {number} return.pendingDeletes - Number of notes pending deletion sync
    * @returns {boolean} return.isOnline - Whether currently in online mode
+   * @returns {boolean} return.isSyncing - Whether sync is currently in progress
+   * @returns {Date|null} return.lastSyncTime - Timestamp of last successful sync
+   * @returns {Object|null} return.lastSyncError - Last sync error if any
+   * @returns {number} return.syncFailureCount - Number of consecutive failed syncs
    */
   getPendingStatus() {
     return {
       pendingSync: this.pendingSync.length,
       pendingUpdates: this.pendingUpdates.length,
       pendingDeletes: this.pendingDeletes.length,
-      isOnline: this.isOnline
+      isOnline: this.isOnline,
+      isSyncing: this.isSyncing,
+      lastSyncTime: this.lastSyncTime,
+      lastSyncError: this.lastSyncError,
+      syncFailureCount: this.syncFailureCount
     };
   }
 }
