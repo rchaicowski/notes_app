@@ -5,6 +5,8 @@
  * @module storageManager
  */
 
+import { getAuthToken, isAuthenticated } from './auth.js';
+
 /**
  * Manages note storage with online/offline synchronization
  * Automatically syncs pending changes when connection is restored
@@ -15,8 +17,6 @@ export class StorageManager {
    * Creates a new StorageManager instance
    * Initializes storage mode, API configuration, and pending operation queues
    * Sets up automatic sync when network connectivity changes
-   * 
-   * WARNING: Event listeners are never removed - potential memory leak
    */
   constructor() {
     /** @type {boolean} Whether currently in online mode */
@@ -34,11 +34,42 @@ export class StorageManager {
     /** @type {Array<Object>} Notes pending update on server (edited offline) */
     this.pendingUpdates = JSON.parse(localStorage.getItem('pendingUpdates') || '[]');
 
-    // Listen for online/offline events
-    // ISSUE: These listeners are never removed - memory leak
-    // ISSUE: Missing authentication in API calls
-    window.addEventListener('online', () => this.handleOnline());
-    window.addEventListener('offline', () => this.handleOffline());
+    // Bind event handlers to preserve 'this' context and enable cleanup
+    this.boundHandleOnline = this.handleOnline.bind(this);
+    this.boundHandleOffline = this.handleOffline.bind(this);
+    this.boundHandleOfflineModeChanged = this.handleOfflineModeChanged.bind(this);
+
+    // Listen for online/offline events (browser network status)
+    window.addEventListener('online', this.boundHandleOnline);
+    window.addEventListener('offline', this.boundHandleOffline);
+    
+    // Listen for custom offline-mode-changed event (app state change)
+    window.addEventListener('offline-mode-changed', this.boundHandleOfflineModeChanged);
+  }
+
+  /**
+   * Cleans up event listeners and resources
+   * Should be called when StorageManager instance is no longer needed
+   * Prevents memory leaks from window event listeners
+   * @returns {void}
+   */
+  destroy() {
+    window.removeEventListener('online', this.boundHandleOnline);
+    window.removeEventListener('offline', this.boundHandleOffline);
+    window.removeEventListener('offline-mode-changed', this.boundHandleOfflineModeChanged);
+  }
+
+  /**
+   * Constructs HTTP headers for authenticated API requests
+   * Includes Content-Type and Bearer token authorization
+   * 
+   * @returns {Object<string, string>} Headers object with auth token
+   */
+  getAuthHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getAuthToken()}`
+    };
   }
 
   /**
@@ -65,18 +96,28 @@ export class StorageManager {
   }
 
   /**
+   * Handles custom offline-mode-changed event
+   * Updates storage mode based on app state change
+   * @param {CustomEvent} event - Event with isOffline detail
+   * @returns {void}
+   */
+  handleOfflineModeChanged(event) {
+    const isOffline = event.detail?.isOffline ?? false;
+    this.isOnline = !isOffline;
+    console.log('[StorageManager] Mode changed to:', isOffline ? 'offline' : 'online');
+  }
+
+  /**
    * Syncs notes created offline to the server
    * Updates local IDs with server-assigned IDs after successful sync
    * Shows sync progress in UI indicator
-   * 
-   * ISSUE: Returns early on first error, abandoning remaining notes
-   * ISSUE: No retry logic for transient failures
+   * Continues syncing remaining notes even if one fails
    * 
    * @async
    * @returns {Promise<Array<Object>>} Array of synced notes with old/new ID mapping
    */
   async syncPendingNotes() {
-    if (this.pendingSync.length === 0) return;
+    if (this.pendingSync.length === 0) return [];
 
     const indicator = document.querySelector('.storage-mode-indicator');
     if (indicator) {
@@ -85,13 +126,14 @@ export class StorageManager {
     }
 
     const syncedNotes = [];
+    const failedNotes = [];
+    
     for (const note of this.pendingSync) {
       try {
-        // ISSUE: Missing Authorization header
         // ISSUE: Only sends 'content', loses 'title' and 'formatting'
         const response = await fetch(this.apiUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: this.getAuthHeaders(),
           body: JSON.stringify({ content: note.content })
         });
         
@@ -105,14 +147,14 @@ export class StorageManager {
         
       } catch (error) {
         console.error('Failed to sync note:', error);
-        // ISSUE: Returns early, abandoning remaining notes in queue
-        return syncedNotes;
+        // Keep track of failed notes instead of returning early
+        failedNotes.push(note);
       }
     }
 
-    // Clear synced notes from pending
-    this.pendingSync = [];
-    localStorage.setItem('pendingSync', '[]');
+    // Update pending sync to only include failed notes
+    this.pendingSync = failedNotes;
+    localStorage.setItem('pendingSync', JSON.stringify(this.pendingSync));
     
     return syncedNotes;
   }
@@ -120,8 +162,7 @@ export class StorageManager {
   /**
    * Syncs notes updated offline to the server
    * Updates are sent in order they were queued
-   * 
-   * ISSUE: Returns early on first error, abandoning remaining updates
+   * Continues syncing remaining notes even if one fails
    * 
    * @async
    * @returns {Promise<void>}
@@ -129,13 +170,14 @@ export class StorageManager {
   async syncPendingUpdates() {
     if (this.pendingUpdates.length === 0) return;
 
+    const failedUpdates = [];
+    
     for (const update of this.pendingUpdates) {
       try {
-        // ISSUE: Missing Authorization header
         // ISSUE: Only sends 'content', loses 'title' and 'formatting'
         const response = await fetch(`${this.apiUrl}/${update.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: this.getAuthHeaders(),
           body: JSON.stringify({ content: update.content })
         });
         
@@ -143,21 +185,21 @@ export class StorageManager {
         
       } catch (error) {
         console.error('Failed to sync update:', error);
-        // ISSUE: Returns early, abandoning remaining updates
-        return;
+        // Keep track of failed updates instead of returning early
+        failedUpdates.push(update);
       }
     }
 
-    this.pendingUpdates = [];
-    localStorage.setItem('pendingUpdates', '[]');
+    // Update pending updates to only include failed ones
+    this.pendingUpdates = failedUpdates;
+    localStorage.setItem('pendingUpdates', JSON.stringify(this.pendingUpdates));
   }
 
   /**
    * Syncs notes deleted offline to the server
    * Skips temporary IDs (notes never synced to server)
    * Updates UI indicator when complete
-   * 
-   * ISSUE: Returns early on first error, abandoning remaining deletes
+   * Continues syncing remaining notes even if one fails
    * 
    * @async
    * @returns {Promise<void>}
@@ -165,26 +207,37 @@ export class StorageManager {
   async syncPendingDeletes() {
     if (this.pendingDeletes.length === 0) return;
 
+    const failedDeletes = [];
+    
     for (const noteId of this.pendingDeletes) {
       try {
         // Don't try to delete temporary IDs from server
         if (!this.isTemporaryId(noteId)) {
-          // ISSUE: Missing Authorization header
-          const response = await fetch(`${this.apiUrl}/${noteId}`, { method: 'DELETE' });
+          const response = await fetch(`${this.apiUrl}/${noteId}`, { 
+            method: 'DELETE',
+            headers: this.getAuthHeaders()
+          });
           if (!response.ok && response.status !== 404) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
         }
       } catch (error) {
         console.error('Failed to sync delete:', error);
-        // ISSUE: Returns early, abandoning remaining deletes
-        return;
+        // Keep track of failed deletes instead of returning early
+        failedDeletes.push(noteId);
       }
     }
 
-    this.pendingDeletes = [];
-    localStorage.setItem('pendingDeletes', '[]');
-    this.updateIndicator('All changes synced', 'online', 2000);
+    // Update pending deletes to only include failed ones
+    this.pendingDeletes = failedDeletes;
+    localStorage.setItem('pendingDeletes', JSON.stringify(this.pendingDeletes));
+    
+    // Only show success if all operations completed
+    if (failedDeletes.length === 0) {
+      this.updateIndicator('All changes synced', 'online', 2000);
+    } else {
+      this.updateIndicator(`${failedDeletes.length} items failed to sync`, 'offline', 3000);
+    }
   }
 
   /**
@@ -200,11 +253,10 @@ export class StorageManager {
   async saveNote(note) {
     if (this.isOnline) {
       try {
-        // ISSUE: Missing Authorization header
         // ISSUE: Only sends 'content', loses 'title' and 'formatting'
         const response = await fetch(this.apiUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: this.getAuthHeaders(),
           body: JSON.stringify({ content: note.content })
         });
         
@@ -247,11 +299,10 @@ export class StorageManager {
 
     if (this.isOnline && !this.isTemporaryId(noteId)) {
       try {
-        // ISSUE: Missing Authorization header
         // ISSUE: Only sends 'content', loses 'title' and 'formatting'
         const response = await fetch(`${this.apiUrl}/${noteId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: this.getAuthHeaders(),
           body: JSON.stringify({ content })
         });
         
@@ -297,8 +348,10 @@ export class StorageManager {
   async deleteNote(noteId) {
     if (this.isOnline && !this.isTemporaryId(noteId)) {
       try {
-        // ISSUE: Missing Authorization header
-        const response = await fetch(`${this.apiUrl}/${noteId}`, { method: 'DELETE' });
+        const response = await fetch(`${this.apiUrl}/${noteId}`, { 
+          method: 'DELETE',
+          headers: this.getAuthHeaders()
+        });
         if (!response.ok && response.status !== 404) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

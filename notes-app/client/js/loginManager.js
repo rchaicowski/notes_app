@@ -213,11 +213,25 @@ export class LoginManager {
     /**
      * Handles user logout
      * Clears auth state and resets UI to login screen
+     * Explicitly updates UI elements to ensure visibility changes
      */
     handleLogout() {
-        authLogout(); // Clear auth state via centralized function
+        // Clear auth state via centralized function (this sets offline mode)
+        authLogout();
         this.token = null;
         this.user = null;
+        
+        // Read the offline mode state that was just set by authLogout
+        this.offlineMode = localStorage.getItem('offlineMode') === 'true';
+        
+        // Explicitly update UI elements
+        const authContainer = document.getElementById('authContainer');
+        const userInfo = document.getElementById('userInfo');
+        
+        userInfo?.classList.add('hidden');
+        authContainer?.classList.remove('hidden');
+        
+        // Also call initializeUI for any other updates
         this.initializeUI();
     }
 
@@ -256,22 +270,55 @@ export class LoginManager {
 
     /**
      * Enables offline mode
-     * Hides auth UI and allows app usage without authentication
+     * Hides authentication UI and shows notes interface
      * Dispatches 'offline-mode-changed' event to notify other components
      * 
      * @fires CustomEvent#offline-mode-changed
      */
     enableOfflineMode() {
+        console.log('[LoginManager] Enabling offline mode');
+        
+        // Set offline mode flags BEFORE clearing auth
+        // This ensures the flags are set when authLogout runs
         localStorage.setItem('offlineMode', 'true');
+        localStorage.setItem('storageMode', 'offline');
         
-        // Hide both auth and user info panels
-        document.getElementById('authContainer')?.classList.add('hidden');
-        document.getElementById('userInfo')?.classList.add('hidden');
+        // Clear authentication state when entering offline mode
+        // This will also dispatch auth-changed event
+        authLogout();
+        this.token = null;
+        this.user = null;
+        this.offlineMode = true;
         
-        // Notify application of offline mode activation
+        console.log('[LoginManager] Auth cleared, hiding login');
+        
+        // Update StorageManager mode if it exists
+        if (window.app?.settingsController?.storageManager) {
+            console.log('[LoginManager] Updating StorageManager to offline mode');
+            window.app.settingsController.storageManager.isOnline = false;
+        }
+        
+        // Hide auth container and show notes interface
+        const authContainer = document.getElementById('authContainer');
+        authContainer?.classList.add('hidden');
+        
+        console.log('[LoginManager] Dispatching offline-mode-changed event');
+        
+        // Dispatch offline mode changed event
         window.dispatchEvent(new CustomEvent('offline-mode-changed', { 
             detail: { isOffline: true } 
         }));
+        
+        console.log('[LoginManager] Loading notes');
+        
+        // Load offline notes if notesManager exists
+        if (window.app?.notesManager) {
+            window.app.notesManager.loadNotes();
+        } else {
+            console.warn('[LoginManager] notesManager not found on window.app');
+        }
+        
+        console.log('[LoginManager] Offline mode enabled successfully');
     }
 
     /**

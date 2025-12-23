@@ -67,11 +67,19 @@ export class SettingsController {
    * Updates the storage mode display in settings panel
    * Shows current mode (Online/Offline) and toggle button visibility
    * Uses translations from LanguageController for localized text
+   * Checks authentication state as the primary source of truth
    */
   updateStorageModeDisplay() {
     const storageModeDisplay = document.getElementById('storageModeDisplay');
     const switchToOnlineBtn = document.getElementById('switchToOnline');
-    const isOffline = localStorage.getItem('offlineMode') === 'true';
+    
+    // Check authentication state first - this is the source of truth
+    const hasToken = !!localStorage.getItem('authToken') || !!localStorage.getItem('token');
+    
+    // If authenticated, user is online regardless of flags
+    const isOffline = hasToken ? false : 
+                     (localStorage.getItem('offlineMode') === 'true' || 
+                      localStorage.getItem('storageMode') === 'offline');
 
     if (storageModeDisplay) {
       // Get localized mode text
@@ -172,16 +180,19 @@ export class SettingsController {
       this.updateSettingsButtonText();
     });
 
+    // React to auth changes
+    window.addEventListener('auth-changed', () => {
+      this.updateStorageModeDisplay();
+    });
+
     // Switch to online mode button
-    document.getElementById('switchToOnline')?.addEventListener('click', () => {
+    document.getElementById('switchToOnline')?.addEventListener('click', async () => {
+      // Clear offline mode flags
       localStorage.removeItem('offlineMode');
-      this.close();
-      document.getElementById('authContainer')?.classList.remove('hidden');
+      localStorage.setItem('storageMode', 'online');
       
-      // Notify app of mode change
-      window.dispatchEvent(new CustomEvent('offline-mode-changed', { 
-        detail: { isOffline: false } 
-      }));
+      // Reload the page to reinitialize with online mode (show login)
+      window.location.reload();
     });
 
     // Settings trigger - click event
@@ -223,8 +234,12 @@ export class SettingsController {
   /**
    * Opens the settings panel
    * Adds visual classes, updates ARIA states, and prevents body scroll
+   * Updates display to reflect current state
    */
   open() {
+    // Update display when opening to ensure fresh state
+    this.updateStorageModeDisplay();
+    
     this.trigger.classList.add('open');
     this.panel.classList.add('open'); 
     this.overlay.classList.add('open');

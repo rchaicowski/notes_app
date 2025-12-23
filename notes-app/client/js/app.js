@@ -21,6 +21,9 @@ class NotesApp {
    * Sets up initial sound volume based on saved settings
    */
   constructor() {
+    // FIRST: Sync storage mode with authentication state
+    this.syncStorageModeWithAuth();
+    
     // Initialize core services
     this.soundManager = new SoundManager();
     this.settingsController = new SettingsController();
@@ -45,6 +48,34 @@ class NotesApp {
     });
 
     this.init();
+  }
+
+  /**
+   * Synchronizes storage mode with authentication state
+   * Ensures consistency between auth token and storage mode flags
+   * Fixes state mismatch where user is logged in but storage shows offline
+   * Called before any other initialization to ensure correct state
+   * @returns {void}
+   */
+  syncStorageModeWithAuth() {
+    const hasToken = !!localStorage.getItem('authToken') || !!localStorage.getItem('token');
+    const currentStorageMode = localStorage.getItem('storageMode');
+    
+    if (hasToken) {
+      // User is authenticated - ensure online mode
+      if (currentStorageMode !== 'online') {
+        console.log('[App Init] User authenticated, switching to online mode');
+        localStorage.setItem('storageMode', 'online');
+        localStorage.setItem('offlineMode', 'false');
+      }
+    } else {
+      // User not authenticated - ensure offline mode
+      if (currentStorageMode !== 'offline') {
+        console.log('[App Init] User not authenticated, switching to offline mode');
+        localStorage.setItem('storageMode', 'offline');
+        localStorage.setItem('offlineMode', 'true');
+      }
+    }
   }
 
   /**

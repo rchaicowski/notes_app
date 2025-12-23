@@ -40,6 +40,7 @@ export function getAuthToken() {
 /**
  * Sets the authentication token and persists it to localStorage
  * Handles both setting and clearing the token
+ * Automatically synchronizes storage mode with authentication state
  * 
  * @param {string|null} token - The auth token to store, or null to clear
  */
@@ -48,10 +49,16 @@ export function setAuthToken(token) {
     
     if (token) {
         localStorage.setItem('authToken', token);
+        // When setting token, switch to online mode
+        localStorage.setItem('storageMode', 'online');
+        localStorage.setItem('offlineMode', 'false');
     } else {
         // Clear both current and legacy token keys
         localStorage.removeItem('authToken');
         localStorage.removeItem('token');
+        // When clearing token, switch to offline mode
+        localStorage.setItem('storageMode', 'offline');
+        localStorage.setItem('offlineMode', 'true');
     }
 }
 
@@ -93,9 +100,11 @@ export function setCurrentUser(user) {
 /**
  * Logs out the current user
  * Clears all authentication data from memory and localStorage
- * Dispatches 'auth-changed' custom event to notify other components
+ * Synchronizes storage mode to offline
+ * Dispatches events to notify other components
  * 
  * @fires CustomEvent#auth-changed
+ * @fires CustomEvent#offline-mode-changed
  */
 export function logout() {
     // Clear in-memory cache
@@ -107,8 +116,17 @@ export function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     
+    // Set storage mode to offline when logging out
+    localStorage.setItem('storageMode', 'offline');
+    localStorage.setItem('offlineMode', 'true');
+    
     // Notify application of auth state change
     window.dispatchEvent(new CustomEvent('auth-changed', { 
         detail: { isAuthenticated: false } 
+    }));
+    
+    // Notify application of offline mode change
+    window.dispatchEvent(new CustomEvent('offline-mode-changed', { 
+        detail: { isOffline: true } 
     }));
 }
