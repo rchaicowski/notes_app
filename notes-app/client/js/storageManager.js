@@ -17,13 +17,16 @@ export class StorageManager {
    * Creates a new StorageManager instance
    * Initializes storage mode, API configuration, and pending operation queues
    * Sets up automatic sync when network connectivity changes
+   * 
+   * @param {Object} [config={}] - Optional configuration object
+   * @param {string} [config.apiUrl] - Custom API base URL (defaults to localhost:5000)
    */
-  constructor() {
+  constructor(config = {}) {
     /** @type {boolean} Whether currently in online mode */
     this.isOnline = localStorage.getItem('storageMode') === 'online';
     
     /** @type {string} Base URL for API endpoints */
-    this.apiUrl = 'http://localhost:5000/api/notes';
+    this.apiUrl = config.apiUrl || 'http://localhost:5000/api/notes';
     
     /** @type {Array<Object>} Notes pending sync to server (created offline) */
     this.pendingSync = JSON.parse(localStorage.getItem('pendingSync') || '[]');
@@ -707,7 +710,7 @@ export class StorageManager {
 
   /**
    * Returns current sync status and pending operation counts
-   * Useful for debugging and displaying sync state in UI
+   * Provides visibility into storage state for UI and monitoring
    * 
    * @returns {Object} Status object with pending counts and sync state
    * @returns {number} return.pendingSync - Number of notes pending creation sync
