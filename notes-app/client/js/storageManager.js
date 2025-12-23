@@ -130,11 +130,14 @@ export class StorageManager {
     
     for (const note of this.pendingSync) {
       try {
-        // ISSUE: Only sends 'content', loses 'title' and 'formatting'
         const response = await fetch(this.apiUrl, {
           method: 'POST',
           headers: this.getAuthHeaders(),
-          body: JSON.stringify({ content: note.content })
+          body: JSON.stringify({ 
+            title: note.title || 'Untitled',
+            content: note.content || '',
+            formatting: note.formatting || []
+          })
         });
         
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -174,11 +177,14 @@ export class StorageManager {
     
     for (const update of this.pendingUpdates) {
       try {
-        // ISSUE: Only sends 'content', loses 'title' and 'formatting'
         const response = await fetch(`${this.apiUrl}/${update.id}`, {
           method: 'PUT',
           headers: this.getAuthHeaders(),
-          body: JSON.stringify({ content: update.content })
+          body: JSON.stringify({ 
+            title: update.title || 'Untitled',
+            content: update.content || '',
+            formatting: update.formatting || []
+          })
         });
         
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -247,17 +253,22 @@ export class StorageManager {
    * 
    * @async
    * @param {Object} note - Note object to save
-   * @param {string} note.content - Note content
+   * @param {string} [note.title] - Note title
+   * @param {string} [note.content] - Note content
+   * @param {Array<Object>} [note.formatting] - Formatting metadata
    * @returns {Promise<Object>} Saved note with assigned ID
    */
   async saveNote(note) {
     if (this.isOnline) {
       try {
-        // ISSUE: Only sends 'content', loses 'title' and 'formatting'
         const response = await fetch(this.apiUrl, {
           method: 'POST',
           headers: this.getAuthHeaders(),
-          body: JSON.stringify({ content: note.content })
+          body: JSON.stringify({ 
+            title: note.title || 'Untitled',
+            content: note.content || '',
+            formatting: note.formatting || []
+          })
         });
         
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -291,19 +302,30 @@ export class StorageManager {
    * 
    * @async
    * @param {number} noteId - ID of note to update
-   * @param {string} content - New note content
+   * @param {Object} noteData - Note data to update
+   * @param {string} [noteData.title] - Note title
+   * @param {string} [noteData.content] - Note content
+   * @param {Array<Object>} [noteData.formatting] - Formatting metadata
    * @returns {Promise<Object>} Updated note object
    */
-  async updateNote(noteId, content) {
-    const updatedNote = { id: noteId, content };
+  async updateNote(noteId, noteData) {
+    const updatedNote = { 
+      id: noteId, 
+      title: noteData.title || 'Untitled',
+      content: noteData.content || '',
+      formatting: noteData.formatting || []
+    };
 
     if (this.isOnline && !this.isTemporaryId(noteId)) {
       try {
-        // ISSUE: Only sends 'content', loses 'title' and 'formatting'
         const response = await fetch(`${this.apiUrl}/${noteId}`, {
           method: 'PUT',
           headers: this.getAuthHeaders(),
-          body: JSON.stringify({ content })
+          body: JSON.stringify({ 
+            title: updatedNote.title,
+            content: updatedNote.content,
+            formatting: updatedNote.formatting
+          })
         });
         
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -325,7 +347,7 @@ export class StorageManager {
       
       if (this.isTemporaryId(noteId)) {
         // Update the pending sync entry
-        this.updatePendingSyncNote(noteId, content);
+        this.updatePendingSyncNote(noteId, updatedNote);
       } else {
         // Add to pending updates
         this.addToPendingUpdate(updatedNote);
@@ -393,17 +415,21 @@ export class StorageManager {
   }
 
   /**
-   * Updates content of a note in pending sync queue
+   * Updates a note in pending sync queue
    * Used when editing a note that hasn't been synced yet
    * 
    * @param {number} noteId - ID of note to update
-   * @param {string} newContent - New content for the note
+   * @param {Object} noteData - Updated note data
    * @returns {void}
    */
-  updatePendingSyncNote(noteId, newContent) {
+  updatePendingSyncNote(noteId, noteData) {
     const index = this.pendingSync.findIndex(n => n.id === noteId);
     if (index !== -1) {
-      this.pendingSync[index].content = newContent;
+      // Merge the updated data with existing note
+      this.pendingSync[index] = { 
+        ...this.pendingSync[index],
+        ...noteData
+      };
       localStorage.setItem('pendingSync', JSON.stringify(this.pendingSync));
     }
   }
@@ -496,7 +522,9 @@ export class StorageManager {
    * 
    * @param {Object} note - Note object to save
    * @param {number} note.id - Note ID
-   * @param {string} note.content - Note content
+   * @param {string} [note.title] - Note title
+   * @param {string} [note.content] - Note content
+   * @param {Array<Object>} [note.formatting] - Formatting metadata
    * @returns {void}
    */
   saveToLocalStorage(note) {
