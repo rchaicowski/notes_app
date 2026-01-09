@@ -47,16 +47,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // Validation errors
-    if (err.name === 'ValidationError') {
-        return res.status(400).json({
-            status: 'error',
-            message: 'Invalid input data',
-            code: 'VALIDATION_ERROR',
-            details: isDev ? err.message : null
-        });
-    }
-
     // Postgres unique constraint (duplicate)
     if (err.code === '23505') {
         return res.status(409).json({
