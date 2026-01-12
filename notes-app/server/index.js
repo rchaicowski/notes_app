@@ -186,8 +186,8 @@ async function gracefulShutdown(signal) {
     
     // Close database pool
     try {
-        if (db && typeof db.end === 'function') {
-            await db.end();
+        if (db && typeof db.closePool === 'function') {
+            await db.closePool();
             console.log('✅ Database pool closed');
         }
     } catch (err) {
