@@ -13,6 +13,8 @@ const { validateHeaders, validateUser } = require('../middleware/validateCommon'
 const { limiter, authLimiter } = require('../middleware/rateLimiter');
 const { auth } = require('../middleware/auth');
 const { AppError } = require('../middleware/errorHandler');
+const { generateToken, getExpirationTime, isExpired } = require('../utils/tokenGenerator');
+const { sendVerificationEmail } = require('../services/emailService');
 
 // Validate JWT_SECRET exists at startup
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -103,14 +105,15 @@ router.post('/register', authLimiter, validateHeaders, validateUser, async (req,
 
         if (userExists.rows.length > 0) {
             await pool.query('ROLLBACK');
-            throw new AppError('Email already registered', 400);
+            throw new AppError('Email already registered', 400, 'EMAIL_EXISTS');
         }
 
         if (recentlyDeleted.rows.length > 0) {
             await pool.query('ROLLBACK');
             throw new AppError(
                 'This email was recently associated with a deleted account. Please wait 15 minutes before registering again.',
-                400
+                400,
+                'EMAIL_COOLDOWN'
             );
         }
 
@@ -118,10 +121,16 @@ router.post('/register', authLimiter, validateHeaders, validateUser, async (req,
         const salt = await bcrypt.genSalt(10);
         const password_hash = await bcrypt.hash(password, salt);
 
-        // Create user account
+        // Generate verification token (24 hours expiry)
+        const verificationToken = generateToken();
+        const verificationExpires = getExpirationTime(24);
+
+        // Create user account with verification token
         const result = await pool.query(
-            'INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING id, email, name',
-            [email, password_hash, name]
+            `INSERT INTO users (email, password_hash, name, email_verified, verification_token, verification_token_expires) 
+             VALUES ($1, $2, $3, false, $4, $5) 
+             RETURNING id, email, name, email_verified`,
+            [email, password_hash, name, verificationToken, verificationExpires]
         );
 
         const user = result.rows[0];
@@ -129,18 +138,24 @@ router.post('/register', authLimiter, validateHeaders, validateUser, async (req,
         // Remove email from cooldown list
         await pool.query('DELETE FROM deleted_emails WHERE email = $1', [email]);
 
-        // Generate JWT token
+        await pool.query('COMMIT');
+
+        // Send verification email (don't wait for it - fire and forget)
+        sendVerificationEmail(email, verificationToken).catch(err => {
+            console.error('⚠️ Failed to send verification email:', err.message);
+        });
+
+        // Generate JWT token (user can still use app, just log warning if not verified)
         const token = jwt.sign(
             { id: user.id },
             JWT_SECRET,
             { expiresIn: TOKEN_EXPIRY }
         );
 
-        await pool.query('COMMIT');
-
         res.status(201).json({
             user: user,
-            token: token
+            token: token,
+            message: 'Registration successful! Please check your email to verify your account.'
         });
     } catch (error) {
         await pool.query('ROLLBACK');
@@ -169,13 +184,13 @@ router.post('/login', authLimiter, validateHeaders, validateUser, async (req, re
 
         // Find user by email
         const result = await pool.query(
-            'SELECT id, email, name, password_hash FROM users WHERE email = $1',
+            'SELECT id, email, name, password_hash, email_verified FROM users WHERE email = $1',
             [email]
         );
 
         // User not found - generic error prevents user enumeration
         if (result.rows.length === 0) {
-            throw new AppError('Invalid credentials', 401);
+            throw new AppError('Invalid credentials', 401, 'INVALID_CREDENTIALS');
         }
 
         const user = result.rows[0];
@@ -185,7 +200,12 @@ router.post('/login', authLimiter, validateHeaders, validateUser, async (req, re
 
         // Invalid password - same generic error
         if (!validPassword) {
-            throw new AppError('Invalid credentials', 401);
+            throw new AppError('Invalid credentials', 401, 'INVALID_CREDENTIALS');
+        }
+
+        // Log warning if email not verified (but still allow login)
+        if (!user.email_verified) {
+            console.log(`⚠️ User ${email} logged in without email verification`);
         }
 
         // Generate JWT token
@@ -200,7 +220,8 @@ router.post('/login', authLimiter, validateHeaders, validateUser, async (req, re
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.name
+                name: user.name,
+                email_verified: user.email_verified
             },
             token: token
         });
@@ -238,6 +259,61 @@ router.get('/cleanup-deleted-emails', limiter, async (req, res, next) => {
             deletedCount: deleteResult.rowCount,
             remainingCount: parseInt(remainingResult.rows[0].count)
         });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * GET /api/users/verify-email
+ * Verifies user email with token from email link
+ * 
+ * @route GET /api/users/verify-email
+ * @access Public
+ * @query {string} token - Verification token from email
+ * @returns {Object} 200 - Success message
+ * @returns {Object} 400 - Invalid or expired token
+ */
+router.get('/verify-email', async (req, res, next) => {
+    try {
+        const { token } = req.query;
+
+        if (!token) {
+            throw new AppError('Verification token is required', 400, 'TOKEN_REQUIRED');
+        }
+
+        // Find user with this token
+        const result = await pool.query(
+            'SELECT id, email, verification_token_expires FROM users WHERE verification_token = $1',
+            [token]
+        );
+
+        if (result.rows.length === 0) {
+            throw new AppError('Invalid verification token', 400, 'INVALID_TOKEN');
+        }
+
+        const user = result.rows[0];
+
+        // Check if token expired
+        if (isExpired(user.verification_token_expires)) {
+            throw new AppError('Verification token has expired', 400, 'TOKEN_EXPIRED');
+        }
+
+        // Verify email
+        await pool.query(
+            `UPDATE users 
+             SET email_verified = true, 
+                 verification_token = NULL, 
+                 verification_token_expires = NULL 
+             WHERE id = $1`,
+            [user.id]
+        );
+
+        res.json({
+            status: 'success',
+            message: 'Email verified successfully! You can now use all features.'
+        });
+
     } catch (error) {
         next(error);
     }
