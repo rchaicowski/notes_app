@@ -407,7 +407,126 @@
     color: #5d4e37;
 }
 
+/* ==================== Email Verification Banner ==================== */
+
+/**
+ * Verification banner shown to unverified users
+ * Appears at the top of the notes interface
+ * Dismissible but reappears on next login if still unverified
+ */
+.verification-banner {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #fff3cd, #ffeeba);
+    color: #856404;
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 2px solid #ffc107;
+    box-shadow: 
+        0 4px 16px rgba(255, 193, 7, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 500px;
+    animation: slideDownBanner 0.4s ease-out;
+}
+
+.verification-banner.hidden {
+    display: none;
+}
+
+/**
+ * Banner icon (warning symbol)
+ */
+.verification-banner-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+/**
+ * Banner text content
+ */
+.verification-banner-text {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/**
+ * Close button for banner
+ */
+.verification-banner-close {
+    background: none;
+    border: none;
+    color: #856404;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.verification-banner-close:hover {
+    background: rgba(133, 100, 4, 0.1);
+}
+
+/**
+ * Banner slide down animation
+ */
+@keyframes slideDownBanner {
+    from {
+        transform: translateX(-50%) translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ==================== Verification Status Badge ==================== */
+
+/**
+ * Warning badge shown next to username for unverified users
+ * Appears in the user info panel
+ */
+.verification-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(255, 193, 7, 0.15);
+    color: #856404;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    vertical-align: middle;
+}
+
+.verification-badge-icon {
+    font-size: 0.9rem;
+    line-height: 1; 
+    transform: translateY(-2px);
+}
+
 /* ==================== Responsive Design ==================== */
+
+@media (max-width: 768px) {
+    .verification-banner {
+        left: 10px;
+        right: 10px;
+        transform: none;
+        max-width: none;
+    }
+}
 
 @media (max-width: 480px) {
     .auth-form {

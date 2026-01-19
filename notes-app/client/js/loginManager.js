@@ -1,6 +1,6 @@
 /**
  * @fileoverview Login and registration UI management
- * Handles user authentication flows, offline mode, and account management
+ * Handles user authentication flows, offline mode, account management, and email verification UI
  * @module loginManager
  */
 
@@ -15,7 +15,7 @@ import {
 
 /**
  * Manages authentication UI and user session lifecycle
- * Coordinates login, registration, logout, and offline mode functionality
+ * Coordinates login, registration, logout, offline mode, and email verification UI
  */
 export class LoginManager {
     /**
@@ -224,6 +224,10 @@ export class LoginManager {
         // Read the offline mode state that was just set by authLogout
         this.offlineMode = localStorage.getItem('offlineMode') === 'true';
         
+        // Hide verification UI
+        this.hideVerificationBanner();
+        this.hideVerificationBadge();
+        
         // Explicitly update UI elements
         const authContainer = document.getElementById('authContainer');
         const userInfo = document.getElementById('userInfo');
@@ -325,6 +329,7 @@ export class LoginManager {
      * Sets authentication data after successful login/registration
      * Updates both centralized auth module and local instance state
      * Dispatches 'auth-changed' event to notify other components
+     * Shows verification banner and badge if email is not verified
      * 
      * @param {Object} data - Response data containing token and user
      * @param {string} data.token - Authentication token
@@ -342,6 +347,9 @@ export class LoginManager {
 
         // Update UI
         this.updateUserInfo();
+        
+        // Update verification UI (banner + badge)
+        this.updateVerificationUI();
         
         // Notify application of authentication
         window.dispatchEvent(new CustomEvent('auth-changed', { 
@@ -428,5 +436,122 @@ export class LoginManager {
             errorDiv.classList.add('fade-out');
             setTimeout(() => errorDiv.remove(), 300);
         }, 5000);
+    }
+
+    /* ==================== EMAIL VERIFICATION UI METHODS ==================== */
+
+    /**
+     * Updates all verification UI elements based on user's verification status
+     * Shows banner and badge if email is not verified
+     * Hides them if email is verified or user is logged out
+     */
+    updateVerificationUI() {
+        if (!this.user) {
+            this.hideVerificationBanner();
+            this.hideVerificationBadge();
+            return;
+        }
+        
+        if (this.user.email_verified) {
+            this.hideVerificationBanner();
+            this.hideVerificationBadge();
+        } else {
+            this.showVerificationBanner();
+            this.showVerificationBadge();
+        }
+    }
+
+    /**
+     * Shows verification banner at top of page
+     * Banner is dismissible and remembers dismissal in session storage
+     * Displays a warning to unverified users to check their email
+     */
+    showVerificationBanner() {
+        if (!this.user || this.user.email_verified) return;
+        
+        // Check if banner was dismissed this session
+        const dismissed = sessionStorage.getItem('verificationBannerDismissed');
+        if (dismissed === 'true') return;
+        
+        // Remove existing banner if any
+        const existingBanner = document.getElementById('verificationBanner');
+        if (existingBanner) {
+            existingBanner.remove();
+        }
+        
+        // Create banner
+        const banner = document.createElement('div');
+        banner.id = 'verificationBanner';
+        banner.className = 'verification-banner';
+        banner.innerHTML = `
+            <span class="verification-banner-icon">⚠️</span>
+            <div class="verification-banner-text">
+                Please verify your email to unlock all features. Check your inbox for the verification link!
+            </div>
+            <button class="verification-banner-close" aria-label="Close">×</button>
+        `;
+        
+        // Add close handler
+        banner.querySelector('.verification-banner-close').addEventListener('click', () => {
+            banner.classList.add('hidden');
+            sessionStorage.setItem('verificationBannerDismissed', 'true');
+            setTimeout(() => banner.remove(), 300);
+        });
+        
+        // Add to page
+        document.body.appendChild(banner);
+    }
+
+    /**
+     * Hides verification banner
+     * Called when user verifies email or logs out
+     */
+    hideVerificationBanner() {
+        const banner = document.getElementById('verificationBanner');
+        if (banner) {
+            banner.classList.add('hidden');
+            setTimeout(() => banner.remove(), 300);
+        }
+        sessionStorage.removeItem('verificationBannerDismissed');
+    }
+
+    /**
+     * Shows verification badge next to username
+     * Badge displays "⚠️ Unverified" status in the user info panel
+     */
+    showVerificationBadge() {
+        if (!this.user || this.user.email_verified) {
+            this.hideVerificationBadge();
+            return;
+        }
+        
+        const userName = document.getElementById('userName');
+        if (!userName) return;
+        
+        // Remove existing badge if any
+        this.hideVerificationBadge();
+        
+        // Create badge
+        const badge = document.createElement('span');
+        badge.id = 'verificationBadge';
+        badge.className = 'verification-badge';
+        badge.innerHTML = `
+            <span class="verification-badge-icon">⚠️</span>
+            <span>Unverified</span>
+        `;
+        
+        // Insert after username
+        userName.parentNode.insertBefore(badge, userName.nextSibling);
+    }
+
+    /**
+     * Hides verification badge
+     * Called when user verifies email or logs out
+     */
+    hideVerificationBadge() {
+        const badge = document.getElementById('verificationBadge');
+        if (badge) {
+            badge.remove();
+        }
     }
 }
