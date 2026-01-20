@@ -31,6 +31,16 @@ CREATE TABLE IF NOT EXISTS deleted_emails (
     deleted_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create password reset tokens table
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_verification_token ON users(verification_token);
@@ -38,6 +48,9 @@ CREATE INDEX IF NOT EXISTS idx_notes_user_id ON notes(user_id);
 CREATE INDEX IF NOT EXISTS idx_deleted_emails_date ON deleted_emails(deleted_at);
 -- GIN index for formatting JSONB to speed up JSONB queries
 CREATE INDEX IF NOT EXISTS idx_notes_formatting_gin ON notes USING GIN (formatting);
+-- Password reset token indexes for fast lookups
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
 
 -- Cleanup function
 CREATE OR REPLACE FUNCTION cleanup_deleted_emails()
