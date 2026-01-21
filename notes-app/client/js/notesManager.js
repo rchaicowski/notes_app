@@ -672,7 +672,7 @@ export class NotesManager {
       let savedNote;
       if (this.isNewNote || this.currentNoteId === null) {
         savedNote = await this.saveNote({ title, content, formatting });
-        this.notes.push(savedNote);
+        this.notes.unshift(savedNote);
         this.currentNoteId = savedNote.id;
         this.isNewNote = false;
       } else {
