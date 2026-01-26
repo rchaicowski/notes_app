@@ -158,7 +158,20 @@ export class LanguageController {
         'auth.welcome': 'Welcome',
         'auth.logout': 'Logout',
         'auth.invalidEmail': 'Please enter a valid email address.',
-        'auth.invalidPassword': 'Password must be at least 6 characters.'
+        'auth.invalidPassword': 'Password must be at least 6 characters.',
+        'auth.forgotPassword': 'Forgot password?',
+        'auth.forgotPasswordTitle': 'Forgot Password',
+        'auth.forgotPasswordDesc': "Enter your email address and we'll send you a link to reset your password.",
+        'auth.sendResetLink': 'Send Reset Link',
+        'auth.backToLogin': '← Back to Login',
+        'auth.resetPasswordTitle': 'Reset Password',
+        'auth.resetPasswordDesc': 'Enter your new password below.',
+        'auth.newPassword': 'New Password',
+        'auth.confirmPassword': 'Confirm Password',
+        'auth.confirmPasswordPlaceholder': 'Confirm your password',
+        'auth.resetPassword': 'Reset Password',
+        'auth.invalidPasswordLength': 'Password must be at least 8 characters.',
+        'auth.passwordMismatch': 'Passwords do not match.'
       },
       
       'pt': {
@@ -206,7 +219,20 @@ export class LanguageController {
         'auth.welcome': 'Bem-vindo',
         'auth.logout': 'Sair',
         'auth.invalidEmail': 'Por favor, insira um endereço de email válido.',
-        'auth.invalidPassword': 'A senha deve ser pelo menos 6 caracteres.'
+        'auth.invalidPassword': 'A senha deve ter pelo menos 6 caracteres.',
+        'auth.forgotPassword': 'Esqueceu a senha?',
+        'auth.forgotPasswordTitle': 'Esqueceu a Senha',
+        'auth.forgotPasswordDesc': 'Digite seu endereço de email e enviaremos um link para redefinir sua senha.',
+        'auth.sendResetLink': 'Enviar Link de Redefinição',
+        'auth.backToLogin': '← Voltar ao Login',
+        'auth.resetPasswordTitle': 'Redefinir Senha',
+        'auth.resetPasswordDesc': 'Digite sua nova senha abaixo.',
+        'auth.newPassword': 'Nova Senha',
+        'auth.confirmPassword': 'Confirmar Senha',
+        'auth.confirmPasswordPlaceholder': 'Confirme sua senha',
+        'auth.resetPassword': 'Redefinir Senha',
+        'auth.invalidPasswordLength': 'A senha deve ter pelo menos 8 caracteres.',
+        'auth.passwordMismatch': 'As senhas não correspondem.'
       },
       
       'es': {
@@ -254,7 +280,20 @@ export class LanguageController {
         'auth.welcome': 'Bienvenido',
         'auth.logout': 'Cerrar Sesión',
         'auth.invalidEmail': 'Por favor, ingresa un correo electrónico válido.',
-        'auth.invalidPassword': 'La contraseña debe tener al menos 6 caracteres.'
+        'auth.invalidPassword': 'La contraseña debe tener al menos 6 caracteres.',
+        'auth.forgotPassword': '¿Olvidaste tu contraseña?',
+        'auth.forgotPasswordTitle': 'Olvidé mi Contraseña',
+        'auth.forgotPasswordDesc': 'Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
+        'auth.sendResetLink': 'Enviar Enlace de Restablecimiento',
+        'auth.backToLogin': '← Volver al Inicio de Sesión',
+        'auth.resetPasswordTitle': 'Restablecer Contraseña',
+        'auth.resetPasswordDesc': 'Ingresa tu nueva contraseña a continuación.',
+        'auth.newPassword': 'Nueva Contraseña',
+        'auth.confirmPassword': 'Confirmar Contraseña',
+        'auth.confirmPasswordPlaceholder': 'Confirma tu contraseña',
+        'auth.resetPassword': 'Restablecer Contraseña',
+        'auth.invalidPasswordLength': 'La contraseña debe tener al menos 8 caracteres.',
+        'auth.passwordMismatch': 'Las contraseñas no coinciden.'
       },
       
       'fr': {
@@ -302,7 +341,20 @@ export class LanguageController {
         'auth.welcome': 'Bienvenue',
         'auth.logout': 'Déconnexion',
         'auth.invalidEmail': "Veuillez entrer une adresse e-mail valide.",
-        'auth.invalidPassword': 'Le mot de passe doit contenir au moins 6 caractères.'
+        'auth.invalidPassword': 'Le mot de passe doit contenir au moins 6 caractères.',
+        'auth.forgotPassword': 'Mot de passe oublié?',
+        'auth.forgotPasswordTitle': 'Mot de Passe Oublié',
+        'auth.forgotPasswordDesc': 'Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.',
+        'auth.sendResetLink': 'Envoyer le Lien de Réinitialisation',
+        'auth.backToLogin': '← Retour à la Connexion',
+        'auth.resetPasswordTitle': 'Réinitialiser le Mot de Passe',
+        'auth.resetPasswordDesc': 'Entrez votre nouveau mot de passe ci-dessous.',
+        'auth.newPassword': 'Nouveau Mot de Passe',
+        'auth.confirmPassword': 'Confirmer le Mot de Passe',
+        'auth.confirmPasswordPlaceholder': 'Confirmez votre mot de passe',
+        'auth.resetPassword': 'Réinitialiser le Mot de Passe',
+        'auth.invalidPasswordLength': 'Le mot de passe doit contenir au moins 8 caractères.',
+        'auth.passwordMismatch': 'Les mots de passe ne correspondent pas.'
       }
     };
     

@@ -4,19 +4,19 @@
 <head>
   <!-- Character encoding for proper text rendering -->
   <meta charset="UTF-8" />
-  
+
   <!-- Responsive design viewport configuration -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
+
   <!-- Page title displayed in browser tab -->
   <title>Notes App</title>
-  
+
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  
+
   <!-- Global styles -->
   <link rel="stylesheet" href="styles/global.css">
-  
+
   <!-- Component-specific stylesheets -->
   <link rel="stylesheet" href="styles/calculator.css">
   <link rel="stylesheet" href="styles/plant.css">
@@ -32,10 +32,10 @@
 <body>
   <!-- Main app title - visually hidden but accessible to screen readers -->
   <h1 class="visually-hidden" data-i18n="app.title">My Notes</h1>
-  
+
   <!-- Main container simulating a desk table layout -->
   <div id="table-container" class="table">
-    
+
     <!-- ============================================
          LAMP COMPONENT - Dark Mode Toggle
          ============================================ -->
@@ -44,18 +44,18 @@
       <div class="lamp-base">
         <div class="lamp-power-button on" id="powerButton"></div>
       </div>
-      
+
       <!-- Decorative lamp stems -->
       <div class="lamp-stems">
         <div class="lamp-stem left"></div>
         <div class="lamp-stem right"></div>
       </div>
-      
+
       <!-- Lamp head components -->
       <div class="lamp-head"></div>
       <div class="lamp-text" data-i18n="lamp.darkMode">DARK MODE</div>
       <div class="lamp-head-back"></div>
-      
+
       <!-- Lamp bulb - toggles on/off with theme -->
       <div class="lamp-bulb on" id="lampBulb"></div>
     </div>
@@ -64,11 +64,7 @@
          SETTINGS PANEL - Matchbox Trigger
          ============================================ -->
     <!-- Settings trigger styled as a matchbox with paperclips -->
-    <div class="settings-trigger" 
-         id="settingsTrigger"
-         role="button"
-         aria-label="Open settings"
-         tabindex="0">
+    <div class="settings-trigger" id="settingsTrigger" role="button" aria-label="Open settings" tabindex="0">
       <div class="matchbox-cover"></div>
       <div class="matchbox-inner">
         <!-- Decorative paperclips -->
@@ -79,12 +75,10 @@
         <div class="paperclip"></div>
       </div>
     </div>
-    
+
     <!-- Settings overlay (backdrop) -->
-    <div class="settings-overlay" 
-         id="settingsOverlay"
-         aria-hidden="true"></div>
-    
+    <div class="settings-overlay" id="settingsOverlay" aria-hidden="true"></div>
+
     <!-- ============================================
          SETTINGS PANEL - Main Content
          ============================================ -->
@@ -92,24 +86,22 @@
       <!-- Panel header with close button -->
       <div class="settings-header">
         <h2 class="settings-title" data-i18n="settings.title">Settings</h2>
-        <button class="settings-close" 
-                id="settingsClose"
-                aria-label="Close settings">×</button>
+        <button class="settings-close" id="settingsClose" aria-label="Close settings">×</button>
       </div>
-      
+
       <div class="settings-content">
         <!-- Storage settings section -->
         <div class="settings-section">
           <h3 data-i18n="settings.storage">📁 Storage</h3>
           <div class="form-group">
             <label for="storageMode" data-i18n="settings.storageMode">Storage Mode:</label>
-            
+
             <!-- Display current storage mode (online/offline) -->
             <div class="storage-mode-status">
               <span data-i18n="settings.currentMode">Current Mode:</span>
               <span id="storageModeDisplay">Online</span>
             </div>
-            
+
             <!-- Button to switch to online mode (hidden when already online) -->
             <button id="switchToOnline" class="btn-switch-mode hidden">
               <span class="cloud-icon">☁️</span>
@@ -121,7 +113,7 @@
         <!-- Audio settings section -->
         <div class="settings-section">
           <h3 data-i18n="settings.audio">🔊 Audio</h3>
-          
+
           <!-- Master volume control -->
           <div class="form-group">
             <label for="masterVolume" data-i18n="settings.volume">Volume:</label>
@@ -130,7 +122,7 @@
               <span class="range-value" id="masterVolumeValue">50%</span>
             </div>
           </div>
-          
+
           <!-- Sound enable/disable toggle -->
           <div class="form-group">
             <label for="soundEnabled" data-i18n="settings.enableSounds">Enable Sounds:</label>
@@ -144,7 +136,7 @@
         <!-- Interface settings section -->
         <div class="settings-section">
           <h3 data-i18n="settings.interface">🎨 Interface</h3>
-          
+
           <!-- Language selector -->
           <div class="form-group">
             <label for="languageSelect" data-i18n="settings.language">Language:</label>
@@ -163,7 +155,7 @@
           <div class="form-group">
             <!-- Destructive action button -->
             <button id="deleteAccountBtn" class="btn-danger" data-i18n="settings.deleteAccount">Delete Account</button>
-            
+
             <!-- Warning message for account deletion -->
             <p class="warning-text" data-i18n="settings.deleteWarning">This action cannot be undone. All your notes will
               be permanently deleted.</p>
@@ -178,10 +170,10 @@
     <div class="plant-group" id="plantGroup">
       <!-- Vase base -->
       <div class="vase"></div>
-      
+
       <!-- Plant stem -->
       <div class="stem"></div>
-      
+
       <!-- Large leaves -->
       <div class="leaf big-leaf-0">
         <div class="leaf-shape"></div>
@@ -201,7 +193,7 @@
       <div class="leaf big-leaf-5">
         <div class="leaf-shape"></div>
       </div>
-      
+
       <!-- Medium leaves -->
       <div class="leaf medium-leaf medium-leaf-0">
         <div class="leaf-shape"></div>
@@ -229,7 +221,7 @@
     <div class="calculator">
       <!-- Calculator display showing current value -->
       <div class="calc-display" id="calcDisplay" aria-label="Calculator display" aria-live="polite">0</div>
-      
+
       <!-- Calculator button grid (now uses event listeners, not inline onclick) -->
       <div class="calc-buttons">
         <!-- Clear and operators -->
@@ -237,27 +229,27 @@
         <button class="calc-btn operator">/</button>
         <button class="calc-btn operator">×</button>
         <button class="calc-btn operator">⌫</button>
-        
+
         <!-- Number row 7-9 -->
         <button class="calc-btn">7</button>
         <button class="calc-btn">8</button>
         <button class="calc-btn">9</button>
         <button class="calc-btn operator">-</button>
-        
+
         <!-- Number row 4-6 -->
         <button class="calc-btn">4</button>
         <button class="calc-btn">5</button>
         <button class="calc-btn">6</button>
         <button class="calc-btn operator">+</button>
-        
+
         <!-- Number row 1-3 -->
         <button class="calc-btn">1</button>
         <button class="calc-btn">2</button>
         <button class="calc-btn">3</button>
-        
+
         <!-- Equals button spans 2 rows -->
         <button class="calc-btn equals" style="grid-row: span 2">=</button>
-        
+
         <!-- Zero button spans 2 columns -->
         <button class="calc-btn zero-btn" style="grid-column: span 2">0</button>
         <button class="calc-btn">.</button>
@@ -273,18 +265,12 @@
         <span></span> <span></span> <span></span> <span></span>
         <span></span> <span></span> <span></span> <span></span>
       </div>
-      
+
       <!-- Global mode controls (Edit/Delete) -->
       <div id="globalControls">
         <!-- Edit mode toggle -->
-        <div class="icon-wrapper" 
-             id="editModeBtn"
-             role="button"
-             aria-label="Toggle edit mode"
-             aria-pressed="false"
-             tabindex="0"
-             data-i18n-attr="title:pencil.edit" 
-             title="Edit Mode">
+        <div class="icon-wrapper" id="editModeBtn" role="button" aria-label="Toggle edit mode" aria-pressed="false"
+          tabindex="0" data-i18n-attr="title:pencil.edit" title="Edit Mode">
           <div class="icon pencil">
             <div class="vertical-lines"></div>
             <div class="pencil-text" data-i18n="pencil.edit">EDIT</div>
@@ -292,47 +278,35 @@
             <div class="graphite-tip"></div>
           </div>
         </div>
-        
+
         <!-- Delete mode toggle -->
-        <div class="icon-wrapper" 
-             id="deleteModeBtn"
-             role="button"
-             aria-label="Toggle delete mode"
-             aria-pressed="false"
-             tabindex="0"
-             data-i18n-attr="title:eraser.delete" 
-             title="Delete Mode">
+        <div class="icon-wrapper" id="deleteModeBtn" role="button" aria-label="Toggle delete mode" aria-pressed="false"
+          tabindex="0" data-i18n-attr="title:eraser.delete" title="Delete Mode">
           <div class="icon eraser">
             <div class="eraser-text" data-i18n="eraser.delete">DELETE</div>
           </div>
         </div>
       </div>
-      
+
       <!-- Note creation form -->
       <form id="noteForm" action="#" method="post">
         <!-- Note content input -->
         <input type="text" id="content" data-i18n="note.placeholder" placeholder="Note" required />
-        
+
         <!-- Add note button -->
         <button type="button" id="addBtn" class="add-btn" data-i18n="note.add">+</button>
       </form>
-      
+
       <!-- Notes list container (populated dynamically) -->
       <ul id="notesList"></ul>
-      
+
       <!-- Pagination controls -->
       <div class="page-navigation">
-        <button class="page-corner" 
-          id="prevPage"
-                aria-label="Previous page"
-                data-i18n-attr="title:page.previous" 
-                title="Previous Page">‹</button>
+        <button class="page-corner" id="prevPage" aria-label="Previous page" data-i18n-attr="title:page.previous"
+          title="Previous Page">‹</button>
         <div class="page-info" id="pageInfo">Page 1 of 1</div>
-        <button class="page-corner" 
-          id="nextPage"
-                aria-label="Next page"
-                data-i18n-attr="title:page.next" 
-                title="Next Page">›</button>
+        <button class="page-corner" id="nextPage" aria-label="Next page" data-i18n-attr="title:page.next"
+          title="Next Page">›</button>
       </div>
     </div>
   </div>
@@ -347,7 +321,7 @@
         <span data-i18n="auth.welcome">Welcome</span>
         <span id="userName"></span>
       </div>
-      
+
       <!-- Logout button -->
       <span id="logoutBtn" class="btn-action" data-i18n="auth.logout">Logout</span>
     </div>
@@ -360,57 +334,52 @@
     <!-- Login form -->
     <form id="loginForm" class="auth-form" action="#" method="post" novalidate>
       <h2 data-i18n="auth.login">Login</h2>
-      
+
       <!-- Email input with validation -->
       <div class="form-group">
         <label for="loginEmail" data-i18n="auth.email">Email</label>
-        <input type="email" 
-               id="loginEmail" 
-               name="email" 
-               data-i18n="auth.emailPlaceholder"
-               placeholder="Enter your email" 
-               autocomplete="username" 
-               required
-               pattern="[^\s@]+@[^\s@]+\.[^\s@]+">
-        
+        <input type="email" id="loginEmail" name="email" data-i18n="auth.emailPlaceholder"
+          placeholder="Enter your email" autocomplete="username" required pattern="[^\s@]+@[^\s@]+\.[^\s@]+">
+
         <!-- Validation error message -->
         <div class="invalid-feedback" data-i18n="auth.invalidEmail">
           Please enter a valid email address.
         </div>
       </div>
-      
+
       <!-- Password input with validation -->
       <div class="form-group">
         <label for="loginPassword" data-i18n="auth.password">Password</label>
-        <input type="password" 
-               id="loginPassword" 
-               name="password" 
-               data-i18n="auth.passwordPlaceholder"
-               placeholder="Enter your password" 
-               autocomplete="current-password" 
-               required
-               minlength="6">
-        
+        <input type="password" id="loginPassword" name="password" data-i18n="auth.passwordPlaceholder"
+          placeholder="Enter your password" autocomplete="current-password" required minlength="6">
+
         <!-- Validation error message -->
         <div class="invalid-feedback" data-i18n="auth.invalidPassword">
           Password must be at least 6 characters.
         </div>
       </div>
-      
+
       <!-- Submit button -->
       <button type="submit" data-i18n="auth.login">Login</button>
-      
+
+      <!-- Forgot password link -->
+      <div class="auth-toggle" style="margin-top: 15px;">
+        <a href="password-reset.html" class="clickable" style="text-decoration: none;">
+          <span data-i18n="auth.forgotPassword">Forgot password?</span>
+        </a>
+      </div>
+
       <!-- Toggle to registration form -->
       <div class="auth-toggle">
         <span data-i18n="auth.noAccount">Don't have an account?</span>
         <span id="showRegister" class="clickable" data-i18n="auth.register">Register</span>
       </div>
-      
+
       <!-- Divider -->
       <div class="auth-separator">
         <span data-i18n="auth.or">or</span>
       </div>
-      
+
       <!-- Offline mode option -->
       <button id="useOfflineMode" class="btn-offline" data-i18n="auth.offlineMode">Continue in Offline Mode</button>
     </form>
@@ -418,47 +387,31 @@
     <!-- Registration form (initially hidden) -->
     <form id="registerForm" class="auth-form hidden" action="#" method="post" novalidate>
       <h2 data-i18n="auth.register">Register</h2>
-      
+
       <!-- Name input -->
       <div class="form-group">
         <label for="registerName" data-i18n="auth.name">Name</label>
-        <input type="text" 
-               id="registerName" 
-               name="name" 
-               data-i18n="auth.namePlaceholder"
-               placeholder="Enter your full name" 
-               autocomplete="name" 
-               required>
+        <input type="text" id="registerName" name="name" data-i18n="auth.namePlaceholder"
+          placeholder="Enter your full name" autocomplete="name" required>
       </div>
-      
+
       <!-- Email input with pattern validation -->
       <div class="form-group">
         <label for="registerEmail" data-i18n="auth.email">Email</label>
-        <input type="email" 
-               id="registerEmail" 
-               name="email" 
-               data-i18n="auth.emailPlaceholder"
-               placeholder="Enter your email" 
-               autocomplete="email" 
-               required 
-               pattern="[^\s@]+@[^\s@]+\.[^\s@]+">
+        <input type="email" id="registerEmail" name="email" data-i18n="auth.emailPlaceholder"
+          placeholder="Enter your email" autocomplete="email" required pattern="[^\s@]+@[^\s@]+\.[^\s@]+">
       </div>
-      
+
       <!-- Password input -->
       <div class="form-group">
         <label for="registerPassword" data-i18n="auth.password">Password</label>
-        <input type="password" 
-               id="registerPassword" 
-               name="password" 
-               data-i18n="auth.createPassword"
-               placeholder="Create a password" 
-               autocomplete="new-password" 
-               required>
+        <input type="password" id="registerPassword" name="password" data-i18n="auth.createPassword"
+          placeholder="Create a password" autocomplete="new-password" required>
       </div>
-      
+
       <!-- Submit button -->
       <button type="submit" data-i18n="auth.register">Register</button>
-      
+
       <!-- Toggle back to login form -->
       <div class="auth-toggle">
         <span data-i18n="auth.hasAccount">Already have an account?</span>
