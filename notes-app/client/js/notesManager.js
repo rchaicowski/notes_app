@@ -26,46 +26,46 @@ export class NotesManager {
   constructor(soundManager, storageManager) {
     /** @type {Array<Object>} Array of note objects loaded from API or storage */
     this.notes = [];
-    
+
     /** @type {number} Current page number for pagination (1-indexed) */
     this.currentPage = 1;
-    
+
     /** @type {number} Number of notes displayed per page */
     this.notesPerPage = 15;
-    
+
     /** @type {boolean} Whether edit mode is currently active */
     this.isEditMode = false;
-    
+
     /** @type {boolean} Whether delete mode is currently active */
     this.isDeleteMode = false;
-    
+
     /** @type {string} Base URL for API endpoints */
     this.apiBaseUrl = 'http://localhost:5000/api/notes';
-    
+
     /** @type {SoundManager} Sound manager for audio feedback */
     this.soundManager = soundManager;
-    
+
     /** @type {StorageManager} Local storage manager for offline data */
     this.storageManager = storageManager;
-    
+
     /** @type {number} Maximum characters per note line (character limit) */
     this.maxCharacters = 35;
-    
+
     /** @type {number} Maximum characters for note title */
     this.maxTitleCharacters = 30;
-    
+
     /** @type {number} Maximum lines per note in detail view */
     this.maxLinesPerNote = 15;
-    
+
     /** @type {boolean} Whether app is in offline mode */
     this.isOffline = localStorage.getItem('offlineMode') === 'true';
-    
+
     /** @type {string} Current view mode: 'index' (list) or 'note' (detail) */
     this.currentView = 'index';
-    
+
     /** @type {number|null} Currently open note ID in detail view, null if none */
     this.currentNoteId = null;
-    
+
     /** @type {FormattingManager} Formatting manager for rich text support */
     this.formattingManager = new FormattingManager(soundManager);
 
@@ -166,7 +166,7 @@ export class NotesManager {
   destroy() {
     window.removeEventListener('offline-mode-changed', this.handleOfflineModeChange);
     window.removeEventListener('auth-changed', this.handleAuthChange);
-    
+
     // Remove note list click handler if it exists
     const list = document.getElementById('notesList');
     if (list && this.boundHandleNoteClick) {
@@ -269,10 +269,10 @@ export class NotesManager {
   async saveNote(noteData, isUpdate = false, noteId = null) {
     if (this.isOffline) {
       const allNotes = this.storageManager.getFromLocalStorage();
-      
+
       // Find existing note in storage for updates
       const existingNote = isUpdate ? allNotes.find(n => n.id === noteId) : null;
-      
+
       const note = {
         id: isUpdate ? noteId : Date.now(),
         title: noteData.title || 'Untitled',
@@ -381,6 +381,9 @@ export class NotesManager {
     this.currentView = 'note';
     this.currentNoteId = noteId;
     this.renderNoteView(note);
+
+    // Show formatting hint when note is opened
+    this.showFormattingHint();
   }
 
   /**
@@ -396,12 +399,93 @@ export class NotesManager {
     this.formattingManager.toggleToolbar(false);
     document.getElementById('editModeBtn').classList.remove('active');
 
+    // Hide formatting hint when returning to index
+    this.hideFormattingHint();
+
     const form = document.getElementById('noteForm');
     const pagination = document.querySelector('.page-navigation');
     if (form) form.style.display = 'flex';
     if (pagination) pagination.style.display = 'flex';
 
     this.renderNotes();
+  }
+
+  /**
+   * Shows a speech bubble hint about formatting options
+   * Only shows once when user first opens a note
+   * Saves preference in localStorage
+   * @returns {void}
+   */
+  showFormattingHint() {
+    // Check if user has dismissed the hint
+    const hintDismissed = localStorage.getItem('formattingHintDismissed');
+    if (hintDismissed === 'true') {
+      return; // Don't show if previously dismissed
+    }
+
+    // Check if hint already exists
+    let hint = document.getElementById('formatting-hint-bubble');
+    if (hint) {
+      hint.classList.remove('hidden');
+      return;
+    }
+
+    // Create hint bubble
+    hint = document.createElement('div');
+    hint.id = 'formatting-hint-bubble';
+    hint.className = 'formatting-hint-bubble';
+
+    hint.innerHTML = `
+      <div class="hint-header">
+        <span class="hint-emoji">💡</span>
+        <span>Formatting Tip!</span>
+      </div>
+      <div class="hint-message">
+        Click the <strong>✏️ EDIT</strong> button to format your text with <strong>Bold</strong>, <em>Italic</em>, <u>Underline</u>, and <mark>Highlight</mark> colors!
+      </div>
+      <div class="hint-checkbox-container">
+        <input type="checkbox" id="hint-dont-show" class="hint-checkbox">
+        <label for="hint-dont-show" class="hint-checkbox-label">Don't show this again</label>
+      </div>
+      <button class="hint-button" id="hint-got-it">Got it!</button>
+    `;
+
+    // Add to page
+    const globalControls = document.getElementById('globalControls');
+    if (globalControls) {
+      globalControls.appendChild(hint);
+    }
+
+    // Handle "Got it!" button
+    const gotItBtn = hint.querySelector('#hint-got-it');
+    const dontShowCheckbox = hint.querySelector('#hint-dont-show');
+
+    gotItBtn.addEventListener('click', () => {
+      // Check if "Don't show again" is checked
+      if (dontShowCheckbox.checked) {
+        localStorage.setItem('formattingHintDismissed', 'true');
+      }
+
+      // Fade out and remove
+      hint.classList.add('fade-out');
+      setTimeout(() => {
+        hint.remove();
+      }, 300);
+
+      this.soundManager.play('pencil', 100);
+    });
+  }
+
+  /**
+   * Hides the formatting hint bubble
+   * Used when user goes back to index view
+   * @returns {void}
+   */
+  hideFormattingHint() {
+    const hint = document.getElementById('formatting-hint-bubble');
+    if (hint) {
+      hint.classList.add('hidden');
+    }
   }
 
   /**
@@ -431,6 +515,9 @@ export class NotesManager {
     this.currentView = 'note';
     this.currentNoteId = null;
     this.renderNoteView(newNote, true);
+    
+    // Show formatting hint when creating new note
+    this.showFormattingHint();
   }
 
   /**
@@ -463,14 +550,14 @@ export class NotesManager {
 
     const titleLine = document.createElement('div');
     titleLine.className = 'note-line title-line';
-    
+
     const titleDiv = document.createElement('div');
     titleDiv.id = 'note-title';
     titleDiv.className = 'note-title-editable';
     titleDiv.contentEditable = 'true';
     titleDiv.setAttribute('data-placeholder', 'Note Title');
     titleDiv.textContent = note.title || '';
-    
+
     titleLine.appendChild(titleDiv);
     noteContainer.appendChild(titleLine);
 
@@ -481,7 +568,7 @@ export class NotesManager {
     for (let i = 0; i < this.maxLinesPerNote; i++) {
       const line = document.createElement('div');
       line.className = 'note-line content-line';
-      
+
       const contentDiv = document.createElement('div');
       contentDiv.className = 'note-content-line';
       contentDiv.contentEditable = 'true';
@@ -490,7 +577,7 @@ export class NotesManager {
         contentDiv.setAttribute('data-placeholder', 'Start writing...');
       }
       contentDiv.textContent = contentLines[i] || '';
-      
+
       line.appendChild(contentDiv);
       contentContainer.appendChild(line);
     }
@@ -532,7 +619,7 @@ export class NotesManager {
     contentDivs.forEach((div, index) => {
       div.addEventListener('input', (e) => {
         const text = div.textContent;
-        
+
         // Handle character limit immediately for better UX
         if (text.length > this.maxCharacters) {
           const selection = window.getSelection();
@@ -540,7 +627,7 @@ export class NotesManager {
             const range = selection.getRangeAt(0);
             const cursorPos = range.startOffset;
             div.textContent = text.substring(0, this.maxCharacters);
-            
+
             const newRange = document.createRange();
             const textNode = div.firstChild;
             if (textNode) {
@@ -554,7 +641,7 @@ export class NotesManager {
             div.textContent = text.substring(0, this.maxCharacters);
           }
         }
-        
+
         // Auto-advance to next line when limit reached (debounced for performance)
         if (text.length === this.maxCharacters && index < contentDivs.length - 1) {
           clearTimeout(inputDebounceTimer);
@@ -605,17 +692,17 @@ export class NotesManager {
 
     titleDivElement.addEventListener('keydown', (e) => {
       const text = titleDivElement.textContent;
-      
+
       if (e.key === 'Enter') {
         e.preventDefault();
         const firstContentLine = document.querySelector('.note-content-line');
         if (firstContentLine) {
           firstContentLine.focus();
         }
-      } else if (text.length >= this.maxTitleCharacters && 
-                 e.key.length === 1 && 
-                 !e.ctrlKey && 
-                 !e.metaKey) {
+      } else if (text.length >= this.maxTitleCharacters &&
+        e.key.length === 1 &&
+        !e.ctrlKey &&
+        !e.metaKey) {
         const selection = window.getSelection();
         if (selection && selection.isCollapsed) {
           e.preventDefault();
@@ -750,7 +837,7 @@ export class NotesManager {
     this.isEditMode = true;
     const editBtn = document.getElementById('editModeBtn');
     editBtn?.setAttribute('aria-pressed', 'true');
-    
+
     editBtn?.classList.add('active');
     document.body.classList.add('edit-mode');
     this.highlightNotes('edit');
@@ -768,7 +855,7 @@ export class NotesManager {
     this.isDeleteMode = true;
     const deleteBtn = document.getElementById('deleteModeBtn');
     deleteBtn?.setAttribute('aria-pressed', 'true');
-    
+
     deleteBtn?.classList.add('active');
     document.body.classList.add('delete-mode');
     this.highlightNotes('delete');
@@ -787,7 +874,7 @@ export class NotesManager {
     const deleteBtn = document.getElementById('deleteModeBtn');
     editBtn?.setAttribute('aria-pressed', 'false');
     deleteBtn?.setAttribute('aria-pressed', 'false');
-    
+
     editBtn?.classList.remove('active');
     deleteBtn?.classList.remove('active');
     document.body.classList.remove('edit-mode', 'delete-mode');
@@ -878,7 +965,7 @@ export class NotesManager {
       const titleFormatting = note.formatting?.find(f => f.field === 'title')?.formats || [];
       const formattedTitle = this.formattingManager.renderFormattedText(note.title, titleFormatting);
       li.innerHTML = `<div class="note-content">${formattedTitle}</div>`;
-      
+
       pageDiv.appendChild(li);
     });
 
