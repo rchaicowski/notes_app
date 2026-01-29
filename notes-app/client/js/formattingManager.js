@@ -89,7 +89,7 @@ export class FormattingManager {
           <div class="highlight-label">Highlight:</div>
           <div class="highlight-colors">
             ${this.highlightColors.map(color => `
-              <button class="highlight-btn ${color === 'yellow' ? 'active' : ''}" 
+              <button class="highlight-btn" 
                       data-color="${color}" 
                       style="background-color: ${color};"
                       title="Highlight ${color}">
@@ -179,12 +179,9 @@ export class FormattingManager {
         e.preventDefault();
         e.stopPropagation();
         
-        // Update active state
-        highlightBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        this.currentHighlightColor = btn.dataset.color;
-        this.applyFormatting('highlight', this.currentHighlightColor);
+        // Apply highlight immediately (like Bold/Italic/Underline)
+        const color = btn.dataset.color;
+        this.applyFormatting('highlight', color);
         this.soundManager.play('pencil', 100);
       };
       btn.addEventListener('click', handler);
