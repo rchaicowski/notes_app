@@ -24,7 +24,7 @@ export class FormattingManager {
     this.isToolbarOpen = false;
     
     /** @type {string[]} Available highlight colors */
-    this.highlightColors = ['yellow', 'green', 'pink', 'blue', 'orange'];
+    this.highlightColors = ['yellow', 'green', 'pink', 'blue', 'orange', 'purple'];
     
     /** @type {string} Currently selected highlight color */
     this.currentHighlightColor = 'yellow';
