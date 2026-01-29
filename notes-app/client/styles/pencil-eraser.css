@@ -253,19 +253,20 @@
  * Speech bubble that appears pointing to the EDIT button
  * Shows formatting tip on first use inside a note
  * Dismissible with "Don't show again" option
+ * Styled to match auth-form appearance
  */
 .formatting-hint-bubble {
   position: absolute;
   right: 180px;
   top: 30px;
-  background: linear-gradient(145deg, #fff8dc, #ffefd5);
-  border: 3px solid #daa520;
-  border-radius: 15px;
-  padding: 20px;
-  width: 320px;
+  background: linear-gradient(145deg, #f5f3f0, #ebe7e0);
+  border: 2px solid rgba(139, 69, 19, 0.2);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 340px;
   box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
   z-index: 10000;
   animation: bubbleSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -280,26 +281,26 @@
   height: 0;
   border-style: solid;
   border-width: 12px 0 12px 20px;
-  border-color: transparent transparent transparent #daa520;
+  border-color: transparent transparent transparent rgba(139, 69, 19, 0.2);
 }
 
 .formatting-hint-bubble::before {
   content: '';
   position: absolute;
-  right: -14px;
-  top: 38px;
+  right: -17px;
+  top: 37px;
   width: 0;
   height: 0;
   border-style: solid;
-  border-width: 9px 0 9px 14px;
-  border-color: transparent transparent transparent #fff8dc;
+  border-width: 10px 0 10px 17px;
+  border-color: transparent transparent transparent #ebe7e0;
   z-index: 1;
 }
 
 @keyframes bubbleSlideIn {
   from {
     opacity: 0;
-    transform: translateX(-30px) scale(0.9);
+    transform: translateX(-30px) scale(0.95);
   }
   to {
     opacity: 1;
@@ -312,22 +313,44 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
-  font-size: 16px;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: #8b4513;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .hint-emoji {
-  font-size: 20px;
+  font-size: 1.3rem;
 }
 
 /* Bubble message */
 .hint-message {
   color: #5d4e37;
-  font-size: 14px;
-  line-height: 1.5;
-  margin-bottom: 15px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.hint-message strong {
+  color: #8b4513;
+  font-weight: 600;
+}
+
+.hint-message em {
+  color: #8b4513;
+}
+
+.hint-message u {
+  color: #8b4513;
+}
+
+.hint-message mark {
+  background-color: #ffeb3b;
+  color: #5d4e37;
+  padding: 2px 4px;
+  border-radius: 3px;
 }
 
 /* Checkbox container */
@@ -335,7 +358,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 1rem;
 }
 
 .hint-checkbox {
@@ -346,35 +369,46 @@
 }
 
 .hint-checkbox-label {
-  color: #5d4e37;
-  font-size: 13px;
+  color: #8b4513;
+  font-size: 0.9rem;
   cursor: pointer;
   user-select: none;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Got it button */
+/* Got it button - matches auth-form button style */
 .hint-button {
   width: 100%;
-  padding: 10px;
+  padding: 16px;
   background: linear-gradient(135deg, #4CAF50, #45a049);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 12px;
+  font-size: 1.05rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  box-shadow:
+    0 4px 12px rgba(76, 175, 80, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  min-height: 52px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .hint-button:hover {
   background: linear-gradient(135deg, #45a049, #3d8b40);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+  box-shadow:
+    0 6px 16px rgba(76, 175, 80, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 .hint-button:active {
   transform: translateY(0);
+  box-shadow:
+    0 3px 8px rgba(76, 175, 80, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 /* Hidden state */
@@ -392,4 +426,12 @@
 
 .formatting-hint-bubble.fade-out {
   animation: bubbleFadeOut 0.3s ease-out forwards;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .formatting-hint-bubble {
+    width: 300px;
+    padding: 1.5rem;
+  }
 }
